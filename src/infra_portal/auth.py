@@ -102,7 +102,9 @@ def github_callback(
 
     member.github_id = user.id
     member.github_login = user.login.lower()
-    member.display_name = user.name
+    # GitHub fills the name once. After that the member edits it on their profile.
+    if member.display_name is None:
+        member.display_name = user.name
     member.avatar_url = user.avatar_url
     member.last_login_at = datetime.now(UTC)
     db.commit()

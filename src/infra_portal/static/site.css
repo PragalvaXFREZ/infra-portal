@@ -31,3 +31,24 @@ table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: .4rem .3rem; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 500; font-size: .9rem; }
 .muted { color: var(--muted); }
+h1 { line-height: 1.2; }
+.small { font-size: .88rem; }
+.error { color: var(--danger); }
+.item { padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.item .title { font-weight: 600; text-decoration: none; }
+.people { list-style: none; padding: 0; }
+.people li { display: flex; align-items: center; gap: .6rem; padding: .4rem 0; }
+.people img, .profile img { border-radius: 50%; }
+.profile { display: flex; gap: 1rem; align-items: center; }
+.profile h1 { margin: 0; }
+form.stack { display: grid; gap: .4rem; }
+form.stack label { margin-top: .6rem; font-weight: 500; }
+textarea { font-family: ui-monospace, monospace; font-size: .95rem; }
+.actions { display: flex; gap: .5rem; margin-top: .8rem; }
+button.secondary { background: none; color: var(--fg); }
+.danger-zone { margin-top: 2rem; }
+.prose { overflow-wrap: anywhere; }
+.prose pre { overflow-x: auto; padding: .8rem; border: 1px solid var(--line); border-radius: 6px; }
+.prose code { font-family: ui-monospace, monospace; font-size: .92em; }
+.prose img { max-width: 100%; }
+.prose table { display: block; overflow-x: auto; }

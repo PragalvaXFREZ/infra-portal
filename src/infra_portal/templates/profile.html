@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ person.name }}{% endblock %}
+{% block content %}
+  <section class="profile">
+    {% if person.avatar_url %}<img src="{{ person.avatar_url }}" alt="" width="80" height="80">{% endif %}
+    <div>
+      <h1>{{ person.name }}</h1>
+      <div class="muted">
+        <a href="https://github.com/{{ person.github_login }}" rel="noopener">@{{ person.github_login }}</a>
+        {% if person.website %} · <a href="{{ person.website }}" rel="noopener nofollow">{{ person.website }}</a>{% endif %}
+      </div>
+    </div>
+  </section>
+  {% if person.bio %}<div class="prose">{{ bio_html }}</div>{% endif %}
+  {% if member and member.id == person.id %}<p><a href="/settings/profile">Edit profile</a></p>{% endif %}
+  <h2>Posts</h2>
+  {% for post in posts %}
+    {% include "_post_item.html" %}
+  {% else %}
+    <p class="muted">No posts yet.</p>
+  {% endfor %}
+{% endblock %}

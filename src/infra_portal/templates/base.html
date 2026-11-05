@@ -10,9 +10,12 @@
   <header class="site">
     <a class="brand" href="/">infra</a>
     <nav>
-      {% block nav %}{% endblock %}
+      <a href="/members">Members</a>
       {% if member %}
-        {% if member.is_admin %}<a href="/admin/members">Members</a>{% endif %}
+        <a href="/write">Write</a>
+        <a href="/me/posts">My posts</a>
+        <a href="/u/{{ member.github_login }}">Profile</a>
+        {% if member.is_admin %}<a href="/admin/members">Admin</a>{% endif %}
         <form method="post" action="/auth/logout"><button class="link">Sign out</button></form>
       {% else %}
         <a href="/auth/github/login">Sign in with GitHub</a>

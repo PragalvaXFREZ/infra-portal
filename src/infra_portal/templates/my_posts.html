@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}My posts{% endblock %}
+{% block content %}
+  <h1>My posts</h1>
+  <p><a href="/write">Write a new post</a></p>
+  <table>
+    <thead><tr><th>Title</th><th>Status</th><th>Updated</th></tr></thead>
+    <tbody>
+    {% for post in posts %}
+      <tr>
+        <td><a href="/posts/{{ post.id }}/edit">{{ post.title }}</a></td>
+        <td>{{ post.status }}</td>
+        <td class="muted">{{ post.updated_at.strftime("%Y-%m-%d") }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3" class="muted">No posts yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
