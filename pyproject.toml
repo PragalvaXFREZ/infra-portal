@@ -1,0 +1,28 @@
+[project]
+name = "infra-portal"
+version = "0.1.0"
+description = "Member profiles and blogs for the infra group, served at infra.pragalva.me"
+authors = [
+    { name = "Pragalva Sapkota", email = "sapkotapragalva@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2.6",
+    "sqlalchemy>=2.0",
+    "uvicorn[standard]>=0.32",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.3,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
