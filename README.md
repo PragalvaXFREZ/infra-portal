@@ -38,8 +38,9 @@ Stop it with `docker compose down`. Add `--volumes` to delete the database as we
 
 `.github/workflows/ci.yaml` runs on every pull request and on every push to `main`:
 
-1. **unit tests**: `uv run pytest`.
-2. **compose stack starts healthy**: starts `compose.yaml` and calls both health endpoints.
+1. **unit tests**: `uv run pytest`, against in-memory SQLite and a fake GitHub client.
+2. **compose stack starts healthy**: starts `compose.yaml` with real Postgres, runs the migrations, calls
+   both health endpoints, and checks that the models and migrations match.
 3. **build image**: builds the image after both checks pass. On `main` it also pushes the image to
    `ghcr.io/pragalvaxfrez/infra-portal` with the tags `sha-<short commit>` and `main`, and writes the
    pinned reference (`tag@sha256:digest`) to the run summary.
@@ -48,11 +49,49 @@ Deployments pin the digest, not a tag. A tag can move. A digest always names the
 
 ## Configuration
 
-| Variable | Required | Example |
-| --- | --- | --- |
-| `DATABASE_URL` | yes | `postgresql+psycopg://portal:secret@db:5432/portal` |
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | yes | | `postgresql+psycopg://user:password@host:5432/db` |
+| `SESSION_SECRET` | yes | | Signs the session cookie. At least 32 characters. `openssl rand -hex 32` |
+| `BASE_URL` | no | `http://localhost:8000` | Public address. The OAuth callback is `BASE_URL/auth/github/callback`. |
+| `GITHUB_CLIENT_ID` | no | empty | GitHub OAuth app. Empty disables sign-in. |
+| `GITHUB_CLIENT_SECRET` | no | empty | GitHub OAuth app secret. |
+| `COOKIE_SECURE` | no | `true` | Send the cookie over HTTPS only. Set `false` for `http://localhost`. |
+| `ADMIN_GITHUB_LOGINS` | no | empty | Comma-separated GitHub logins that sign in as admins without an invite. |
 
-`compose.yaml` builds `DATABASE_URL` from the `POSTGRES_*` values in `.env`.
+`compose.yaml` builds `DATABASE_URL` from the `POSTGRES_*` values in `.env`. The migration step receives only
+`DATABASE_URL`.
+
+## Sign-in
+
+Sign-in uses GitHub OAuth and is invite-only. See [ADR 0003](docs/adr/0003-github-sign-in-invite-only.md).
+
+1. Create a GitHub OAuth app (GitHub Settings, Developer settings, OAuth Apps). Set the callback URL to
+   `http://localhost:8000/auth/github/callback` for local use.
+2. Put its client ID and a new client secret in `.env`, and your GitHub login in `ADMIN_GITHUB_LOGINS`.
+3. Run `docker compose up --build --wait`, open <http://localhost:8000>, and sign in.
+4. Invite others at `/admin/members` by GitHub login. Their first sign-in claims the invite.
+
+A GitHub OAuth app has one callback URL, so production uses a second app with
+`https://infra.pragalva.me/auth/github/callback`.
+
+## Database migrations
+
+Alembic manages the schema. The image runs migrations as a separate one-shot step, before the app starts:
+
+```bash
+docker compose run --rm migrate                                          # apply
+docker compose run --rm migrate python -m infra_portal.migrate check     # models match migrations?
+```
+
+After a model change, generate a migration against a running database and review it before committing:
+
+```bash
+uv run alembic revision --autogenerate -m "describe the change"
+```
+
+Keep migrations additive. During a rollout the old and the new version run at the same time, so a column
+must stop being used in one release before a later release drops it.
 
 ## Health endpoints
 
@@ -80,7 +119,7 @@ Each stage ends with a git tag. Check out a tag to see the project at that point
 | --- | --- | --- |
 | `v0-compose` | API and Postgres in Compose, health endpoints, non-root multi-stage image | Done |
 | `v1-ci` | CI runs tests, builds the image, and publishes it to GHCR | Done |
-| `v2-login` | GitHub sign-in, invite-only members, sessions | Planned |
+| `v2-login` | GitHub sign-in, invite-only members, sessions, Alembic migrations | Done |
 | `v3-profiles-posts` | Profiles and Markdown posts with drafts | Planned |
 | `v4-on-devata` | Runs on devata through Argo CD at `infra.pragalva.me` | Planned |
 
@@ -88,9 +127,12 @@ Each stage ends with a git tag. Check out a tag to see the project at that point
 
 ```
 src/infra_portal/   application package
+  migrations/       Alembic migrations
+  templates/        Jinja2 pages
+  static/           CSS
 tests/              pytest suite
 docs/adr/           architecture decision records
 Dockerfile          two-stage image build
-compose.yaml        local stack: api + db
+compose.yaml        local stack: db, migrate, api
 .github/workflows/  CI
 ```

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Members{% endblock %}
+{% block content %}
+  <h1>Members</h1>
+  <form method="post" action="/admin/members" class="inline">
+    <label for="github_login">Invite by GitHub login</label>
+    <input id="github_login" name="github_login" required maxlength="40" autocomplete="off" placeholder="octocat">
+    <button>Invite</button>
+  </form>
+  <table>
+    <thead><tr><th>GitHub login</th><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for m in members %}
+      <tr>
+        <td>@{{ m.github_login }}</td>
+        <td>{{ m.display_name or "" }}</td>
+        <td>{{ m.role }}</td>
+        <td>{% if m.has_signed_in %}joined{% else %}invited{% endif %}</td>
+        <td>
+          {% if m.id != member.id %}
+          <form method="post" action="/admin/members/{{ m.id }}/remove"><button class="link danger">Remove</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

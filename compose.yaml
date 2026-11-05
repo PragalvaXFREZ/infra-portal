@@ -1,5 +1,8 @@
 name: infra-portal
 
+# One connection string, shared by the migration step and the app.
+x-database-url: &database-url postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
 services:
   db:
     image: postgres:18-alpine
@@ -16,18 +19,37 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-    # No ports: only the api service reaches the database, over the Compose network.
+    # No ports: only the app reaches the database, over the Compose network.
 
-  api:
+  # Runs once, applies schema migrations, and exits. The app starts only after
+  # it exits successfully. On Kubernetes the same command runs as a Job.
+  migrate:
     build: .
+    image: infra-portal:local
+    command: ["python", "-m", "infra_portal.migrate"]
     environment:
-      # "db" resolves through Compose's internal DNS to the db container.
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-    ports:
-      - "127.0.0.1:8000:8000"
+      DATABASE_URL: *database-url
     depends_on:
       db:
         condition: service_healthy
+    read_only: true
+    restart: "no"
+
+  api:
+    image: infra-portal:local
+    environment:
+      DATABASE_URL: *database-url
+      BASE_URL: ${BASE_URL:-http://localhost:8000}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ADMIN_GITHUB_LOGINS: ${ADMIN_GITHUB_LOGINS:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       # The slim image has no curl, so Python does the request.
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz')"]
