@@ -4,13 +4,15 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from infra_portal import admin, auth
+from infra_portal import admin, auth, posts, profiles
 from infra_portal.auth import current_member, require_member
 from infra_portal.config import get_settings
-from infra_portal.db import database_is_reachable
+from infra_portal.db import database_is_reachable, get_db
 from infra_portal.models import Member
+from infra_portal.posts import recent_posts
 from infra_portal.templating import templates
 
 
@@ -33,6 +35,8 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
     app.include_router(auth.router)
     app.include_router(admin.router)
+    app.include_router(profiles.router)
+    app.include_router(posts.router)
 
     @app.get("/livez")
     def livez() -> dict[str, str]:
@@ -57,8 +61,14 @@ def create_app() -> FastAPI:
         return {"status": "unavailable", "database": "unreachable"}
 
     @app.get("/")
-    def home(request: Request, member: Member | None = Depends(current_member)):
-        return templates.TemplateResponse(request, "home.html", {"member": member})
+    def home(
+        request: Request,
+        member: Member | None = Depends(current_member),
+        db: Session = Depends(get_db),
+    ):
+        return templates.TemplateResponse(
+            request, "home.html", {"member": member, "posts": recent_posts(db)}
+        )
 
     @app.get("/api/me")
     def me(member: Member = Depends(require_member)) -> dict[str, object]:

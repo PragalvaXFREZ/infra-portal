@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{% if post %}Edit post{% else %}New post{% endif %}{% endblock %}
+{% block content %}
+  <h1>{% if post %}Edit post{% else %}New post{% endif %}</h1>
+  {% if post %}
+    <p class="muted small">
+      {% if post.is_published %}Published at <a href="{{ post.url }}">{{ post.url }}</a>{% else %}Draft. Only you can see it. <a href="{{ post.url }}">Preview</a>{% endif %}
+    </p>
+  {% endif %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{% if post %}/posts/{{ post.id }}/edit{% else %}/write{% endif %}" class="stack">
+    <label for="title">Title</label>
+    <input id="title" name="title" required maxlength="200" value="{{ title }}">
+    <label for="body">Post <span class="muted small">(Markdown)</span></label>
+    <textarea id="body" name="body" rows="20">{{ body }}</textarea>
+    <div class="actions">
+      <button name="action" value="save">Save</button>
+      {% if post and post.is_published %}
+        <button name="action" value="unpublish" class="secondary">Unpublish</button>
+      {% else %}
+        <button name="action" value="publish" class="secondary">Publish</button>
+      {% endif %}
+    </div>
+  </form>
+  {% if post %}
+    <form method="post" action="/posts/{{ post.id }}/delete" class="danger-zone">
+      <button class="link danger">Delete this post</button>
+    </form>
+  {% endif %}
+{% endblock %}

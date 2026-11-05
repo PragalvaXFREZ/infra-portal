@@ -75,6 +75,22 @@ Sign-in uses GitHub OAuth and is invite-only. See [ADR 0003](docs/adr/0003-githu
 A GitHub OAuth app has one callback URL, so production uses a second app with
 `https://infra.pragalva.me/auth/github/callback`.
 
+## Profiles and posts
+
+| Page | Who | What |
+| --- | --- | --- |
+| `/` | everyone | Recent published posts |
+| `/members` | everyone | Members who have signed in |
+| `/u/<login>` | everyone | Profile and published posts |
+| `/u/<login>/<slug>` | everyone, or only the author for a draft | One post |
+| `/write`, `/posts/<id>/edit` | the author | Write, save, publish, unpublish, delete |
+| `/me/posts` | the author | All own posts, drafts included |
+| `/settings/profile` | the member | Name, website, Markdown bio |
+
+Posts and bios are Markdown. Raw HTML in them is escaped, and `javascript:` links are not rendered. A post's
+link is set when the post is created and does not change when the title changes. Admins can delete any
+post.
+
 ## Database migrations
 
 Alembic manages the schema. The image runs migrations as a separate one-shot step, before the app starts:
@@ -120,7 +136,7 @@ Each stage ends with a git tag. Check out a tag to see the project at that point
 | `v0-compose` | API and Postgres in Compose, health endpoints, non-root multi-stage image | Done |
 | `v1-ci` | CI runs tests, builds the image, and publishes it to GHCR | Done |
 | `v2-login` | GitHub sign-in, invite-only members, sessions, Alembic migrations | Done |
-| `v3-profiles-posts` | Profiles and Markdown posts with drafts | Planned |
+| `v3-profiles-posts` | Profiles, member directory, Markdown posts with drafts, admin moderation | Done |
 | `v4-on-devata` | Runs on devata through Argo CD at `infra.pragalva.me` | Planned |
 
 ## Layout

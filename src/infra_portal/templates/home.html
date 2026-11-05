@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
   <h1>infra</h1>
-  <p>Profiles and writing from the infra group.</p>
-  {% if member %}
-    <p>Signed in as <strong>{{ member.display_name or member.github_login }}</strong> (@{{ member.github_login }}).</p>
-  {% endif %}
+  <p class="muted">Profiles and writing from the infra group.</p>
+  <h2>Recent posts</h2>
+  {% for post in posts %}
+    {% include "_post_item.html" %}
+  {% else %}
+    <p class="muted">Nothing published yet.</p>
+  {% endfor %}
 {% endblock %}

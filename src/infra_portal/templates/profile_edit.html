@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Edit profile{% endblock %}
+{% block content %}
+  <h1>Edit profile</h1>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="/settings/profile" class="stack">
+    <label for="display_name">Name</label>
+    <input id="display_name" name="display_name" maxlength="100" value="{{ member.display_name or '' }}">
+    <label for="website">Website</label>
+    <input id="website" name="website" type="url" maxlength="200" placeholder="https://" value="{{ member.website or '' }}">
+    <label for="bio">Bio <span class="muted small">(Markdown)</span></label>
+    <textarea id="bio" name="bio" rows="6" maxlength="2000">{{ member.bio or '' }}</textarea>
+    <div><button>Save</button></div>
+  </form>
+{% endblock %}

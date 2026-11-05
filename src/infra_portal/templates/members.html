@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Members{% endblock %}
+{% block content %}
+  <h1>Members</h1>
+  <ul class="people">
+  {% for person in members %}
+    <li>
+      {% if person.avatar_url %}<img src="{{ person.avatar_url }}" alt="" width="40" height="40">{% endif %}
+      <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
+      <span class="muted">@{{ person.github_login }}</span>
+    </li>
+  {% else %}
+    <li class="muted">No members have signed in yet.</li>
+  {% endfor %}
+  </ul>
+{% endblock %}
