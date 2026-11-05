@@ -34,6 +34,18 @@ curl localhost:8000/readyz
 
 Stop it with `docker compose down`. Add `--volumes` to delete the database as well.
 
+## Continuous integration
+
+`.github/workflows/ci.yaml` runs on every pull request and on every push to `main`:
+
+1. **unit tests**: `uv run pytest`.
+2. **compose stack starts healthy**: starts `compose.yaml` and calls both health endpoints.
+3. **build image**: builds the image after both checks pass. On `main` it also pushes the image to
+   `ghcr.io/pragalvaxfrez/infra-portal` with the tags `sha-<short commit>` and `main`, and writes the
+   pinned reference (`tag@sha256:digest`) to the run summary.
+
+Deployments pin the digest, not a tag. A tag can move. A digest always names the same image.
+
 ## Configuration
 
 | Variable | Required | Example |
@@ -67,7 +79,7 @@ Each stage ends with a git tag. Check out a tag to see the project at that point
 | Tag | Adds | Status |
 | --- | --- | --- |
 | `v0-compose` | API and Postgres in Compose, health endpoints, non-root multi-stage image | Done |
-| `v1-ci` | CI runs tests, builds the image, and publishes it to GHCR | Planned |
+| `v1-ci` | CI runs tests, builds the image, and publishes it to GHCR | Done |
 | `v2-login` | GitHub sign-in, invite-only members, sessions | Planned |
 | `v3-profiles-posts` | Profiles and Markdown posts with drafts | Planned |
 | `v4-on-devata` | Runs on devata through Argo CD at `infra.pragalva.me` | Planned |
@@ -80,4 +92,5 @@ tests/              pytest suite
 docs/adr/           architecture decision records
 Dockerfile          two-stage image build
 compose.yaml        local stack: api + db
+.github/workflows/  CI
 ```
