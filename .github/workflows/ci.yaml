@@ -40,6 +40,8 @@ jobs:
         run: |
           curl --fail --silent --show-error localhost:8000/livez
           curl --fail --silent --show-error localhost:8000/readyz
+      - name: Check that the models and migrations match
+        run: docker compose run --rm migrate python -m infra_portal.migrate check
       - name: Show logs on failure
         if: failure()
         run: docker compose logs

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}infra{% endblock %}</title>
+  <link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+  <header class="site">
+    <a class="brand" href="/">infra</a>
+    <nav>
+      {% block nav %}{% endblock %}
+      {% if member %}
+        {% if member.is_admin %}<a href="/admin/members">Members</a>{% endif %}
+        <form method="post" action="/auth/logout"><button class="link">Sign out</button></form>
+      {% else %}
+        <a href="/auth/github/login">Sign in with GitHub</a>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

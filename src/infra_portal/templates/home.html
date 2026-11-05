@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>infra</h1>
+  <p>Profiles and writing from the infra group.</p>
+  {% if member %}
+    <p>Signed in as <strong>{{ member.display_name or member.github_login }}</strong> (@{{ member.github_login }}).</p>
+  {% endif %}
+{% endblock %}
