@@ -2,6 +2,6 @@
   <a class="title" href="{{ post.url }}">{{ post.title }}</a>
   <div class="meta">
     <a href="/u/{{ post.author.github_login }}">{{ post.author.name }}</a>
-    {% if post.published_at %} · <time datetime="{{ post.published_at.isoformat() }}">{{ post.published_at.strftime("%Y-%m-%d") }}</time>{% endif %}
+    {% if post.published_at %} · <time datetime="{{ post.published_at.isoformat() }}">{{ post.published_at.strftime("%-d %B %Y") }}</time>{% endif %}
   </div>
 </article>

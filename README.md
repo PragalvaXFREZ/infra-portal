@@ -79,7 +79,9 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 
 | Page | Who | What |
 | --- | --- | --- |
-| `/` | everyone | Recent published posts |
+| `/` | everyone | What the group is, recent labs, recent posts, members |
+| `/labs`, `/labs/<slug>` | everyone | Labs and experiments |
+| `/writing` | everyone | All published posts |
 | `/members` | everyone | Members who have signed in |
 | `/u/<login>` | everyone | Profile and published posts |
 | `/u/<login>/<slug>` | everyone, or only the author for a draft | One post |
@@ -90,6 +92,24 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 Posts and bios are Markdown. Raw HTML in them is escaped, and `javascript:` links are not rendered. A post's
 link is set when the post is created and does not change when the title changes. Admins can delete any
 post.
+
+## Labs and experiments
+
+Labs are Markdown files in `src/infra_portal/content/labs/`, not database rows. Add a lab with a pull request
+that adds a file. The file name is the address: `ci.md` is served at `/labs/ci`.
+
+```markdown
+---
+title: CI, one step at a time
+kind: lab            # lab or experiment
+date: 2026-10-09
+link: https://github.com/...   # optional
+summary: One sentence for the list.
+---
+Body in Markdown.
+```
+
+A file with a bad header fails the tests, so a broken lab never reaches the image.
 
 ## Database migrations
 
@@ -145,6 +165,7 @@ Each stage ends with a git tag. Check out a tag to see the project at that point
 src/infra_portal/   application package
   migrations/       Alembic migrations
   templates/        Jinja2 pages
+  content/labs/     labs and experiments, one Markdown file each
   static/           CSS, the background painting (art/), self-hosted fonts (fonts/)
 tests/              pytest suite
 docs/adr/           architecture decision records

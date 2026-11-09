@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from infra_portal import admin, auth, posts, profiles
+from infra_portal import admin, auth, labs, posts, profiles
 from infra_portal.auth import current_member, require_member
 from infra_portal.config import get_settings
 from infra_portal.db import database_is_reachable, get_db
@@ -38,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(admin.router)
     app.include_router(profiles.router)
     app.include_router(posts.router)
+    app.include_router(labs.router)
 
     @app.get("/livez")
     def livez() -> dict[str, str]:
@@ -70,7 +71,12 @@ def create_app() -> FastAPI:
         return templates.TemplateResponse(
             request,
             "home.html",
-            {"member": member, "posts": recent_posts(db), "people": signed_in_members(db)},
+            {
+                "member": member,
+                "labs": labs.all_labs()[:3],
+                "posts": recent_posts(db, limit=5),
+                "people": signed_in_members(db),
+            },
         )
 
     @app.get("/api/me")

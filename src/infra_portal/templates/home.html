@@ -3,30 +3,60 @@
 {% block scene %}
   <section class="hero">
     <h1>infra</h1>
-    <p>Profiles and writing from the infra group.</p>
+    {# Draft intro. Edit freely. #}
+    <p>
+      A student-run infrastructure group in the R&amp;D Department at Deerwalk Institute of Technology.
+      We work through hands-on labs on Git, CI, containers and the machines they run on, and write down
+      what we learn.
+    </p>
+    <p class="hero-links">
+      <a class="button" href="/labs">See the labs</a>
+      <a href="/writing">Read the writing</a>
+    </p>
   </section>
-  <main class="cards">
-    <section class="card">
-      <h2 class="label">Recent posts</h2>
+{% endblock %}
+{% block main %}
+<main class="home-sections">
+  <section>
+    <div class="section-head">
+      <h2>Labs and experiments</h2>
+      <a href="/labs">All labs</a>
+    </div>
+    <div class="lab-grid">
+      {% for lab in labs %}
+        {% include "_lab_card.html" %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="split">
+    <section>
+      <div class="section-head">
+        <h2>Recent writing</h2>
+        <a href="/writing">All writing</a>
+      </div>
       {% for post in posts %}
         {% include "_post_item.html" %}
       {% else %}
-        <p class="empty">Nothing published yet.</p>
+        <p class="muted">Nothing published yet.</p>
       {% endfor %}
     </section>
-    <section class="card">
-      <h2 class="label">Members <a href="/members">See all</a></h2>
+    <section>
+      <div class="section-head">
+        <h2>Members</h2>
+        <a href="/members">All members</a>
+      </div>
       <ul class="people">
       {% for person in people %}
         <li>
-          {% if person.avatar_url %}<img class="avatar" src="{{ person.avatar_url }}" alt="" width="32" height="32">{% endif %}
+          {% if person.avatar_url %}<img class="avatar" src="{{ person.avatar_url }}" alt="" width="28" height="28">{% endif %}
           <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
         </li>
       {% else %}
-        <li class="empty">No members have signed in yet.</li>
+        <li class="muted">No members have signed in yet.</li>
       {% endfor %}
       </ul>
     </section>
-  </main>
+  </div>
+</main>
 {% endblock %}
-{% block main %}{% endblock %}

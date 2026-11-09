@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Writing{% endblock %}
+{% block content %}
+  <h1>Writing</h1>
+  <p class="lede">Posts by members of the group.</p>
+  {% for post in posts %}
+    {% include "_post_item.html" %}
+  {% else %}
+    <p class="muted">Nothing published yet.</p>
+  {% endfor %}
+{% endblock %}

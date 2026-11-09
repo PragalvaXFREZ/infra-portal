@@ -8,5 +8,5 @@
 - <https://www.metmuseum.org/art/collection/search/10584>
 - Public domain (The Met Open Access, CC0)
 
-The files are the Met's image with the frame edge cropped off, resized, and converted to WebP. The site
-footer credits the painting on every page.
+The files are the Met's image with the frame edge cropped off, resized, and converted to WebP. The work is
+in the public domain, so the site does not need to show a credit.
