@@ -14,6 +14,7 @@
   </section>
   {% if person.bio %}<div class="prose">{{ bio_html }}</div>{% endif %}
   {% if member and member.id == person.id %}<p><a href="/settings/profile">Edit profile</a></p>{% endif %}
+  {% include "_follow_form.html" %}
   <h2>Posts</h2>
   {% for post in posts %}
     {% include "_post_item.html" %}

@@ -439,6 +439,13 @@ button.tab[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--
 .preview > h1 { margin-top: 0; }
 [hidden] { display: none !important; }
 .actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
+/* Following a member by email: a quiet form under their posts and on their page. */
+form.follow { display: grid; gap: 0.45rem; margin: 1.6rem 0 2rem; max-width: 30rem; }
+form.follow > label { font-weight: 500; }
+.follow-row { display: flex; gap: 0.5rem; }
+.follow-row input { flex: 1 1 auto; min-width: 0; }
+form.follow .muted.small { margin: 0; }
+.after-post { margin-top: 2.4rem; padding-top: 0.4rem; border-top: 1px solid var(--line); }
 .danger-zone { margin-top: 2.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
 .error { color: var(--danger); background: rgb(163 58 44 / 0.08); padding: 0.6rem 0.9rem; border-radius: 7px; }
 

@@ -58,6 +58,9 @@ Deployments pin the digest, not a tag. A tag can move. A digest always names the
 | `GITHUB_CLIENT_SECRET` | no | empty | GitHub OAuth app secret. |
 | `COOKIE_SECURE` | no | `true` | Send the cookie over HTTPS only. Set `false` for `http://localhost`. |
 | `ADMIN_GITHUB_LOGINS` | no | empty | Comma-separated GitHub logins that sign in as admins without an invite. |
+| `CONTACT_EMAIL` | no | `pragalva.sapkota@deerwalk.edu.np` | Shown to people who sign in without an invite. |
+| `RESEND_API_KEY` | no | empty | [Resend](https://resend.com) API key for follower email. Empty hides the Follow forms. |
+| `MAIL_FROM` | no | empty | Sender, such as `infra <posts@pragalva.me>`, on a domain verified in Resend. |
 
 `compose.yaml` builds `DATABASE_URL` from the `POSTGRES_*` values in `.env`. The migration step receives only
 `DATABASE_URL`.
@@ -85,13 +88,34 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | `/members` | everyone | Members who have signed in |
 | `/u/<login>` | everyone | Profile and published posts |
 | `/u/<login>/<slug>` | everyone, or only the author for a draft | One post |
-| `/write`, `/posts/<id>/edit` | the author | Write, save, publish, unpublish, delete |
+| `/write`, `/posts/<id>/edit` | the author | Write, preview, save, publish, unpublish, delete |
 | `/me/posts` | the author | All own posts, drafts included |
 | `/settings/profile` | the member | Name, website, Markdown bio |
 
 Posts and bios are Markdown. Raw HTML in them is escaped, and `javascript:` links are not rendered. A post's
 link is set when the post is created and does not change when the title changes. Admins can delete any
 post.
+
+The editor has Write and Preview tabs. Preview renders the post with the same Markdown renderer as the
+published page and saves nothing.
+
+## Following by email
+
+Anyone can ask for an email when one member publishes a post, from the form on that member's page and under
+each of their posts. It works only when `RESEND_API_KEY` and `MAIL_FROM` are set; without them the forms are
+hidden.
+
+1. The address gets a confirmation link first. Nothing else is sent until it is opened. Asking again within a
+   day sends no second link, and the page reads the same whether or not the address already follows, so the
+   form does not reveal who follows whom.
+2. The first time a post is published, every confirmed follower of its author gets one email with the title
+   and link. Unpublishing and publishing again sends nothing. Posts published before this feature count as
+   already announced.
+3. Every email has an unsubscribe link and a `List-Unsubscribe` header. The link opens a page with a button,
+   because mail scanners open links; mail apps' one-click unsubscribe posts to the same address.
+
+The emails go out after the response, through Resend's batch API. A failure is logged and the post stays
+published. Authors see their follower count on `/me/posts`.
 
 ## Labs and experiments
 

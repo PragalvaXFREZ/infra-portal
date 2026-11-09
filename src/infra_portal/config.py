@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     # the page a non-member sees after signing in. Set it empty to hide the line.
     contact_email: str = "pragalva.sapkota@deerwalk.edu.np"
 
+    # Email for followers, sent through Resend (https://resend.com). MAIL_FROM is the sender, such
+    # as "infra <posts@pragalva.me>", on a domain verified in Resend. With either one empty the
+    # Follow forms are hidden and no email is sent.
+    resend_api_key: str = ""
+    mail_from: str = ""
+
     @field_validator("admin_github_logins", mode="before")
     @classmethod
     def _split_logins(cls, value: object) -> object:
@@ -50,6 +56,10 @@ class Settings(BaseSettings):
     @classmethod
     def _strip_trailing_slash(cls, value: str) -> str:
         return value.rstrip("/")
+
+    @property
+    def mail_enabled(self) -> bool:
+        return bool(self.resend_api_key and self.mail_from)
 
     @property
     def github_callback_url(self) -> str:

@@ -3,6 +3,9 @@
 {% block content %}
   <h1>My posts</h1>
   <p><a href="/write">Write a new post</a></p>
+  {% if follow_enabled() %}
+    <p class="muted small">{% if followers == 1 %}1 person gets{% else %}{{ followers }} people get{% endif %} an email when you publish a post.</p>
+  {% endif %}
   <div class="table-wrap">
   <table>
     <thead><tr><th>Title</th><th>Status</th><th>Updated</th></tr></thead>

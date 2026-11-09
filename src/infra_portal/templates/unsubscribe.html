@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block art %}blossoms{% endblock %}
+{% block title %}Unsubscribe{% endblock %}
+{% block content %}
+  <h1>Unsubscribe</h1>
+  <p>Stop sending <strong>{{ email }}</strong> an email when <a href="/u/{{ author.github_login }}">{{ author.name }}</a> posts?</p>
+  <form method="post" action="/unsubscribe/{{ token }}" class="actions">
+    <button>Unsubscribe</button>
+  </form>
+{% endblock %}
