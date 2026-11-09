@@ -2,13 +2,16 @@
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from infra_portal.auth import current_member, require_member
+from infra_portal.config import Settings, get_settings
 from infra_portal.db import get_db
+from infra_portal.follow import announcement, follower_count
+from infra_portal.mail import Mailer, get_mailer, send_new_post
 from infra_portal.models import STATUS_DRAFT, STATUS_PUBLISHED, Member, Post
 from infra_portal.profiles import get_member_by_login
 from infra_portal.rendering import render_markdown, slugify
@@ -106,11 +109,14 @@ def new_post_form(request: Request, member: Member = Depends(require_member)):
 @router.post("/write")
 def create_post(
     request: Request,
+    background: BackgroundTasks,
     title: str = Form(""),
     body: str = Form(""),
     action: str = Form("save"),
     member: Member = Depends(require_member),
     db: Session = Depends(get_db),
+    mailer: Mailer = Depends(get_mailer),
+    settings: Settings = Depends(get_settings),
 ):
     title = title.strip()
     if action in VIEW_ACTIONS:
@@ -120,7 +126,10 @@ def create_post(
     post = Post(author_id=member.id, title=title, body=body, slug=_unique_slug(db, member.id, title))
     _apply_action(post, action)
     db.add(post)
+    news = announcement(db, settings, post, member)
     db.commit()
+    if news:
+        background.add_task(send_new_post, mailer, settings, news)
     return RedirectResponse(f"/posts/{post.id}/edit", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -139,11 +148,14 @@ def edit_post_form(
 def update_post(
     post_id: int,
     request: Request,
+    background: BackgroundTasks,
     title: str = Form(""),
     body: str = Form(""),
     action: str = Form("save"),
     member: Member = Depends(require_member),
     db: Session = Depends(get_db),
+    mailer: Mailer = Depends(get_mailer),
+    settings: Settings = Depends(get_settings),
 ):
     post = _own_post(db, post_id, member)
     title = title.strip()
@@ -153,7 +165,10 @@ def update_post(
         return _editor(request, member, post, title, body, error)
     post.title, post.body = title, body
     _apply_action(post, action)
+    news = announcement(db, settings, post, member)
     db.commit()
+    if news:
+        background.add_task(send_new_post, mailer, settings, news)
     return RedirectResponse(f"/posts/{post.id}/edit", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -190,7 +205,11 @@ def my_posts(
     posts = db.scalars(
         select(Post).where(Post.author_id == member.id).order_by(Post.updated_at.desc())
     ).all()
-    return templates.TemplateResponse(request, "my_posts.html", {"member": member, "posts": posts})
+    return templates.TemplateResponse(
+        request,
+        "my_posts.html",
+        {"member": member, "posts": posts, "followers": follower_count(db, member.id)},
+    )
 
 
 @router.get("/u/{login}/{slug}")
@@ -209,7 +228,13 @@ def read_post(
     return templates.TemplateResponse(
         request,
         "post.html",
-        {"member": member, "post": post, "body_html": render_markdown(post.body), "is_author": is_author},
+        {
+            "member": member,
+            "post": post,
+            "body_html": render_markdown(post.body),
+            "is_author": is_author,
+            "person": author,
+        },
     )
 
 

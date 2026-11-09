@@ -1,0 +1,16 @@
+{# Needs `person`, the member to follow. Hidden while email is not configured. #}
+{% if follow_enabled() %}
+  <form method="post" action="/u/{{ person.github_login }}/follow" class="follow">
+    <label for="follow-email">Get an email when {{ person.name }} posts</label>
+    <div class="follow-row">
+      <input id="follow-email" type="email" name="email" required maxlength="254" autocomplete="email" value="{{ email or '' }}">
+      <button class="secondary">Follow</button>
+    </div>
+    {# People never see this field; bots that fill every field give themselves away. #}
+    <div class="visually-hidden" aria-hidden="true">
+      <label for="follow-nickname">Leave this empty</label>
+      <input id="follow-nickname" name="nickname" tabindex="-1" autocomplete="off">
+    </div>
+    <p class="muted small">You'll get a link to confirm first. Every email has a link to stop them.</p>
+  </form>
+{% endif %}

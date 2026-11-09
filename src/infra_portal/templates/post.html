@@ -12,6 +12,7 @@
     <div class="prose">{{ body_html }}</div>
   </article>
   {% if is_author %}<p><a href="/posts/{{ post.id }}/edit">Edit</a></p>{% endif %}
+  {% if post.is_published %}<div class="after-post">{% include "_follow_form.html" %}</div>{% endif %}
   {% if member and member.is_admin and not is_author %}
     <form method="post" action="/posts/{{ post.id }}/delete"><button class="link danger">Delete (admin)</button></form>
   {% endif %}

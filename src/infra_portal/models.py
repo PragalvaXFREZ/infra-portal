@@ -59,6 +59,9 @@ class Member(Base):
     posts: Mapped[list["Post"]] = relationship(
         back_populates="author", cascade="all, delete-orphan", passive_deletes=True
     )
+    follows: Mapped[list["Follow"]] = relationship(
+        back_populates="author", cascade="all, delete-orphan", passive_deletes=True
+    )
 
     @property
     def name(self) -> str:
@@ -109,6 +112,9 @@ class Post(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    # When followers were emailed about this post. Set on the first publish only, so
+    # unpublishing and publishing again does not email them twice.
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     author: Mapped[Member] = relationship(back_populates="posts")
 
@@ -119,3 +125,35 @@ class Post(Base):
     @property
     def url(self) -> str:
         return f"/u/{self.author.github_login}/{self.slug}"
+
+
+class Follow(Base):
+    """An email address that gets a message when one member publishes a post.
+
+    Anyone can type any address, so a row starts unconfirmed and gets no post emails until the
+    link in the confirmation email is opened. `token` is in that link and in every unsubscribe
+    link; it is the only thing that proves the reader owns the address.
+    """
+
+    __tablename__ = "follows"
+    __table_args__ = (UniqueConstraint("author_id", "email"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    author_id: Mapped[int] = mapped_column(
+        ForeignKey("members.id", ondelete="CASCADE"), index=True
+    )
+    # Stored in lowercase.
+    email: Mapped[str] = mapped_column(String(254))
+    token: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    # When the last confirmation email went out. A repeat request within a day sends nothing.
+    confirm_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    author: Mapped[Member] = relationship(back_populates="follows")
+
+    @property
+    def is_confirmed(self) -> bool:
+        return self.confirmed_at is not None

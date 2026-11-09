@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block art %}blossoms{% endblock %}
+{% block title %}{% if outcome == "confirmed" %}Following {{ author.name }}{% elif outcome == "unsubscribed" %}Unsubscribed{% elif outcome == "sent" %}Check your inbox{% else %}Follow{% endif %}{% endblock %}
+{% block content %}
+  {% if outcome == "sent" %}
+    <h1>Check your inbox</h1>
+    <p>A link to confirm is on its way to <strong>{{ email }}</strong>, unless one was sent in the last day. Open it to start getting an email when <a href="/u/{{ author.github_login }}">{{ author.name }}</a> posts.</p>
+    <p class="muted">Nothing arrives? Look in spam, or try again tomorrow.</p>
+  {% elif outcome == "confirmed" %}
+    <h1>You're following {{ author.name }}</h1>
+    <p><strong>{{ email }}</strong> will get an email each time {{ author.name }} publishes a post. Every email has a link to stop them.</p>
+    <p><a href="/u/{{ author.github_login }}">{{ author.name }}'s posts</a></p>
+  {% elif outcome == "unsubscribed" %}
+    <h1>Unsubscribed</h1>
+    <p>You won't get more emails{% if author %} about {{ author.name }}'s posts{% endif %}.</p>
+    {% if author %}<p><a href="/u/{{ author.github_login }}">{{ author.name }}'s posts</a></p>{% endif %}
+  {% elif outcome == "invalid" %}
+    <h1>Check the address</h1>
+    <p class="error" role="alert">That doesn't look like an email address.</p>
+    {% set person = author %}
+    {% include "_follow_form.html" %}
+  {% elif outcome == "failed" %}
+    <h1>The email didn't go out</h1>
+    <p>Something went wrong on our side. Try again in a few minutes.</p>
+    <p><a href="/u/{{ author.github_login }}">Back to {{ author.name }}</a></p>
+  {% else %}
+    <h1>This link doesn't work</h1>
+    <p>It may be from an address that has since unsubscribed. You can follow again from a member's page.</p>
+    <p><a href="/members">Members</a></p>
+  {% endif %}
+{% endblock %}

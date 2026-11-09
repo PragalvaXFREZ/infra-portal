@@ -6,6 +6,8 @@ from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
 
+from infra_portal.config import get_settings
+
 STATIC_DIR = Path(__file__).parent / "static"
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -27,3 +29,11 @@ def static_url(path: str) -> str:
 
 
 templates.env.globals["static_url"] = static_url
+
+
+def follow_enabled() -> bool:
+    """Whether to show the Follow forms. They need the email settings."""
+    return get_settings().mail_enabled
+
+
+templates.env.globals["follow_enabled"] = follow_enabled
