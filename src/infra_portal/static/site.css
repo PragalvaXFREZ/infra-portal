@@ -1,5 +1,5 @@
 /* infra-portal styles.
-   A painting (static/art) sits behind the top of every page. Type is IBM Plex Sans, with
+   A painting (static/art), one per section, sits behind the top of every page. Type is IBM Plex Sans, with
    IBM Plex Mono for code only. Fonts are self-hosted from static/fonts (SIL Open Font License). */
 
 @font-face {
@@ -22,7 +22,6 @@
 }
 
 :root {
-  --painting: url("/static/art/pompton-plains-2200.webp");
   --painting-filter: brightness(1.05) saturate(1.08);
 
   --paper: #f7f6f2;
@@ -68,8 +67,18 @@
     --shadow: 0 8px 24px -12px rgb(0 0 0 / 0.6);
   }
 }
+/* One painting per section. base.html puts art-<name> on <body>; templates choose the name. */
+.art-pompton { --painting: url("/static/art/pompton-plains-2200.webp"); --painting-pos: center 62%; }
+.art-gap { --painting: url("/static/art/delaware-water-gap-2200.webp"); --painting-pos: center 38%; }
+.art-eatons { --painting: url("/static/art/eatons-neck-2200.webp"); --painting-pos: center 62%; }
+.art-blossoms { --painting: url("/static/art/spring-blossoms-2200.webp"); --painting-pos: center 55%; }
+.art-tools { --painting: url("/static/art/newburyport-meadows-2200.webp"); --painting-pos: center 48%; }
 @media (max-width: 700px) {
-  :root { --painting: url("/static/art/pompton-plains-1100.webp"); }
+  .art-pompton { --painting: url("/static/art/pompton-plains-1100.webp"); }
+  .art-gap { --painting: url("/static/art/delaware-water-gap-1100.webp"); }
+  .art-eatons { --painting: url("/static/art/eatons-neck-1100.webp"); }
+  .art-blossoms { --painting: url("/static/art/spring-blossoms-1100.webp"); }
+  .art-tools { --painting: url("/static/art/newburyport-meadows-1100.webp"); }
 }
 
 * { box-sizing: border-box; }
@@ -101,12 +110,13 @@ h3 { font-size: 1.1rem; }
   padding: 1rem 1rem 0;
   min-height: 16rem;
 }
+.inner .scene { min-height: clamp(18rem, 44vh, 26rem); }
 .scene::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--painting) center 62% / cover no-repeat, #c9b98f;
+  background: var(--painting) var(--painting-pos, center 62%) / cover no-repeat, #c9b98f;
   filter: var(--painting-filter);
 }
 
@@ -171,7 +181,7 @@ header.site nav a.cta:hover { background: var(--ink-2); color: var(--paper); }
 .hero {
   max-width: 64rem;
   margin: 0 auto;
-  padding: clamp(3rem, 9vh, 6rem) 0 0;
+  padding: clamp(3.5rem, 12vh, 7.5rem) 0 0;
 }
 .hero h1 {
   font-size: clamp(3rem, 8vw, 5rem);
@@ -183,10 +193,12 @@ header.site nav a.cta:hover { background: var(--ink-2); color: var(--paper); }
 }
 .hero p {
   margin: 0;
-  max-width: 36rem;
-  font-size: 1.2rem;
-  line-height: 1.55;
-  color: #2f2a25;
+  max-width: 40rem;
+  font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.012em;
+  color: #1c1a17;
 }
 .hero .hero-links { display: flex; gap: 1.25rem; align-items: center; margin-top: 1.6rem; font-size: 1rem; }
 .hero .hero-links a:not(.button) { color: #1c1a17; font-weight: 500; }
@@ -300,7 +312,7 @@ main.sheet {
   position: relative;
   z-index: 1;
   width: min(46rem, calc(100% - 2rem));
-  margin: -6rem auto 0;
+  margin: -4.5rem auto 0;
   padding: 2.25rem clamp(1.25rem, 5vw, 3rem) 2.5rem;
   background: var(--paper);
   border-radius: 12px;
@@ -434,9 +446,18 @@ footer.site {
   .home .scene { min-height: 94vh; padding-bottom: 3rem; }
   .home .scene::before { background-position: 0 0, 38% bottom; }
   .hero { padding: 2.25rem 0.25rem 0; }
-  .hero h1 { margin-bottom: 0.9rem; }
-  .hero p { font-size: 1.05rem; }
+  .hero p { font-size: 1.25rem; }
   .split { grid-template-columns: 1fr; }
-  main.sheet { margin-top: -4rem; }
+  main.sheet { margin-top: -3rem; }
+  .inner .scene { min-height: 17rem; }
   .profile { align-items: flex-start; }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
