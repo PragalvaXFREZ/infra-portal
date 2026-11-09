@@ -32,10 +32,6 @@
   --muted: #7d7770;
   --line: #e3e0d8;
   --link: #2f6b5e;
-  --lab: #dff5b0;
-  --lab-ink: #34460c;
-  --exp: #f6e2c4;
-  --exp-ink: #6b4512;
   --danger: #a33a2c;
   --bar: rgb(247 246 242 / 0.9);
   --scrim: rgb(247 246 242 / 0.4);
@@ -57,10 +53,6 @@
     --muted: #938d85;
     --line: #2e2a26;
     --link: #9fd8c4;
-    --lab: #2f3a14;
-    --lab-ink: #d6f29a;
-    --exp: #3b2c17;
-    --exp-ink: #f2cf9c;
     --danger: #e0806f;
     --bar: rgb(30 27 24 / 0.9);
     --scrim: rgb(22 20 18 / 0.35);
@@ -154,16 +146,13 @@ header.site {
   box-shadow: var(--shadow);
 }
 .brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: -0.03em;
+  font-weight: 600;
+  font-size: 1.12rem;
+  letter-spacing: -0.02em;
   color: var(--ink);
   text-decoration: none;
+  padding: 0 0.4rem;
 }
-.brand .mark { flex: none; display: block; }
 header.site nav { display: flex; align-items: center; gap: 0.1rem; flex-wrap: wrap; }
 header.site form { margin: 0; }
 header.site nav a,
@@ -243,33 +232,20 @@ header.site nav a.cta:hover { background: var(--ink-2); color: var(--paper); }
 .lab-card {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 1.1rem 1.2rem 1rem;
+  gap: 0.4rem;
+  padding: 1.25rem 1.3rem 1.1rem;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
   color: var(--ink);
   text-decoration: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.2s ease;
 }
-.lab-card:hover { border-color: var(--muted); box-shadow: var(--shadow); }
+.lab-card:hover { border-color: var(--muted); }
 .lab-card strong { font-size: 1.08rem; font-weight: 600; line-height: 1.3; }
-.lab-card .summary { color: var(--ink-2); font-size: 0.95rem; line-height: 1.5; }
-.lab-card time { margin-top: auto; padding-top: 0.5rem; color: var(--muted); font-size: 0.85rem; }
+.lab-card .summary { color: var(--ink-2); font-size: 0.95rem; line-height: 1.55; }
+.lab-card .foot { margin-top: auto; padding-top: 0.6rem; color: var(--muted); font-size: 0.85rem; }
 
-.tag {
-  align-self: flex-start;
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 500;
-  line-height: 1;
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  background: var(--sunk);
-  color: var(--ink-2);
-}
-.tag.lab { background: var(--lab); color: var(--lab-ink); }
-.tag.experiment { background: var(--exp); color: var(--exp-ink); }
 
 .crumb { margin: 0 0 0.6rem; font-size: 0.92rem; }
 
@@ -393,17 +369,7 @@ td a { color: var(--ink); font-weight: 500; text-decoration: none; }
 td a:hover { text-decoration: underline; }
 td.muted { font-size: 0.9rem; white-space: nowrap; }
 
-.pill {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 500;
-  line-height: 1;
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  background: var(--sunk);
-  color: var(--ink-2);
-}
-.pill.published, .pill.joined { background: var(--lab); color: var(--lab-ink); }
+td.status { color: var(--ink-2); font-size: 0.92rem; }
 
 /* ---------- prose (posts, bios, labs) ---------- */
 
@@ -443,7 +409,7 @@ footer.site {
 
 @media (max-width: 760px) {
   body { font-size: 16px; }
-  header.site { padding: 0.5rem 0.5rem 0.5rem 0.6rem; }
+  header.site { padding: 0.5rem 0.5rem 0.5rem 0.5rem; }
   header.site nav { gap: 0; margin-left: -0.55rem; }
   header.site nav a, header.site nav button.link { padding: 0.35rem 0.55rem; font-size: 0.9rem; }
   header.site nav .sep { display: none; }

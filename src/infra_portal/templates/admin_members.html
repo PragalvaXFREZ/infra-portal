@@ -17,7 +17,7 @@
         <td>@{{ m.github_login }}</td>
         <td>{{ m.display_name or "" }}</td>
         <td>{{ m.role }}</td>
-        <td>{% if m.has_signed_in %}<span class="pill joined">joined</span>{% else %}<span class="pill">invited</span>{% endif %}</td>
+        <td class="status">{% if m.has_signed_in %}Joined{% else %}Invited{% endif %}</td>
         <td>
           {% if m.id != member.id %}
           <form method="post" action="/admin/members/{{ m.id }}/remove"><button class="link danger">Remove</button></form>

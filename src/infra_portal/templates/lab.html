@@ -6,8 +6,7 @@
     <p class="crumb"><a href="/labs">Labs</a></p>
     <h1>{{ lab.title }}</h1>
     <div class="meta">
-      <span class="tag {{ lab.kind }}">{{ lab.kind }}</span>
-      <time datetime="{{ lab.date.isoformat() }}">{{ lab.date.strftime("%-d %B %Y") }}</time>
+      {{ lab.kind|capitalize }} · <time datetime="{{ lab.date.isoformat() }}">{{ lab.date.strftime("%-d %B %Y") }}</time>
       {% if lab.link %} · <a href="{{ lab.link }}" rel="noopener">Source on GitHub</a>{% endif %}
     </div>
     <p class="lede">{{ lab.summary }}</p>
