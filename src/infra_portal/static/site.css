@@ -135,9 +135,7 @@ header.site {
   z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
   max-width: 64rem;
   margin: 0 auto;
   padding: 0.45rem 0.45rem 0.45rem 0.6rem;
@@ -152,22 +150,75 @@ header.site {
   color: var(--ink);
   text-decoration: none;
   padding: 0 0.4rem;
+  margin-right: auto;
 }
-header.site nav { display: flex; align-items: center; gap: 0.1rem; flex-wrap: wrap; }
+header.site nav.primary { display: flex; align-items: center; gap: 0.1rem; }
+header.site .end { display: flex; align-items: center; gap: 0.35rem; }
 header.site form { margin: 0; }
-header.site nav a,
-header.site nav button.link {
+header.site nav.primary a,
+header.site .menu summary,
+header.site .sign-in {
   color: var(--ink-2);
   text-decoration: none;
   font-size: 0.93rem;
   padding: 0.4rem 0.7rem;
   border-radius: 6px;
 }
-header.site nav a:hover,
-header.site nav button.link:hover { background: var(--sunk); color: var(--ink); }
-header.site nav .sep { width: 1px; height: 1.1rem; background: var(--line); margin: 0 0.35rem; }
-header.site nav a.cta { background: var(--ink); color: var(--paper); font-weight: 500; }
-header.site nav a.cta:hover { background: var(--ink-2); color: var(--paper); }
+header.site nav.primary a:hover,
+header.site .menu summary:hover,
+header.site .sign-in:hover { background: var(--sunk); color: var(--ink); }
+/* Sign-in is only for the few members, so it stays a quiet link at the end of the bar. */
+header.site .sign-in { color: var(--muted); font-size: 0.86rem; }
+
+/* Drop-down menus are <details>, so they work without JavaScript. */
+.menu { position: relative; }
+.menu summary { display: block; list-style: none; cursor: pointer; user-select: none; }
+.menu summary::-webkit-details-marker { display: none; }
+.menu[open] summary { background: var(--sunk); color: var(--ink); }
+.menu .panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.55rem);
+  min-width: 13rem;
+  display: grid;
+  padding: 0.35rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.menu .panel a,
+.menu .panel .item-button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-2);
+  font: 400 0.95rem/1.3 var(--sans);
+  text-align: left;
+  text-decoration: none;
+}
+.menu .panel a:hover,
+.menu .panel .item-button:hover { background: var(--sunk); color: var(--ink); }
+.menu .panel a.quiet { color: var(--muted); font-size: 0.88rem; border-top: 1px solid var(--line); border-radius: 0 0 6px 6px; margin-top: 0.25rem; padding-top: 0.6rem; }
+.menu .panel form { border-top: 1px solid var(--line); margin-top: 0.25rem; padding-top: 0.25rem; }
+.menu .who {
+  display: grid;
+  margin: 0 0 0.25rem;
+  padding: 0.45rem 0.7rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.menu .who span { font-weight: 400; font-size: 0.85rem; color: var(--muted); }
+header.site .account summary { padding: 0.2rem; border-radius: 50%; display: flex; }
+header.site .account summary .avatar { display: block; width: 30px; height: 30px; }
+header.site .account[open] summary { box-shadow: 0 0 0 2px var(--line); }
+.site-menu { display: none; }
+.avatar-empty { display: inline-block; width: 30px; height: 30px; }
 
 /* ---------- home ---------- */
 
@@ -306,6 +357,12 @@ main.sheet.wide { width: min(64rem, calc(100% - 2rem)); }
 .profile .muted { font-size: 0.92rem; }
 .profile .muted a { color: var(--ink-2); }
 
+.picture-edit { display: flex; gap: 1.2rem; align-items: flex-start; }
+.picture-edit > .avatar { width: 88px; height: 88px; }
+.picture-edit p { margin: 0.6rem 0; }
+.picture-form { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+.picture-form input[type="file"] { width: auto; flex: 1 1 14rem; padding: 0.45rem 0.6rem; font-size: 0.92rem; }
+
 article > h1 { font-size: clamp(2rem, 5vw, 2.75rem); letter-spacing: -0.025em; }
 
 /* ---------- forms and buttons ---------- */
@@ -322,8 +379,8 @@ button, a.button {
   cursor: pointer;
 }
 button:hover, a.button:hover { background: var(--ink-2); border-color: var(--ink-2); }
-button.secondary { background: transparent; color: var(--ink); }
-button.secondary:hover { background: var(--sunk); }
+button.secondary, a.button.secondary { background: transparent; color: var(--ink); }
+button.secondary:hover, a.button.secondary:hover { background: var(--sunk); }
 button.link {
   background: none;
   border: 0;
@@ -410,18 +467,23 @@ footer.site {
 
 @media (max-width: 760px) {
   body { font-size: 16px; }
-  header.site { padding: 0.5rem 0.5rem 0.5rem 0.5rem; }
-  header.site nav { gap: 0; margin-left: -0.55rem; }
-  header.site nav a, header.site nav button.link { padding: 0.35rem 0.55rem; font-size: 0.9rem; }
-  header.site nav .sep { display: none; }
-  .home .scene { min-height: 94vh; padding-bottom: 3rem; }
-  .home .scene::before { background-position: 0 0, 38% bottom; }
-  .hero { padding: 2.25rem 0.25rem 0; }
+  header.site { padding: 0.4rem 0.4rem 0.4rem 0.5rem; }
+  /* One row on phones: the name, then Menu, then the account picture or Sign in. */
+  header.site nav.primary { display: none; }
+  .site-menu { display: block; }
+  header.site .sign-in { display: none; }
+  .menu .panel { min-width: 12rem; }
+  /* The hero is as tall as its text plus a band of the painting, not most of the screen. */
+  .home .scene { min-height: 0; padding-bottom: clamp(10rem, 30svh, 14rem); }
+  .home .scene::before { background-position: 0 0, 40% 70%; }
+  .home .scene::after { height: 4rem; }
+  .hero { padding: 2.5rem 0.25rem 0; }
   .hero p { font-size: 1.25rem; }
   .split { grid-template-columns: 1fr; }
   main.sheet { margin-top: -3rem; }
-  .inner .scene { min-height: 17rem; }
+  .inner .scene { min-height: 15rem; }
   .profile { align-items: flex-start; }
+  .picture-edit { flex-direction: column; }
 }
 
 .visually-hidden {

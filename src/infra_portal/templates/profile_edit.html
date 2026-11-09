@@ -1,8 +1,36 @@
 {% extends "base.html" %}
+{% block art %}blossoms{% endblock %}
 {% block title %}Edit profile{% endblock %}
 {% block content %}
   <h1>Edit profile</h1>
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+
+  <h2>Picture</h2>
+  <div class="picture-edit">
+    {% if member.avatar_src %}
+      <img class="avatar" src="{{ member.avatar_src }}" alt="Your current picture" width="88" height="88">
+    {% else %}
+      <span class="avatar avatar-empty" aria-hidden="true"></span>
+    {% endif %}
+    <div>
+      <form method="post" action="/settings/avatar" enctype="multipart/form-data" class="picture-form">
+        <label for="picture" class="visually-hidden">Picture</label>
+        <input id="picture" name="picture" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required>
+        <button>Upload</button>
+      </form>
+      <p class="muted small">
+        JPEG, PNG, WebP or GIF, up to 5 MB. It is cropped to a square from the middle.
+        {% if not member.avatar_version %}Until you upload one, your GitHub picture is shown.{% endif %}
+      </p>
+      {% if member.avatar_version %}
+        <form method="post" action="/settings/avatar/remove">
+          <button class="link">Use my GitHub picture instead</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2>Details</h2>
   <form method="post" action="/settings/profile" class="stack">
     <label for="display_name">Name</label>
     <input id="display_name" name="display_name" maxlength="100" value="{{ member.display_name or '' }}">
@@ -10,6 +38,6 @@
     <input id="website" name="website" type="url" maxlength="200" placeholder="https://" value="{{ member.website or '' }}">
     <label for="bio">Bio <span class="muted small">(Markdown)</span></label>
     <textarea id="bio" name="bio" rows="6" maxlength="2000">{{ member.bio or '' }}</textarea>
-    <div><button>Save</button></div>
+    <div class="actions"><button>Save</button> <a href="/u/{{ member.github_login }}">View profile</a></div>
   </form>
 {% endblock %}

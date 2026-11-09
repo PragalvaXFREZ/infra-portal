@@ -96,7 +96,7 @@ def github_callback(
         return templates.TemplateResponse(
             request,
             "not_invited.html",
-            {"login": user.login, "member": None},
+            {"login": user.login, "member": None, "contact_email": settings.contact_email},
             status_code=status.HTTP_403_FORBIDDEN,
         )
 
