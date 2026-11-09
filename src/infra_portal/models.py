@@ -5,8 +5,17 @@ A change here needs a migration: `uv run alembic revision --autogenerate -m "...
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text, UniqueConstraint, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    LargeBinary,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, deferred, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
@@ -40,6 +49,12 @@ class Member(Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     bio: Mapped[str | None] = mapped_column(Text)
     website: Mapped[str | None] = mapped_column(String(200))
+    # A picture the member uploaded, re-encoded by the app as a small WebP. When set it wins over
+    # the GitHub picture in `avatar_url`, which sign-in refreshes every time. Deferred, so lists of
+    # members do not load the image bytes.
+    avatar_image: Mapped[bytes | None] = deferred(mapped_column(LargeBinary))
+    # A hash of the image. It goes in the picture URL, so a new upload gets a new URL.
+    avatar_version: Mapped[str | None] = mapped_column(String(16))
 
     posts: Mapped[list["Post"]] = relationship(
         back_populates="author", cascade="all, delete-orphan", passive_deletes=True
@@ -48,6 +63,13 @@ class Member(Base):
     @property
     def name(self) -> str:
         return self.display_name or self.github_login
+
+    @property
+    def avatar_src(self) -> str | None:
+        """The picture to show: the uploaded one if there is one, else the GitHub one."""
+        if self.avatar_version:
+            return f"/avatars/{self.id}?v={self.avatar_version}"
+        return self.avatar_url
 
     @property
     def is_admin(self) -> bool:

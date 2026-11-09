@@ -2,6 +2,7 @@ from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy import select
 
+from infra_portal import config
 from infra_portal.models import Member
 
 
@@ -31,12 +32,25 @@ def test_callback_with_the_wrong_state_is_refused(client):
     assert response.status_code == 400
 
 
-def test_uninvited_user_is_refused(client, sign_in):
+def test_uninvited_user_is_refused(client, sign_in, monkeypatch):
+    monkeypatch.setenv("CONTACT_EMAIL", "")
+    config.get_settings.cache_clear()
+
     response = sign_in("stranger", github_id=99)
 
     assert response.status_code == 403
-    assert "does not have an invite" in response.text
+    assert "not on the member list" in response.text
+    assert "Want to join?" not in response.text  # no contact address configured
     assert client.get("/api/me").status_code == 401
+
+
+def test_uninvited_user_sees_where_to_ask_to_join(client, sign_in, monkeypatch):
+    monkeypatch.setenv("CONTACT_EMAIL", "infra@example.edu")
+    config.get_settings.cache_clear()
+
+    response = sign_in("stranger", github_id=99)
+
+    assert 'href="mailto:infra@example.edu"' in response.text
 
 
 def test_invited_user_claims_the_invite(client, sign_in, add_member, session_factory):
@@ -100,8 +114,6 @@ def test_removed_member_loses_access_with_a_valid_cookie(client, sign_in, add_me
 
 
 def test_sign_in_without_oauth_configured_says_so(client, monkeypatch):
-    from infra_portal import config
-
     monkeypatch.setenv("GITHUB_CLIENT_ID", "")
     config.get_settings.cache_clear()
 

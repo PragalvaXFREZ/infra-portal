@@ -1,3 +1,9 @@
+import io
+import re
+
+from PIL import Image
+
+
 def test_profile_edit_and_public_page(client, add_member, sign_in):
     add_member("alice")
     sign_in("alice", github_id=42, name="From GitHub")
@@ -48,3 +54,67 @@ def test_member_directory_lists_joined_members(client, add_member, sign_in):
     sign_in("alice", github_id=42, name="Alice")
 
     assert "Alice" in client.get("/members").text
+
+
+def _png(width=600, height=400, color=(200, 80, 40)) -> bytes:
+    out = io.BytesIO()
+    Image.new("RGB", (width, height), color).save(out, "PNG")
+    return out.getvalue()
+
+
+def test_uploaded_picture_replaces_the_github_one(client, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", github_id=42)
+
+    response = client.post(
+        "/settings/avatar", files={"picture": ("me.png", _png(), "image/png")}, follow_redirects=False
+    )
+    assert response.status_code == 303
+
+    page = client.get("/u/alice").text
+    src = re.search(r'src="(/avatars/\d+\?v=\w+)"', page).group(1)
+    image = client.get(src)
+    assert image.status_code == 200
+    assert image.headers["content-type"] == "image/webp"
+    assert "immutable" in image.headers["cache-control"]
+    with Image.open(io.BytesIO(image.content)) as stored:
+        assert stored.format == "WEBP"
+        assert stored.size == (256, 256)
+
+
+def test_signing_in_again_keeps_the_uploaded_picture(client, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", github_id=42)
+    client.post("/settings/avatar", files={"picture": ("me.png", _png(), "image/png")})
+    client.post("/auth/logout")
+
+    sign_in("alice", github_id=42)
+
+    assert "/avatars/" in client.get("/u/alice").text
+
+
+def test_removing_the_picture_goes_back_to_github(client, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", github_id=42)
+    client.post("/settings/avatar", files={"picture": ("me.png", _png(), "image/png")})
+
+    client.post("/settings/avatar/remove")
+
+    assert "/avatars/" not in client.get("/u/alice").text
+
+
+def test_a_file_that_is_not_an_image_is_refused(client, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", github_id=42)
+
+    svg = b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+    response = client.post("/settings/avatar", files={"picture": ("me.svg", svg, "image/svg+xml")})
+
+    assert response.status_code == 422
+    assert "/avatars/" not in client.get("/u/alice").text
+
+
+def test_only_members_can_upload_a_picture(client):
+    response = client.post("/settings/avatar", files={"picture": ("me.png", _png(), "image/png")})
+
+    assert response.status_code == 401

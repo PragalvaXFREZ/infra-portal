@@ -49,7 +49,7 @@
       <ul class="people">
       {% for person in people %}
         <li>
-          {% if person.avatar_url %}<img class="avatar" src="{{ person.avatar_url }}" alt="" width="28" height="28">{% endif %}
+          {% if person.avatar_src %}<img class="avatar" src="{{ person.avatar_src }}" alt="" width="28" height="28">{% endif %}
           <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
         </li>
       {% else %}

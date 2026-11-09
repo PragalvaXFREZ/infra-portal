@@ -3,7 +3,7 @@
 {% block title %}{{ person.name }}{% endblock %}
 {% block content %}
   <section class="profile">
-    {% if person.avatar_url %}<img class="avatar" src="{{ person.avatar_url }}" alt="" width="88" height="88">{% endif %}
+    {% if person.avatar_src %}<img class="avatar" src="{{ person.avatar_src }}" alt="" width="88" height="88">{% endif %}
     <div>
       <h1>{{ person.name }}</h1>
       <div class="muted">

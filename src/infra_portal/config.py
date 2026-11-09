@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     # Comma-separated in the environment: ADMIN_GITHUB_LOGINS=alice,bob
     admin_github_logins: Annotated[list[str], NoDecode] = []
 
+    # Where people who are not members can write to ask about joining. Shown on
+    # the page a non-member sees after signing in. Set it empty to hide the line.
+    contact_email: str = "pragalva.sapkota@deerwalk.edu.np"
+
     @field_validator("admin_github_logins", mode="before")
     @classmethod
     def _split_logins(cls, value: object) -> object:

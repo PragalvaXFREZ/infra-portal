@@ -1,6 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Not a member{% endblock %}
+{% block title %}Members only{% endblock %}
 {% block content %}
-  <h1>Not a member yet</h1>
-  <p>@{{ login }} does not have an invite. Ask an admin to add your GitHub login, then sign in again.</p>
+  <h1>Sign-in is for members</h1>
+  <p class="lede">
+    You signed in to GitHub as @{{ login }}, but that account is not on the member list,
+    so you are not signed in here. Nothing about your account was saved.
+  </p>
+  <p>
+    You do not need an account to read anything on this site. The labs and the writing are open to everyone.
+  </p>
+  <p class="actions">
+    <a class="button" href="/labs">See the labs</a>
+    <a class="button secondary" href="/writing">Read the writing</a>
+  </p>
+  {% if contact_email %}
+    <h2>Want to join?</h2>
+    <p>
+      Write to <a href="mailto:{{ contact_email }}">{{ contact_email }}</a> with your GitHub login and a line
+      about what you would like to work on.
+    </p>
+  {% endif %}
 {% endblock %}

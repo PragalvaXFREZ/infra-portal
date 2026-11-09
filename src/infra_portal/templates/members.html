@@ -7,7 +7,7 @@
   <ul class="people grid">
   {% for person in members %}
     <li>
-      {% if person.avatar_url %}<img class="avatar" src="{{ person.avatar_url }}" alt="" width="44" height="44">{% endif %}
+      {% if person.avatar_src %}<img class="avatar" src="{{ person.avatar_src }}" alt="" width="44" height="44">{% endif %}
       <div>
         <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
         <span class="muted">@{{ person.github_login }}</span>

@@ -13,21 +13,41 @@
   <div class="scene">
     <header class="site">
       <a class="brand" href="/">infra</a>
-      <nav>
+      <nav class="primary" aria-label="Site">
         <a href="/labs">Labs</a>
         <a href="/writing">Writing</a>
         <a href="/members">Members</a>
-        {% if member %}
-          <span class="sep" aria-hidden="true"></span>
-          <a href="/write">New post</a>
-          <a href="/me/posts">My posts</a>
-          <a href="/u/{{ member.github_login }}">Profile</a>
-          {% if member.is_admin %}<a href="/admin/members">Admin</a>{% endif %}
-          <form method="post" action="/auth/logout"><button class="link">Sign out</button></form>
-        {% else %}
-          <a class="cta" href="/auth/github/login">Sign in with GitHub</a>
-        {% endif %}
       </nav>
+      <div class="end">
+        {# On phones the three links above move into this menu. #}
+        <details class="menu site-menu">
+          <summary>Menu</summary>
+          <div class="panel">
+            <a href="/labs">Labs</a>
+            <a href="/writing">Writing</a>
+            <a href="/members">Members</a>
+            {% if not member %}<a class="quiet" href="/auth/github/login">Member sign in</a>{% endif %}
+          </div>
+        </details>
+        {% if member %}
+          <details class="menu account">
+            <summary aria-label="Your account">
+              {% if member.avatar_src %}<img class="avatar" src="{{ member.avatar_src }}" alt="" width="30" height="30">{% else %}<span class="avatar avatar-empty"></span>{% endif %}
+            </summary>
+            <div class="panel">
+              <p class="who">{{ member.name }}<span>@{{ member.github_login }}</span></p>
+              <a href="/write">New post</a>
+              <a href="/me/posts">My posts</a>
+              <a href="/u/{{ member.github_login }}">Profile</a>
+              <a href="/settings/profile">Edit profile</a>
+              {% if member.is_admin %}<a href="/admin/members">Members admin</a>{% endif %}
+              <form method="post" action="/auth/logout"><button class="item-button">Sign out</button></form>
+            </div>
+          </details>
+        {% else %}
+          <a class="sign-in" href="/auth/github/login">Sign in</a>
+        {% endif %}
+      </div>
     </header>
     {% block scene %}{% endblock %}
   </div>
