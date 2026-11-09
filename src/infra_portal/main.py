@@ -1,19 +1,19 @@
 """HTTP entry point."""
 
-from pathlib import Path
-
 from fastapi import Depends, FastAPI, Request, Response, status
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from infra_portal import admin, auth, posts, profiles
+from infra_portal import admin, auth, labs, posts, profiles
 from infra_portal.auth import current_member, require_member
 from infra_portal.config import get_settings
 from infra_portal.db import database_is_reachable, get_db
 from infra_portal.models import Member
 from infra_portal.posts import recent_posts
-from infra_portal.templating import templates
+from infra_portal.profiles import signed_in_members
+from infra_portal.templating import STATIC_DIR, templates
 
 
 def create_app() -> FastAPI:
@@ -32,11 +32,17 @@ def create_app() -> FastAPI:
         https_only=settings.cookie_secure,
     )
 
-    app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     app.include_router(auth.router)
     app.include_router(admin.router)
     app.include_router(profiles.router)
     app.include_router(posts.router)
+    app.include_router(labs.router)
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon() -> FileResponse:
+        # Browsers ask for /favicon.ico even when the page names other icons.
+        return FileResponse(STATIC_DIR / "icon" / "favicon-32.png", media_type="image/png")
 
     @app.get("/livez")
     def livez() -> dict[str, str]:
@@ -67,7 +73,14 @@ def create_app() -> FastAPI:
         db: Session = Depends(get_db),
     ):
         return templates.TemplateResponse(
-            request, "home.html", {"member": member, "posts": recent_posts(db)}
+            request,
+            "home.html",
+            {
+                "member": member,
+                "labs": labs.all_labs()[:3],
+                "posts": recent_posts(db, limit=5),
+                "people": signed_in_members(db),
+            },
         )
 
     @app.get("/api/me")

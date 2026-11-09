@@ -173,6 +173,17 @@ def read_post(
     )
 
 
+@router.get("/writing")
+def writing(
+    request: Request,
+    member: Member | None = Depends(current_member),
+    db: Session = Depends(get_db),
+):
+    return templates.TemplateResponse(
+        request, "writing.html", {"member": member, "posts": recent_posts(db, limit=200)}
+    )
+
+
 def recent_posts(db: Session, limit: int = 20) -> list[Post]:
     return list(
         db.scalars(

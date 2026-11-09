@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block art %}gap{% endblock %}
+{% block title %}Labs and experiments{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  <h1>Labs and experiments</h1>
+  <p class="lede">Labs are step-by-step exercises. Experiments are things we tried and wrote up.</p>
+  <div class="lab-grid">
+    {% for lab in labs %}
+      {% include "_lab_card.html" %}
+    {% else %}
+      <p class="muted">No labs yet.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

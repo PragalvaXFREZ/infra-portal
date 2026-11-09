@@ -1,0 +1,5 @@
+<a class="lab-card" href="{{ lab.url }}">
+  <strong>{{ lab.title }}</strong>
+  <span class="summary">{{ lab.summary }}</span>
+  <span class="foot">{{ lab.kind|capitalize }} · <time datetime="{{ lab.date.isoformat() }}">{{ lab.date.strftime("%-d %B %Y") }}</time></span>
+</a>

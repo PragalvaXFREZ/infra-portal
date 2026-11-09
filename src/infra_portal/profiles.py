@@ -27,15 +27,22 @@ def get_member_by_login(db: Session, login: str) -> Member:
     return member
 
 
+def signed_in_members(db: Session) -> list[Member]:
+    """Members who have signed in at least once. Pending invites stay hidden."""
+    return list(
+        db.scalars(
+            select(Member).where(Member.github_id.is_not(None)).order_by(Member.github_login)
+        ).all()
+    )
+
+
 @router.get("/members")
 def member_directory(
     request: Request,
     member: Member | None = Depends(current_member),
     db: Session = Depends(get_db),
 ):
-    members = db.scalars(
-        select(Member).where(Member.github_id.is_not(None)).order_by(Member.github_login)
-    ).all()
+    members = signed_in_members(db)
     return templates.TemplateResponse(
         request, "members.html", {"member": member, "members": members}
     )

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block art %}gap{% endblock %}
+{% block title %}{{ lab.title }}{% endblock %}
+{% block content %}
+  <article>
+    <p class="crumb"><a href="/labs">Labs</a></p>
+    <h1>{{ lab.title }}</h1>
+    <div class="meta">
+      {{ lab.kind|capitalize }} · <time datetime="{{ lab.date.isoformat() }}">{{ lab.date.strftime("%-d %B %Y") }}</time>
+      {% if lab.link %} · <a href="{{ lab.link }}" rel="noopener">Source on GitHub</a>{% endif %}
+    </div>
+    <p class="lede">{{ lab.summary }}</p>
+    <div class="prose">{{ body_html }}</div>
+  </article>
+{% endblock %}

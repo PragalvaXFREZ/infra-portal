@@ -46,6 +46,7 @@ def test_published_post_is_public_and_listed(client, alice):
     assert "<strong>text</strong>" in page.text
     assert "Hello Docker" in client.get("/").text
     assert "Hello Docker" in client.get("/u/alice").text
+    assert "Hello Docker" in client.get("/writing").text
 
 
 def test_duplicate_titles_get_distinct_slugs(client, alice, session_factory):
