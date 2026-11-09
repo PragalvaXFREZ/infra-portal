@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}infra{% endblock %}</title>
   <link rel="preload" href="/static/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="icon" href="/static/icon/favicon-32.png" sizes="32x32" type="image/png">
-  <link rel="apple-touch-icon" href="/static/icon/apple-touch-icon.png">
-  <link rel="stylesheet" href="/static/site.css">
+  <link rel="icon" href="{{ static_url('icon/favicon-32.png') }}" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="{{ static_url('icon/apple-touch-icon.png') }}">
+  <link rel="stylesheet" href="{{ static_url('site.css') }}">
 </head>
 <body class="{% block body_class %}inner{% endblock %} art-{% block art %}tools{% endblock %}">
   <div class="scene">
