@@ -226,6 +226,7 @@ header.site nav a.cta:hover { background: var(--ink-2); color: var(--paper); }
 .lab-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  grid-auto-rows: 1fr; /* every card as tall as the tallest, so the kind and date sit on one line */
   gap: 1rem;
   margin-top: 1rem;
 }
