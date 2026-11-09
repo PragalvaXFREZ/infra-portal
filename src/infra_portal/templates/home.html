@@ -1,11 +1,32 @@
 {% extends "base.html" %}
-{% block content %}
-  <h1>infra</h1>
-  <p class="muted">Profiles and writing from the infra group.</p>
-  <h2>Recent posts</h2>
-  {% for post in posts %}
-    {% include "_post_item.html" %}
-  {% else %}
-    <p class="muted">Nothing published yet.</p>
-  {% endfor %}
+{% block body_class %}home{% endblock %}
+{% block scene %}
+  <section class="hero">
+    <h1>infra</h1>
+    <p>Profiles and writing from the infra group.</p>
+  </section>
+  <main class="cards">
+    <section class="card">
+      <h2 class="label">Recent posts</h2>
+      {% for post in posts %}
+        {% include "_post_item.html" %}
+      {% else %}
+        <p class="empty">Nothing published yet.</p>
+      {% endfor %}
+    </section>
+    <section class="card">
+      <h2 class="label">Members <a href="/members">See all</a></h2>
+      <ul class="people">
+      {% for person in people %}
+        <li>
+          {% if person.avatar_url %}<img class="avatar" src="{{ person.avatar_url }}" alt="" width="32" height="32">{% endif %}
+          <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
+        </li>
+      {% else %}
+        <li class="empty">No members have signed in yet.</li>
+      {% endfor %}
+      </ul>
+    </section>
+  </main>
 {% endblock %}
+{% block main %}{% endblock %}

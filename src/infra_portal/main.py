@@ -13,6 +13,7 @@ from infra_portal.config import get_settings
 from infra_portal.db import database_is_reachable, get_db
 from infra_portal.models import Member
 from infra_portal.posts import recent_posts
+from infra_portal.profiles import signed_in_members
 from infra_portal.templating import templates
 
 
@@ -67,7 +68,9 @@ def create_app() -> FastAPI:
         db: Session = Depends(get_db),
     ):
         return templates.TemplateResponse(
-            request, "home.html", {"member": member, "posts": recent_posts(db)}
+            request,
+            "home.html",
+            {"member": member, "posts": recent_posts(db), "people": signed_in_members(db)},
         )
 
     @app.get("/api/me")

@@ -1,13 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Members{% endblock %}
+{% block sheet_class %}wide{% endblock %}
 {% block content %}
   <h1>Members</h1>
-  <ul class="people">
+  <ul class="people grid">
   {% for person in members %}
     <li>
-      {% if person.avatar_url %}<img src="{{ person.avatar_url }}" alt="" width="40" height="40">{% endif %}
-      <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
-      <span class="muted">@{{ person.github_login }}</span>
+      {% if person.avatar_url %}<img class="avatar" src="{{ person.avatar_url }}" alt="" width="44" height="44">{% endif %}
+      <div>
+        <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
+        <span class="muted">@{{ person.github_login }}</span>
+      </div>
     </li>
   {% else %}
     <li class="muted">No members have signed in yet.</li>

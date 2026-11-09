@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Members{% endblock %}
+{% block sheet_class %}wide{% endblock %}
 {% block content %}
   <h1>Members</h1>
   <form method="post" action="/admin/members" class="inline">
@@ -7,6 +8,7 @@
     <input id="github_login" name="github_login" required maxlength="40" autocomplete="off" placeholder="octocat">
     <button>Invite</button>
   </form>
+  <div class="table-wrap">
   <table>
     <thead><tr><th>GitHub login</th><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
     <tbody>
@@ -15,7 +17,7 @@
         <td>@{{ m.github_login }}</td>
         <td>{{ m.display_name or "" }}</td>
         <td>{{ m.role }}</td>
-        <td>{% if m.has_signed_in %}joined{% else %}invited{% endif %}</td>
+        <td>{% if m.has_signed_in %}<span class="pill joined">joined</span>{% else %}<span class="pill">invited</span>{% endif %}</td>
         <td>
           {% if m.id != member.id %}
           <form method="post" action="/admin/members/{{ m.id }}/remove"><button class="link danger">Remove</button></form>
@@ -25,4 +27,5 @@
     {% endfor %}
     </tbody>
   </table>
+  </div>
 {% endblock %}

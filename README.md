@@ -145,7 +145,7 @@ Each stage ends with a git tag. Check out a tag to see the project at that point
 src/infra_portal/   application package
   migrations/       Alembic migrations
   templates/        Jinja2 pages
-  static/           CSS
+  static/           CSS, the background painting (art/), self-hosted fonts (fonts/)
 tests/              pytest suite
 docs/adr/           architecture decision records
 Dockerfile          two-stage image build
