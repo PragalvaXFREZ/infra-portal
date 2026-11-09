@@ -1,7 +1,10 @@
 import io
 import re
 
+import pytest
 from PIL import Image
+
+from infra_portal.profiles import BadImage, make_avatar
 
 
 def test_profile_edit_and_public_page(client, add_member, sign_in):
@@ -118,3 +121,27 @@ def test_only_members_can_upload_a_picture(client):
     response = client.post("/settings/avatar", files={"picture": ("me.png", _png(), "image/png")})
 
     assert response.status_code == 401
+
+
+def test_picture_follows_the_phone_rotation_tag():
+    # Left half red, right half blue, tagged "rotate 90 degrees clockwise" (EXIF orientation 6).
+    # Turned the right way up, red is on top.
+    image = Image.new("RGB", (1600, 800), (0, 0, 255))
+    image.paste((255, 0, 0), (0, 0, 800, 800))
+    exif = Image.Exif()
+    exif[0x0112] = 6
+    out = io.BytesIO()
+    image.save(out, "JPEG", exif=exif)
+
+    with Image.open(io.BytesIO(make_avatar(out.getvalue()))) as avatar:
+        top, bottom = avatar.getpixel((128, 20)), avatar.getpixel((128, 235))
+    assert top[0] > 200 and top[2] < 60
+    assert bottom[2] > 200 and bottom[0] < 60
+
+
+def test_a_huge_png_is_refused():
+    out = io.BytesIO()
+    Image.new("RGB", (4000, 3000)).save(out, "PNG")
+
+    with pytest.raises(BadImage):
+        make_avatar(out.getvalue())
