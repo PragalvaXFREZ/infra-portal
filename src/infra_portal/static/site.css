@@ -148,18 +148,22 @@ header.site {
   flex-wrap: wrap;
   max-width: 64rem;
   margin: 0 auto;
-  padding: 0.45rem 0.45rem 0.45rem 1rem;
+  padding: 0.45rem 0.45rem 0.45rem 0.6rem;
   background: var(--bar);
   border-radius: 10px;
   box-shadow: var(--shadow);
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
+  font-size: 1.15rem;
+  letter-spacing: -0.03em;
   color: var(--ink);
   text-decoration: none;
 }
+.brand .mark { flex: none; display: block; }
 header.site nav { display: flex; align-items: center; gap: 0.1rem; flex-wrap: wrap; }
 header.site form { margin: 0; }
 header.site nav a,
@@ -439,7 +443,7 @@ footer.site {
 
 @media (max-width: 760px) {
   body { font-size: 16px; }
-  header.site { padding: 0.5rem 0.5rem 0.5rem 0.9rem; }
+  header.site { padding: 0.5rem 0.5rem 0.5rem 0.6rem; }
   header.site nav { gap: 0; margin-left: -0.55rem; }
   header.site nav a, header.site nav button.link { padding: 0.35rem 0.55rem; font-size: 0.9rem; }
   header.site nav .sep { display: none; }

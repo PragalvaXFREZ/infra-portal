@@ -28,3 +28,9 @@ def test_readyz_reports_an_unreachable_database(monkeypatch):
 
     assert response.status_code == 503
     assert response.json()["database"] == "unreachable"
+
+
+def test_favicon(monkeypatch):
+    response = _client(monkeypatch).get("/favicon.ico")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"

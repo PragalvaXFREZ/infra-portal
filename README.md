@@ -1,6 +1,6 @@
 # infra-portal
 
-Member profiles and blogs for the infra group, served at `infra.pragalva.me`.
+Member profiles, writing and labs for the infra initiative, served at `infra.pragalva.me`.
 
 Each member has a profile and can write posts. The app runs on
 [devata](https://github.com/PragalvaXFREZ/lab), a Talos Kubernetes homelab, and it is built in stages so
@@ -79,7 +79,7 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 
 | Page | Who | What |
 | --- | --- | --- |
-| `/` | everyone | What the group is, recent labs, recent posts, members |
+| `/` | everyone | What the initiative is, recent labs, recent posts, members |
 | `/labs`, `/labs/<slug>` | everyone | Labs and experiments |
 | `/writing` | everyone | All published posts |
 | `/members` | everyone | Members who have signed in |

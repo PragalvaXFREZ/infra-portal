@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request, Response, status
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
@@ -15,6 +16,8 @@ from infra_portal.models import Member
 from infra_portal.posts import recent_posts
 from infra_portal.profiles import signed_in_members
 from infra_portal.templating import templates
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 def create_app() -> FastAPI:
@@ -33,12 +36,17 @@ def create_app() -> FastAPI:
         https_only=settings.cookie_secure,
     )
 
-    app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     app.include_router(auth.router)
     app.include_router(admin.router)
     app.include_router(profiles.router)
     app.include_router(posts.router)
     app.include_router(labs.router)
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon() -> FileResponse:
+        # Browsers ask for /favicon.ico even when the page names other icons.
+        return FileResponse(STATIC_DIR / "icon" / "favicon-32.png", media_type="image/png")
 
     @app.get("/livez")
     def livez() -> dict[str, str]:
