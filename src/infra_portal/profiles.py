@@ -2,6 +2,7 @@
 
 import hashlib
 import io
+import math
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import RedirectResponse
@@ -24,6 +25,9 @@ MAX_WEBSITE = 200
 # Uploaded pictures.
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 MAX_SOURCE_PIXELS = 40_000_000  # about 8000 x 5000; larger images are refused before decoding
+# JPEG decodes straight to a small size. Other formats decode in full first, about 4 bytes a
+# pixel, so they get a lower limit: 9 MP still takes a 4K screenshot.
+MAX_FULL_DECODE_PIXELS = 9_000_000
 AVATAR_SIZE = 256  # stored as a 256 x 256 WebP, shown at 88 px or smaller
 UPLOAD_FORMATS = {"JPEG", "PNG", "WEBP", "GIF"}
 
@@ -42,8 +46,14 @@ def make_avatar(data: bytes) -> bytes:
         with Image.open(io.BytesIO(data)) as source:
             if source.format not in UPLOAD_FORMATS:
                 raise BadImage("Use a JPEG, PNG, WebP or GIF image.")
-            if source.width * source.height > MAX_SOURCE_PIXELS:
-                raise BadImage("That image is too large. Use one under 40 megapixels.")
+            limit = MAX_SOURCE_PIXELS if source.format == "JPEG" else MAX_FULL_DECODE_PIXELS
+            if source.width * source.height > limit:
+                raise BadImage(f"That image is too large. Use one under {limit // 1_000_000} megapixels.")
+            # Shrink first, while decoding where the format allows it (JPEG decodes at 1/2 to 1/8
+            # scale), so a phone photo never sits in memory at full size. The pod has 256 MiB.
+            scale = 2 * AVATAR_SIZE / min(source.size)
+            if scale < 1:
+                source.thumbnail((math.ceil(source.width * scale), math.ceil(source.height * scale)))
             image = ImageOps.exif_transpose(source)  # phone photos are often stored sideways
             image = ImageOps.fit(image.convert("RGB"), (AVATAR_SIZE, AVATAR_SIZE), Image.Resampling.LANCZOS)
     except BadImage:
