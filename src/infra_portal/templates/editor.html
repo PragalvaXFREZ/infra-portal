@@ -1,18 +1,32 @@
 {% extends "base.html" %}
 {% block title %}{% if post %}Edit post{% else %}New post{% endif %}{% endblock %}
 {% block content %}
+  {% set previewing = preview_html is not none %}
   <h1>{% if post %}Edit post{% else %}New post{% endif %}</h1>
   {% if post %}
     <p class="muted small">
-      {% if post.is_published %}Published at <a href="{{ post.url }}">{{ post.url }}</a>{% else %}Draft. Only you can see it. <a href="{{ post.url }}">Preview</a>{% endif %}
+      {% if post.is_published %}Published at <a href="{{ post.url }}">{{ post.url }}</a>{% else %}Draft. Only you can see it. <a href="{{ post.url }}">View the saved draft</a>{% endif %}
     </p>
   {% endif %}
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-  <form method="post" action="{% if post %}/posts/{{ post.id }}/edit{% else %}/write{% endif %}" class="stack">
+  <form method="post" action="{% if post %}/posts/{{ post.id }}/edit{% else %}/write{% endif %}" class="stack" data-editor>
+    {# Enter in the title field presses the first button in the form, so that one is Save. #}
+    <button name="action" value="save" class="visually-hidden" tabindex="-1" aria-hidden="true">Save</button>
     <label for="title">Title</label>
     <input id="title" name="title" required maxlength="200" value="{{ title }}">
-    <label for="body">Post <span class="muted small">(Markdown)</span></label>
-    <textarea id="body" name="body" rows="20">{{ body }}</textarea>
+    <div class="editor-head">
+      <label for="body">Post <span class="muted small">(Markdown)</span></label>
+      <div class="tabs">
+        <button name="action" value="write" class="tab" formnovalidate aria-pressed="{{ 'false' if previewing else 'true' }}">Write</button>
+        <button name="action" value="preview" class="tab" formnovalidate aria-pressed="{{ 'true' if previewing else 'false' }}">Preview</button>
+      </div>
+    </div>
+    <textarea id="body" name="body" rows="20"{% if previewing %} hidden{% endif %}>{{ body }}</textarea>
+    <article class="preview" data-preview aria-live="polite"{% if not previewing %} hidden{% endif %}>
+      <h1 data-preview-title>{{ title or "Untitled" }}</h1>
+      <div class="prose" data-preview-body>{% if previewing %}{{ preview_html if body.strip() else "" }}{% endif %}</div>
+      <p class="muted" data-preview-empty{% if body.strip() %} hidden{% endif %}>Nothing written yet.</p>
+    </article>
     <div class="actions">
       <button name="action" value="save">Save</button>
       {% if post and post.is_published %}
@@ -28,3 +42,4 @@
     </form>
   {% endif %}
 {% endblock %}
+{% block scripts %}<script src="{{ static_url('editor.js') }}" defer></script>{% endblock %}
