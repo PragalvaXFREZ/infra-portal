@@ -115,6 +115,14 @@ def test_an_already_confirmed_address_gets_the_same_page_and_no_email(client, al
     assert mailer.sent == []
 
 
+def test_new_addresses_over_the_hourly_limit_get_no_email(client, alice, mailer, monkeypatch):
+    monkeypatch.setattr("infra_portal.follow.MAX_NEW_PER_HOUR", 3)
+    for n in range(5):
+        response = _follow(client, email=f"fresh{n}@example.com")
+        assert "Check your inbox" in response.text
+    assert len(mailer.sent) == 3
+
+
 def test_bad_address_is_refused(client, alice, mailer, session_factory):
     response = _follow(client, email="not-an-address")
     assert response.status_code == 422

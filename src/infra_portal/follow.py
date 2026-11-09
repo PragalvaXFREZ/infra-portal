@@ -30,6 +30,9 @@ MAX_EMAIL = 254
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # A second request for the same address within this time sends no new confirmation email.
 RESEND_AFTER = timedelta(days=1)
+# At most this many confirmation emails to new addresses per member per hour. Each one is sent
+# from the site's domain, so a script feeding the form fresh addresses must not get far.
+MAX_NEW_PER_HOUR = 20
 
 
 def _aware(moment: datetime | None) -> datetime | None:
@@ -43,6 +46,18 @@ def _page(
     request: Request, member: Member | None, name: str, context: dict, status_code: int = status.HTTP_200_OK
 ):
     return templates.TemplateResponse(request, name, {"member": member, **context}, status_code=status_code)
+
+
+def _recent_pending(db: Session, author_id: int, now: datetime) -> int:
+    return db.scalar(
+        select(func.count())
+        .select_from(Follow)
+        .where(
+            Follow.author_id == author_id,
+            Follow.confirmed_at.is_(None),
+            Follow.confirm_sent_at > now - timedelta(hours=1),
+        )
+    ) or 0
 
 
 def _by_token(db: Session, token: str) -> Follow | None:
@@ -80,6 +95,9 @@ def follow(
 
     row = db.scalar(select(Follow).where(Follow.author_id == author.id, Follow.email == email))
     now = datetime.now(UTC)
+    if row is None and _recent_pending(db, author.id, now) >= MAX_NEW_PER_HOUR:
+        log.warning("Follow requests for %s are over the hourly limit; sending nothing", author.github_login)
+        return _page(request, member, "follow_result.html", {"author": author, "outcome": "sent", "email": email})
     if row is None:
         row = Follow(author_id=author.id, email=email, token=secrets.token_urlsafe(32))
         db.add(row)
