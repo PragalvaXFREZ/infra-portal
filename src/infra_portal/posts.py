@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -61,13 +61,41 @@ def _apply_action(post: Post, action: str) -> None:
         post.status = STATUS_DRAFT
 
 
-def _editor(request: Request, member: Member, post: Post | None, title: str, body: str, error: str | None):
+# The Write and Preview tabs submit these. Neither saves anything. With JavaScript the page handles
+# them itself and fetches /preview; without it the form posts and the editor comes back.
+VIEW_ACTIONS = ("write", "preview")
+
+
+def _editor(
+    request: Request,
+    member: Member,
+    post: Post | None,
+    title: str,
+    body: str,
+    error: str | None,
+    preview_html: str | None = None,
+):
     return templates.TemplateResponse(
         request,
         "editor.html",
-        {"member": member, "post": post, "title": title, "body": body, "error": error},
+        {
+            "member": member,
+            "post": post,
+            "title": title,
+            "body": body,
+            "error": error,
+            "preview_html": preview_html,
+        },
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT if error else status.HTTP_200_OK,
     )
+
+
+def _view(request: Request, member: Member, post: Post | None, title: str, body: str, action: str):
+    """Show the editor on the Write or Preview tab, keeping what was typed. Saves nothing."""
+    if len(body) > MAX_BODY:
+        return _editor(request, member, post, title, body, f"The post must be at most {MAX_BODY:,} characters.")
+    preview_html = render_markdown(body) if action == "preview" else None
+    return _editor(request, member, post, title, body, None, preview_html)
 
 
 @router.get("/write")
@@ -85,6 +113,8 @@ def create_post(
     db: Session = Depends(get_db),
 ):
     title = title.strip()
+    if action in VIEW_ACTIONS:
+        return _view(request, member, None, title, body, action)
     if error := _validate(title, body):
         return _editor(request, member, None, title, body, error)
     post = Post(author_id=member.id, title=title, body=body, slug=_unique_slug(db, member.id, title))
@@ -117,12 +147,22 @@ def update_post(
 ):
     post = _own_post(db, post_id, member)
     title = title.strip()
+    if action in VIEW_ACTIONS:
+        return _view(request, member, post, title, body, action)
     if error := _validate(title, body):
         return _editor(request, member, post, title, body, error)
     post.title, post.body = title, body
     _apply_action(post, action)
     db.commit()
     return RedirectResponse(f"/posts/{post.id}/edit", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/preview")
+def preview(body: str = Form(""), member: Member = Depends(require_member)) -> HTMLResponse:
+    """The post body as readers will see it, for the editor's Preview tab. Saves nothing."""
+    if len(body) > MAX_BODY:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "The post is too long.")
+    return HTMLResponse(render_markdown(body))
 
 
 @router.post("/posts/{post_id}/delete")

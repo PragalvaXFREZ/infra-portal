@@ -127,3 +127,49 @@ def test_admin_can_delete_any_post(client, alice, sign_in, session_factory):
 def test_signed_out_visitor_cannot_write(client):
     assert client.get("/write").status_code == 401
     assert client.post("/write", data={"title": "x"}).status_code == 401
+
+
+def test_preview_on_a_new_post_renders_and_saves_nothing(client, alice, session_factory):
+    response = client.post("/write", data={"title": "", "body": "Some **text**.", "action": "preview"})
+
+    assert response.status_code == 200
+    assert "<strong>text</strong>" in response.text
+    # The text is kept in the form so the author can go on writing.
+    assert "Some **text**." in response.text
+    with session_factory() as session:
+        assert session.scalars(select(Post)).all() == []
+
+
+def test_preview_on_an_existing_post_leaves_it_unchanged(client, alice, session_factory):
+    post_id = _create(client, body="old body")
+
+    response = client.post(
+        f"/posts/{post_id}/edit", data={"title": "Changed", "body": "# new body", "action": "preview"}
+    )
+
+    assert response.status_code == 200
+    assert "<h1>new body</h1>" in response.text
+    with session_factory() as session:
+        post = session.get(Post, post_id)
+        assert (post.title, post.body) == ("Hello Docker", "old body")
+
+
+def test_write_tab_returns_the_editor_without_saving(client, alice, session_factory):
+    response = client.post("/write", data={"title": "T", "body": "draft text", "action": "write"})
+
+    assert response.status_code == 200
+    assert "draft text" in response.text
+    with session_factory() as session:
+        assert session.scalars(select(Post)).all() == []
+
+
+def test_preview_endpoint_renders_like_a_post_and_escapes_html(client, alice):
+    response = client.post("/preview", data={"body": "*hi* <script>alert(1)</script>"})
+
+    assert response.status_code == 200
+    assert "<em>hi</em>" in response.text
+    assert "<script>" not in response.text
+
+
+def test_preview_endpoint_needs_a_member(client):
+    assert client.post("/preview", data={"body": "x"}).status_code == 401

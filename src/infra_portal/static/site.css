@@ -413,6 +413,31 @@ form.stack label { margin-top: 0.8rem; font-weight: 500; }
 form.inline { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 1.2rem 0 1.6rem; }
 form.inline label { font-weight: 500; }
 form.inline input { width: auto; flex: 1 1 12rem; }
+/* The editor's Write and Preview tabs: plain words, the current one underlined. */
+.editor-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-top: 0.8rem; }
+form.stack .editor-head label { margin-top: 0; }
+.tabs { display: flex; gap: 1.1rem; }
+button.tab,
+button.tab:hover {
+  padding: 0.2rem 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--muted);
+  font-weight: 500;
+}
+button.tab:hover { color: var(--ink); }
+button.tab[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.preview {
+  min-height: 24rem;
+  padding: 1.5rem clamp(1rem, 4vw, 1.75rem);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+}
+.preview > h1 { margin-top: 0; }
+[hidden] { display: none !important; }
 .actions { display: flex; gap: 0.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
 .danger-zone { margin-top: 2.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
 .error { color: var(--danger); background: rgb(163 58 44 / 0.08); padding: 0.6rem 0.9rem; border-radius: 7px; }
