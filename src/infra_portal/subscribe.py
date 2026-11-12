@@ -45,9 +45,16 @@ def _by_token(db: Session, token: str) -> Subscriber | None:
     return db.scalar(select(Subscriber).where(Subscriber.token == token))
 
 
-def _member_id(value: str) -> int | None:
-    # From a URL or a form, so anything may arrive. Something that is not an id means no member.
-    return int(value) if value.isdigit() and len(value) < 10 else None
+def _member(db: Session, value: str) -> Member | None:
+    """The member named by an id from a URL or a form, where anything may arrive.
+
+    Something that is not an id means no member. So does an invite nobody has claimed: the rest
+    of the site does not show those either.
+    """
+    if not (value.isdecimal() and value.isascii() and len(value) < 10):
+        return None
+    person = db.get(Member, int(value))
+    return person if person is not None and person.has_signed_in else None
 
 
 def _result(request: Request, member: Member | None, outcome: str, email: str = "", status_code: int = 200):
@@ -119,12 +126,10 @@ def confirm(
 def _manage(
     request: Request,
     member: Member | None,
-    db: Session,
     row: Subscriber,
-    author_id: int | None,
+    author: Member | None,
     done: str | None = None,
 ):
-    author = db.get(Member, author_id) if author_id is not None else None
     muted = sorted((m.author for m in row.mutes), key=lambda person: person.name.lower())
     return _page(
         request,
@@ -155,7 +160,7 @@ def subscription_page(
     row = _by_token(db, token)
     if row is None:
         return _result(request, member, "unsubscribed")
-    return _manage(request, member, db, row, _member_id(author))
+    return _manage(request, member, row, _member(db, author))
 
 
 @router.post("/subscription/{token}")
@@ -188,16 +193,15 @@ def mute(
     row = _by_token(db, token)
     if row is None:
         return _result(request, member, "unsubscribed")
-    author_id = _member_id(author)
-    target = db.get(Member, author_id) if author_id is not None else None
+    target = _member(db, author)
     if target is None:
-        return _manage(request, member, db, row, None)
+        return _manage(request, member, row, None)
     if all(m.author_id != target.id for m in row.mutes):
         row.mutes.append(SubscriberMute(author_id=target.id))
     # A follow of the same member would keep their posts coming, so it goes too.
     db.execute(delete(Follow).where(Follow.email == row.email, Follow.author_id == target.id))
     db.commit()
-    return _manage(request, member, db, row, target.id, "muted")
+    return _manage(request, member, row, target, "muted")
 
 
 @router.post("/subscription/{token}/unmute")
@@ -211,11 +215,11 @@ def unmute(
     row = _by_token(db, token)
     if row is None:
         return _result(request, member, "unsubscribed")
-    author_id = _member_id(author)
-    found = [m for m in row.mutes if m.author_id == author_id]
+    target = _member(db, author)
+    found = [m for m in row.mutes if target is not None and m.author_id == target.id]
     if not found:
-        return _manage(request, member, db, row, author_id)
+        return _manage(request, member, row, target)
     for mute_row in found:
         row.mutes.remove(mute_row)
     db.commit()
-    return _manage(request, member, db, row, author_id, "unmuted")
+    return _manage(request, member, row, target, "unmuted")

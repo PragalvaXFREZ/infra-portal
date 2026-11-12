@@ -100,8 +100,8 @@ def _site_name(settings: Settings) -> str:
 
 
 def _one_line(text: str) -> str:
-    # A title or name with a line break in it would make a broken subject, and Resend refuses the
-    # whole batch for one bad message.
+    # A subject must be one line. A title or name with a line break in it, sent by a crafted form
+    # post, would otherwise make a broken message, and one bad message can fail a whole batch.
     return " ".join(text.split())
 
 

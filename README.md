@@ -82,7 +82,7 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 
 | Page | Who | What |
 | --- | --- | --- |
-| `/` | everyone | What the initiative is, recent labs, recent posts, members |
+| `/` | everyone | What the initiative is, recent labs, recent posts, members, the form to get an email when anyone posts |
 | `/labs`, `/labs/<slug>` | everyone | Labs and experiments |
 | `/writing` | everyone | All published posts, and the form to get an email when anyone posts |
 | `/members` | everyone | Members who have signed in |

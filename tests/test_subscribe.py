@@ -149,10 +149,22 @@ def test_subscription_page_changes_nothing(client, mailer, add_member, session_f
 
 def test_subscription_page_without_a_known_author_offers_only_stop_all(client, mailer):
     token = _subscriber(client, mailer)
-    for query in ("", "?author=999", "?author=abc"):
+    for query in ("", "?author=999", "?author=abc", "?author=%C2%B2", "?author=" + "9" * 30):
         page = client.get(f"/subscription/{token}{query}")
         assert page.status_code == 200
         assert "Stop all emails" in page.text and "Stop emails about" not in page.text
+    assert client.post(f"/subscription/{token}/mute", data={"author": "²"}).status_code == 200
+
+
+def test_an_unclaimed_invite_is_not_shown_or_muted(client, mailer, add_member, session_factory):
+    invited = add_member("secret-invitee")
+    token = _subscriber(client, mailer)
+
+    page = client.get(f"/subscription/{token}?author={invited.id}")
+    assert "secret-invitee" not in page.text and "Stop emails about" not in page.text
+    muted = client.post(f"/subscription/{token}/mute", data={"author": str(invited.id)})
+    assert "secret-invitee" not in muted.text
+    assert _rows(session_factory, SubscriberMute) == []
 
 
 def test_one_click_post_removes_the_whole_subscription(client, mailer, add_member, session_factory):
@@ -285,7 +297,7 @@ def test_the_page_from_a_post_email_names_its_author(client, mailer, add_member,
 
 def test_muting_one_author_stops_only_that_author(client, mailer, add_member, sign_in):
     token = _subscriber(client, mailer)
-    alice = add_member("alice", display_name="Alice")
+    alice = add_member("alice", display_name="Alice", github_id=42)
     client.post(f"/subscription/{token}/mute", data={"author": str(alice.id)})
 
     sign_in("alice", github_id=42)
@@ -313,7 +325,7 @@ def test_a_follower_who_also_subscribes_gets_one_email(client, mailer, add_membe
 
 def test_a_mute_wins_over_a_follow_row_of_the_same_address(client, mailer, add_member, sign_in, session_factory):
     token = _subscriber(client, mailer)
-    alice = add_member("alice", display_name="Alice")
+    alice = add_member("alice", display_name="Alice", github_id=42)
     client.post(f"/subscription/{token}/mute", data={"author": str(alice.id)})
     with session_factory() as session:
         # A follow row next to the mute, as an older app version could leave during a rollout.
@@ -353,8 +365,8 @@ def test_removing_a_member_removes_the_mutes_of_them(client, mailer, add_member,
         # SQLite runs ON DELETE CASCADE only with this switched on. Postgres always does.
         session.execute(text("PRAGMA foreign_keys = ON"))
     token = _subscriber(client, mailer)
-    alice = add_member("alice", display_name="Alice")
-    bob = add_member("bob", display_name="Bob")
+    alice = add_member("alice", display_name="Alice", github_id=42)
+    bob = add_member("bob", display_name="Bob", github_id=7)
     client.post(f"/subscription/{token}/mute", data={"author": str(alice.id)})
     client.post(f"/subscription/{token}/mute", data={"author": str(bob.id)})
 
