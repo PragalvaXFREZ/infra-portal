@@ -1,0 +1,11 @@
+{# One step on the path. Needs `step`. A step with no text yet is listed but is not a link. #}
+<li class="step{% if step.is_build %} step-build{% endif %}{% if not step.written %} step-coming{% endif %}{% if step.done %} step-done{% endif %}">
+  {% if step.written %}<a class="step-row" href="{{ step.url }}">{% else %}<div class="step-row">{% endif %}
+    <span class="step-mark" aria-hidden="true"></span>
+    <span class="step-text">
+      <span class="step-label">{{ step.label }}{% if step.done %}<span class="visually-hidden"> (done)</span>{% endif %}</span>
+      <span class="step-title">{{ step.page.title }}</span>
+    </span>
+    <span class="step-meta">{% if step.is_draft %}Draft{% if step.written and step.page.minutes %} · {% endif %}{% endif %}{% if not step.written %}{% if step.is_draft %} · {% endif %}Not written yet{% elif step.page.minutes %}{{ step.page.minutes }} min{% endif %}</span>
+  {% if step.written %}</a>{% else %}</div>{% endif %}
+</li>

@@ -85,6 +85,7 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | --- | --- | --- |
 | `/` | everyone | What the initiative is, recent labs, recent posts, members |
 | `/labs`, `/labs/<slug>` | everyone; hidden pages only for members or admins | Labs, experiments and learning sessions |
+| `/learn`, `/learn/<slug>` | members; drafts only for admins | The learning path: stages, their chunks and builds, and the member's own ticks |
 | `/writing` | everyone | All published posts |
 | `/subscribe` | everyone | The form to get an email when anyone posts. Every Subscribe button leads here |
 | `/members` | everyone | Members who have signed in |
@@ -94,9 +95,13 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | `/me/posts` | the author | All own posts, drafts included |
 | `/settings/profile` | the member | Name, website, Markdown bio |
 | `/subscription/<token>` | the subscriber, from a link in an email | Stop one member's posts, start them again, or stop all emails |
+| `/admin` | admins | Overview: people, steps still hidden, and where each member is on the path |
+| `/admin/course` | admins | The stages and their steps; show them to members or hide them; import the course notes |
+| `/admin/labs` | admins | Write, preview, show or hide, and delete database pages, steps of the path included |
 | `/admin/members` | admins | Invite and remove members |
 | `/admin/mail` | admins | Preview every email the site sends, and send the samples to one address |
-| `/admin/labs` | admins | Write, preview, show or hide, and delete database labs |
+
+Every admin page has the same row of tabs, and the account menu has one link to them, Admin.
 
 Posts and bios are Markdown. Raw HTML in them is escaped, and `javascript:` links are not rendered. A post's
 link is set when the post is created and does not change when the title changes. Admins can delete any
@@ -201,6 +206,52 @@ an admin at `/admin/labs`. Each row has a visibility:
   lab. If a file lab later takes the address of a database page, the file wins.
 - The editor has the same Write and Preview tabs as the post editor. Removing a member keeps the pages
   they edited.
+
+## The learning path
+
+The path is the course for members: numbered stages, and in each stage its steps in order. A step is a
+**chunk** (a few videos, questions and a warm-up at the keyboard) or a **build** (the hands-on work that uses
+the chunks before it). It is at `/learn` and only signed-in members see it.
+
+- A stage is a row in `course_stages`. A step is a `lab_pages` row with a stage and a place in it, so steps
+  are written in the same editor as database labs and follow the same visibility rule.
+- A member sees a step when they may see both the step and its stage. A draft stays with the admins.
+  Hidden, missing and signed out all get the same 404.
+- A step with no text yet is listed as "Not written yet" and cannot be opened. A stage with nothing written is
+  shown as coming later.
+- Steps are left out of `/labs` and the home page. Written builds get their own part of `/labs` for those
+  who may see them.
+- A member can tick a step as done and take the tick back (`page_progress`). A tick is the member's own
+  word: it unlocks nothing. The path shows the next step that is not ticked, and admins see where each member
+  is on `/admin`.
+
+### Getting the course onto the site
+
+The course is written as Markdown notes in a private notes repository. This repository and its image are
+public, so the notes are **not** files here. An admin uploads them at `/admin/course/import`:
+
+1. Choose the note files and press Import. Everything new is stored as a draft.
+2. Read the drafts as an admin on `/learn`.
+3. On `/admin/course`, press "Show the stage and its written steps to members". Single steps can be shown or
+   hidden too.
+
+What the import reads, and nothing else:
+
+| Note | Recognised by its title | What is stored |
+| --- | --- | --- |
+| Stage note | `..., stage 2: Bread` | Each `## Chunk N. Title` section as a chunk; each `### Build N. Title` heading as the name of a build |
+| Build note | `Stage 2, build 1: A first loaf` | The whole note, as that build |
+| Warm-up note | `Stage 2, chunk 3: warm-up` | Added to the end of chunk 3 |
+| Any note | A table starting with the columns `Stage` and `Topic` | The names of the stages |
+
+A file whose name ends in `-mentor.md`, or whose header has `draft: true`, is an answer key and is refused.
+Comments that the notes app hides (`%% ... %%` and `<!-- ... -->`) are dropped. A chunk ends at the next
+first or second level heading.
+
+Uploading again replaces a step's text and title; who sees it and the members' ticks stay. The order of a
+stage changes only when its stage note is in the upload, and a chunk keeps its warm-up when the stage note
+comes without the warm-up note. A stage that already exists is left as it is. Links between notes (`[[folder/stage-2-build-1|the build]]`) become
+links between pages when the reader may see both.
 
 ### Notes syntax in lab bodies
 

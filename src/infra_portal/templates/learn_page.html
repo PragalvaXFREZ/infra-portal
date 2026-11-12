@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% set section = "learn" %}
+{% block title %}{{ step.label }}: {{ step.page.title }}{% endblock %}
+{% block content %}
+  <article>
+    <p class="crumb"><a href="/learn">Learning path</a> · <a href="/learn#stage-{{ step.stage.number }}">Stage {{ step.stage.number }}: {{ step.stage.title }}</a></p>
+    <p class="step-label">{{ step.label }}</p>
+    <h1>{{ step.page.title }}</h1>
+    <div class="meta">
+      {% if step.page.minutes %}{{ step.page.minutes }} min of video{% else %}{{ "Hands-on" if step.is_build else "Reading" }}{% endif %}
+      {% if step.is_draft %} · <strong>Draft</strong>{% endif %}
+      {% if member.is_admin %} · <a href="/admin/labs/{{ step.page.id }}/edit">Edit</a>{% endif %}
+    </div>
+    {% if step.written %}
+      <div class="prose">{{ body_html }}</div>
+    {% else %}
+      <p class="lede">This one is not written yet.</p>
+    {% endif %}
+  </article>
+  {% if step.written %}
+    {# The member's own tick. It unlocks nothing; it shows them, and the mentor, where they are. #}
+    <div class="step-tick{% if step.done %} is-done{% endif %}">
+      {% if step.done %}
+        <p role="status"><span class="step-mark" aria-hidden="true"></span> Done on {{ step.done_at.strftime("%-d %B %Y") }}</p>
+        <form method="post" action="{{ step.url }}/undo"><button class="link">Not done after all</button></form>
+      {% else %}
+        <p>{% if step.is_build %}Handed in and talked through with your mentor?{% else %}Watched, answered and warmed up?{% endif %}</p>
+        <form method="post" action="{{ step.url }}/done"><button>Mark as done</button></form>
+      {% endif %}
+    </div>
+  {% endif %}
+  <nav class="step-nav" aria-label="Steps">
+    {% if earlier %}<a class="step-nav-earlier" href="{{ earlier.url }}"><span>Earlier</span>{{ earlier.label }}: {{ earlier.page.title }}</a>{% else %}<span></span>{% endif %}
+    {% if later %}<a class="step-nav-later" href="{{ later.url }}"><span>Next</span>{{ later.label }}: {{ later.page.title }}</a>{% endif %}
+  </nav>
+{% endblock %}

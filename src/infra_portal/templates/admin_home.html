@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  {% set admin_tab = "overview" %}
+  {% include "_admin_tabs.html" %}
+  <h1>Overview</h1>
+  <div class="tiles">
+    <a class="tile" href="/admin/members">
+      <strong>{{ joined }}</strong>
+      <span>{% if joined == 1 %}member has{% else %}members have{% endif %} signed in</span>
+      <small>{% if invited %}{{ invited }} invited, not signed in yet{% else %}No open invites{% endif %}</small>
+    </a>
+    <a class="tile" href="/admin/course">
+      <strong>{{ live }}</strong>
+      <span>{% if live == 1 %}step{% else %}steps{% endif %} members can open</span>
+      <small>{% if drafts %}{{ drafts }} written but still hidden{% else %}Nothing waiting{% endif %}</small>
+    </a>
+    <a class="tile" href="/admin/mail">
+      <strong>{{ subscribers }}</strong>
+      <span>{% if subscribers == 1 %}address gets{% else %}addresses get{% endif %} every post</span>
+      <small>{{ follows }} {% if follows == 1 %}follow{% else %}follows{% endif %} of one member</small>
+    </a>
+    <a class="tile" href="/writing">
+      <strong>{{ posts }}</strong>
+      <span>{% if posts == 1 %}post{% else %}posts{% endif %} published</span>
+      <small>By members</small>
+    </a>
+  </div>
+  {% if drafts %}
+    <p class="notice">
+      <span><strong>{{ drafts }} written {% if drafts == 1 %}step is{% else %}steps are{% endif %} still hidden from members.</strong> Read them, then show them on the Course tab.</span>
+      <a class="button secondary" href="/admin/course">Open Course</a>
+    </p>
+  {% endif %}
+
+  <h2>Where everyone is</h2>
+  <p class="muted small">Ticks members set themselves on the steps they can open. Hidden steps are not counted.</p>
+  <div class="table-wrap">
+  <table class="progress">
+    <thead><tr><th>Member</th><th>Done</th><th>Next step</th><th>Last tick</th></tr></thead>
+    <tbody>
+    {% for row in everyone %}
+      <tr>
+        <td><a href="/u/{{ row.member.github_login }}">{{ row.member.name }}</a></td>
+        <td>
+          <span class="bar" role="img" aria-label="{{ row.done }} of {{ row.total }}"><span style="width: {{ (100 * row.done / row.total) | round(1) if row.total else 0 }}%"></span></span>
+          <span class="muted">{{ row.done }} of {{ row.total }}</span>
+        </td>
+        <td class="status">{% if row.next %}<a href="{{ row.next.url }}">Stage {{ row.next.stage.number }} · {{ row.next.label }}</a>{% elif row.total %}Through everything{% else %}Nothing to do yet{% endif %}</td>
+        <td class="muted">{% if row.last_tick %}{{ row.last_tick.strftime("%-d %b %Y") }}{% else %}None yet{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">Nobody has signed in yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% endblock %}

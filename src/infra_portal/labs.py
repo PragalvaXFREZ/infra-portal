@@ -28,6 +28,7 @@ from functools import cache
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session, defer
 
@@ -45,7 +46,14 @@ from infra_portal.rendering import render_lab_markdown
 from infra_portal.templating import templates
 
 LABS_DIR = Path(__file__).parent / "content" / "labs"
-KIND_LABELS = {"lab": "Lab", "experiment": "Experiment", "session": "Learning session"}
+# Chunks and builds are the steps of the learning path (course.py).
+KIND_LABELS = {
+    "lab": "Lab",
+    "experiment": "Experiment",
+    "session": "Learning session",
+    "chunk": "Chunk",
+    "build": "Build",
+}
 KINDS = set(KIND_LABELS)
 # Shown on cards and pages that not everyone can see. Public pages get no label.
 VISIBILITY_LABELS = {VISIBILITY_DRAFT: "Draft", VISIBILITY_MEMBERS: "Members only"}
@@ -155,10 +163,11 @@ def visible_labs(db: Session, member: Member | None, slug: str | None = None) ->
 
     Database rows are read on every request, not cached like the files, so a change on the
     admin pages shows at once. A row whose slug a file lab took later is left out: the file
-    owns that address.
+    owns that address. Pages on the learning path are left out too: they have their own place
+    under /learn, and a dozen chunks would push the labs off the home page.
     """
     allowed = [visibility for visibility in VISIBILITIES if can_see(visibility, member)]
-    query = select(LabPage).where(LabPage.visibility.in_(allowed))
+    query = select(LabPage).where(LabPage.visibility.in_(allowed), LabPage.stage_id.is_(None))
     files = list(all_labs())
     if slug is None:
         # Lists show no body, so the long Markdown stays in the database.
@@ -178,8 +187,17 @@ def lab_list(
     member: Member | None = Depends(current_member),
     db: Session = Depends(get_db),
 ):
+    # Imported here because course.py builds on this module.
+    from infra_portal import course
+
     return templates.TemplateResponse(
-        request, "labs.html", {"member": member, "labs": visible_labs(db, member)}
+        request,
+        "labs.html",
+        {
+            "member": member,
+            "labs": visible_labs(db, member),
+            "builds": course.builds(course.load_path(db, member)),
+        },
     )
 
 
@@ -190,9 +208,16 @@ def lab_page(
     member: Member | None = Depends(current_member),
     db: Session = Depends(get_db),
 ):
+    from infra_portal import course
+
     lab = next(iter(visible_labs(db, member, slug)), None)
-    # The same 404 for "missing" and "hidden from you", so an address reveals nothing.
     if lab is None:
+        # A page that moved onto the learning path keeps its old address working, but only for
+        # a viewer who may see it there.
+        path = course.load_path(db, member)
+        if any(step.page.slug == slug for step in course.all_steps(path)):
+            return RedirectResponse(f"/learn/{slug}", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+        # The same 404 for "missing" and "hidden from you", so an address reveals nothing.
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such lab.")
     return templates.TemplateResponse(
         request,

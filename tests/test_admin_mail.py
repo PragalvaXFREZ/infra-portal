@@ -87,7 +87,9 @@ def test_admin_sees_every_message(client, boss):
         # The HTML part is inside the srcdoc attribute, escaped once more by the template.
         assert f'srcdoc="{escape(email.html)}"' in page.text
     assert page.text.count('<iframe sandbox=""') == 4
-    assert "/admin/mail" in client.get("/").text
+    # The account menu has one Admin link; the admin pages carry the tab for this one.
+    assert 'href="/admin"' in client.get("/").text
+    assert 'href="/admin/mail"' in client.get("/admin").text
 
 
 def test_without_email_the_page_says_so_and_sending_is_404(client, boss):

@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{% if page %}Edit lab page{% else %}New lab page{% endif %}{% endblock %}
 {% block content %}
-  <p class="crumb"><a href="/admin/labs">Labs admin</a></p>
-  <h1>{% if page %}Edit lab page{% else %}New lab page{% endif %}</h1>
+  {% set admin_tab = "course" if stage else "pages" %}
+  {% include "_admin_tabs.html" %}
+  <p class="crumb">{% if stage %}<a href="/admin/course">Course</a>{% else %}<a href="/admin/labs">Pages</a>{% endif %}</p>
+  <h1>{% if page %}Edit page{% else %}New page{% endif %}</h1>
   {% if page %}
-    <p class="muted small">At <a href="/labs/{{ page.slug }}">/labs/{{ page.slug }}</a>. The address does not change.</p>
+    {% set address = ("/learn/" if page.stage_id else "/labs/") ~ page.slug %}
+    <p class="muted small">At <a href="{{ address }}">{{ address }}</a>. The address does not change.</p>
   {% endif %}
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
   <form method="post" action="{% if page %}/admin/labs/{{ page.id }}/edit{% else %}/admin/labs/new{% endif %}"
@@ -35,6 +38,29 @@
     <input id="summary" name="summary" required maxlength="300" value="{{ summary }}">
     <label for="link">Link <span class="muted small">(optional, https://...)</span></label>
     <input id="link" name="link" type="url" maxlength="500" value="{{ link }}">
+    {# A page with a stage is a step on the learning path and is served under /learn. #}
+    <div class="field-row four">
+      <div>
+        <label for="stage">Stage</label>
+        <select id="stage" name="stage">
+          <option value="">Not on the path</option>
+          {% for s in stages %}<option value="{{ s.id }}"{% if s.id | string == stage %} selected{% endif %}>Stage {{ s.number }}: {{ s.title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="position">Place in the stage</label>
+        <input id="position" name="position" type="number" min="0" max="999" value="{{ position }}">
+      </div>
+      <div>
+        <label for="number">Step number</label>
+        <input id="number" name="number" type="number" min="0" max="999" value="{{ number }}">
+      </div>
+      <div>
+        <label for="minutes">Minutes of video</label>
+        <input id="minutes" name="minutes" type="number" min="0" max="999" value="{{ minutes }}">
+      </div>
+    </div>
+    <p class="muted small field-note">Only for a step on the learning path. The lowest place comes first. The step number is the 3 in "Chunk 3". Number and minutes may stay empty.</p>
     <label for="visibility">Who can see it</label>
     <select id="visibility" name="visibility">
       {% for value, name in visibilities.items() %}<option value="{{ value }}"{% if value == visibility %} selected{% endif %}>{{ name }}</option>{% endfor %}

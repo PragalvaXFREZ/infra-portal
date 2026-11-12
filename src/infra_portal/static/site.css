@@ -371,6 +371,135 @@ a.hero-card-title:hover { text-decoration: underline; }
 .by-email { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 0.85rem; font-size: 0.88rem; }
 .by-email svg { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
 
+/* ---------- the learning path ---------- */
+
+/* The way in: one dark card with the step to open. */
+.next-up {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem 1.5rem;
+  margin: 0.4rem 0 0;
+  padding: 1.15rem 1.3rem;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+}
+.next-up-label { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; opacity: 0.7; }
+.next-up strong { grid-column: 1; font-size: 1.2rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+.next-up-go {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+.next-up:hover .next-up-go { background: var(--card); }
+.next-up-bar { grid-column: 1 / -1; height: 4px; margin-top: 0.75rem; border-radius: 4px; background: rgb(128 128 128 / 0.4); overflow: hidden; }
+.next-up-bar span { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--paper); }
+.next-up-count { grid-column: 1 / -1; font-size: 0.82rem; opacity: 0.7; }
+.all-done { margin: 0.4rem 0 0; padding: 0.9rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+
+/* Stages hang on a line down the left, each from its number. */
+.path { list-style: none; margin: 2.4rem 0 0; padding: 0; }
+.stage { position: relative; padding: 0 0 1.9rem 3.5rem; }
+.stage::before {
+  content: "";
+  position: absolute;
+  top: 2.5rem;
+  bottom: 0.3rem;
+  left: 1.1rem;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.stage:last-child { padding-bottom: 0; }
+.stage:last-child::before { display: none; }
+.stage-number {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1.5px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.stage-open .stage-number { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.stage-done .stage-number { border-color: var(--link); background: var(--link); color: var(--paper); }
+.stage-done::before { background: var(--link); }
+.stage-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.2rem 1rem; flex-wrap: wrap; min-height: 2.2rem; }
+.stage-head h2 { margin: 0.3rem 0 0; font-size: 1.22rem; }
+.stage-planned .stage-head h2 { color: var(--ink-2); font-weight: 500; }
+.stage-state { color: var(--muted); font-size: 0.88rem; white-space: nowrap; }
+.stage-summary { max-width: 40rem; color: var(--ink-2); }
+.stage-summary p { margin: 0.2rem 0 0; }
+
+.steps { list-style: none; display: grid; gap: 0.15rem; margin: 0.8rem 0 0; padding: 0; }
+.step-row {
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  margin-left: -0.8rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+a.step-row:hover { border-color: var(--line); background: var(--card); }
+.step-mark { width: 1.1rem; height: 1.1rem; border: 1.5px solid var(--muted); border-radius: 50%; }
+.step-text { display: grid; grid-template-columns: 5.2rem minmax(0, 1fr); align-items: baseline; gap: 0 0.6rem; }
+.step-label { margin: 0; color: var(--muted); font-size: 0.76rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.step-title { font-weight: 500; }
+.step-meta { color: var(--muted); font-size: 0.86rem; white-space: nowrap; }
+/* A build is the thing the chunks before it lead to, so it stands out as a card. */
+.step-build .step-row { margin-top: 0.4rem; margin-bottom: 0.7rem; padding-top: 0.95rem; padding-bottom: 0.95rem; border-color: var(--line); background: var(--card); }
+.step-build .step-mark { border-radius: 4px; }
+.step-build .step-label { color: var(--link); }
+.step-build .step-title { font-size: 1.08rem; font-weight: 600; }
+a.step-row:hover .step-title { text-decoration: underline; text-underline-offset: 0.18em; }
+.step-coming .step-row { background: none; border-style: dashed; }
+.step-coming .step-title, .step-coming .step-label { color: var(--muted); }
+.step-coming .step-mark { border-style: dashed; }
+/* A ticked step: the mark is filled, with a check drawn from two borders. */
+.step-done .step-mark, .step-tick.is-done .step-mark { position: relative; border-color: var(--link); background: var(--link); }
+.step-done .step-mark::after, .step-tick.is-done .step-mark::after {
+  content: "";
+  position: absolute;
+  top: 12%;
+  left: 33%;
+  width: 28%;
+  height: 52%;
+  border: solid var(--paper);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.step-done .step-title { color: var(--ink-2); }
+
+/* A step's own page. */
+article > .step-label { margin-bottom: 0.3rem; }
+.step-tick { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; margin-top: 2.6rem; padding: 0.9rem 1rem 0.9rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.step-tick p { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-weight: 500; }
+.step-tick form { margin: 0; }
+.step-tick .step-mark { display: inline-block; flex: none; }
+.step-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
+.step-nav a { display: grid; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font-weight: 500; line-height: 1.35; text-decoration: none; }
+.step-nav a:hover { border-color: var(--muted); }
+.step-nav a span { color: var(--muted); font-size: 0.76rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.step-nav-later { grid-column: 2; text-align: right; }
+
 /* ---------- post lists and meta ---------- */
 
 .item { padding: 0.8rem 0; border-top: 1px solid var(--line); }
@@ -483,6 +612,9 @@ form.stack label { margin-top: 0.8rem; font-weight: 500; }
 /* Two short fields side by side, such as a lab's kind and date. */
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0 1rem; }
 .field-row > div { display: grid; gap: 0.4rem; align-content: start; }
+/* Four short fields on one row where there is room. */
+.field-row.four { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
+form.stack .field-note { margin: 0.2rem 0 0; }
 form.inline { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 1.2rem 0 1.6rem; }
 form.inline label { font-weight: 500; }
 form.inline input { width: auto; flex: 1 1 12rem; }
@@ -646,6 +778,57 @@ form[aria-busy="true"] .subscribe-field button { opacity: 0.6; cursor: progress;
 @keyframes subscribe-settle { from { transform: scale(1.1); } }
 @keyframes subscribe-panel { from { opacity: 0; transform: translateY(6px); } }
 
+/* ---------- admin ---------- */
+
+/* The tabs on every admin page: plain words, the current one underlined, like the editor's tabs. */
+.admin-tabs { display: flex; align-items: baseline; gap: 1.4rem; margin: -0.6rem 0 1.8rem; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.admin-tabs-name { color: var(--muted); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; }
+.admin-tabs a { flex: none; margin-bottom: -1px; padding: 0.55rem 0; border-bottom: 2px solid transparent; color: var(--muted); font-size: 0.95rem; font-weight: 500; text-decoration: none; }
+.admin-tabs a:hover { color: var(--ink); }
+.admin-tabs a[aria-current="page"] { border-bottom-color: var(--ink); color: var(--ink); }
+.page-head .actions { margin-top: 0; }
+.page-head .actions .button, .page-head > .button { padding: 0.55rem 0.85rem; font-size: 0.88rem; }
+
+/* Four numbers on the overview, each a link to the tab behind it. */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.75rem; margin: 1.2rem 0 0; }
+.tile { display: grid; gap: 0.1rem; padding: 1rem 1.15rem 1.05rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); text-decoration: none; transition: border-color 0.2s ease; }
+.tile:hover { border-color: var(--muted); }
+.tile strong { font-size: 2rem; font-weight: 600; line-height: 1.1; letter-spacing: -0.03em; }
+.tile span { color: var(--ink-2); font-size: 0.95rem; }
+.tile small { margin-top: 0.35rem; color: var(--muted); font-size: 0.82rem; }
+.notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; margin: 0.9rem 0 0; padding: 0.8rem 0.9rem 0.8rem 1.1rem; border: 1px solid var(--line); border-left: 3px solid #a8741a; border-radius: 10px; background: var(--card); }
+.notice .button { padding: 0.5rem 0.85rem; font-size: 0.88rem; }
+.bar { display: inline-block; width: 6rem; height: 6px; margin-right: 0.6rem; border-radius: 6px; background: var(--sunk); overflow: hidden; vertical-align: middle; }
+.bar span { display: block; height: 100%; border-radius: 6px; background: var(--link); }
+table.progress td { white-space: nowrap; }
+
+/* One stage on the Course tab: its name, who sees it, the button that approves it, then its steps. */
+.admin-stage { margin-top: 2.2rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+.admin-stage-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.admin-stage-head h2 { margin: 0; font-size: 1.2rem; }
+.admin-stage-head h2 .muted { margin-right: 0.3rem; font-weight: 500; }
+.admin-stage-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-left: auto; font-size: 0.92rem; }
+.admin-stage-actions form, .admin-stage td form { margin: 0; }
+.admin-stage-actions button:not(.link) { padding: 0.5rem 0.8rem; font-size: 0.86rem; }
+.admin-stage table { margin-top: 0.6rem; }
+.admin-stage td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.admin-stage td:last-child { text-align: right; white-space: nowrap; font-size: 0.9rem; }
+/* Who sees a stage or a step: a hollow dot for a draft, a filled one once members see it. */
+.seen { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--ink-2); font-size: 0.9rem; white-space: nowrap; }
+.seen::before { content: ""; width: 0.55rem; height: 0.55rem; border: 1.5px solid var(--link); border-radius: 50%; background: var(--link); }
+.seen-draft { color: var(--muted); }
+.seen-draft::before { border-color: var(--muted); background: none; }
+
+/* What an import did, and the plain rules of what it reads. */
+.import-result { margin: 0 0 1.8rem; padding: 0.9rem 1.15rem 0.4rem; border: 1px solid var(--line); border-left: 3px solid var(--link); border-radius: 10px; background: var(--card); }
+.import-result p { margin: 0 0 0.6rem; }
+.import-result h2 { margin: 1rem 0 0.3rem; font-size: 1rem; }
+.import-result h2 .muted { margin-left: 0.3rem; font-weight: 400; }
+.import-result ul, .import-rules { margin: 0 0 0.8rem; padding-left: 1.2rem; }
+.import-result li, .import-rules li { margin: 0.25rem 0; overflow-wrap: anywhere; }
+.import-rules { color: var(--ink-2); font-size: 0.95rem; }
+.import-rules code, .import-result code { font: 0.9em var(--mono); background: var(--sunk); padding: 0.1em 0.35em; border-radius: 4px; }
+
 /* ---------- tables ---------- */
 
 .table-wrap { overflow-x: auto; }
@@ -745,6 +928,13 @@ footer.site a { color: var(--ink-2); }
   .inner .scene { min-height: 15rem; }
   .profile { align-items: flex-start; }
   .picture-edit { flex-direction: column; }
+  /* The path on a phone: a narrower line, and a step's name under its label. */
+  .stage { padding-left: 2.9rem; }
+  .step-text { grid-template-columns: minmax(0, 1fr); }
+  .step-row { align-items: start; }
+  .step-mark { margin-top: 0.2rem; }
+  .step-nav { grid-template-columns: 1fr; }
+  .step-nav-later { grid-column: 1; text-align: left; }
   /* On a phone the painting is a band across the top, cut to the reader and her book. The
      pop-up sits at the top of the screen so the keyboard does not cover the address field. */
   dialog.subscribe { margin-top: 1rem; }
