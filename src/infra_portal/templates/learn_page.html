@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% set section = "learn" %}
+{% block title %}{{ step.label }}: {{ step.page.title }}{% endblock %}
+{% block content %}
+  <article>
+    <p class="crumb"><a href="/learn">Learning path</a> · <a href="/learn#stage-{{ step.stage.number }}">Stage {{ step.stage.number }}: {{ step.stage.title }}</a></p>
+    <p class="step-label">{{ step.label }}</p>
+    <h1>{{ step.page.title }}</h1>
+    <div class="meta">
+      {% if step.page.minutes %}{{ step.page.minutes }} min of video{% else %}{{ "Hands-on" if step.is_build else "Reading" }}{% endif %}
+      {% if step.is_draft %} · <strong>Draft</strong>{% endif %}
+      {% if member.is_admin %} · <a href="/admin/labs/{{ step.page.id }}/edit">Edit</a>{% endif %}
+    </div>
+    {% if step.written %}
+      <div class="prose">{{ body_html }}</div>
+    {% else %}
+      <p class="lede">This one is not written yet.</p>
+    {% endif %}
+  </article>
+  <nav class="step-nav" aria-label="Steps">
+    {% if earlier %}<a class="step-nav-earlier" href="{{ earlier.url }}"><span>Earlier</span>{{ earlier.label }}: {{ earlier.page.title }}</a>{% else %}<span></span>{% endif %}
+    {% if later %}<a class="step-nav-later" href="{{ later.url }}"><span>Next</span>{{ later.label }}: {{ later.page.title }}</a>{% endif %}
+  </nav>
+{% endblock %}

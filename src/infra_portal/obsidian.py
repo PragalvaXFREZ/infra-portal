@@ -3,7 +3,8 @@
 Lab guides are first written in Obsidian, so they contain:
 
 - Wikilinks: `[[some/path|Label]]` or `[[some/path]]`. The target is a note in the notes
-  repository, not a page on this site, so only the label is shown, as plain text.
+  repository, so by default only the label is shown, as plain text. The caller may pass a
+  function that knows which notes are pages on this site; then those become ordinary links.
 - Callouts: a blockquote whose first line is `> [!warning] Optional title`. It becomes a box
   with the title instead of a quote that shows `[!warning]`.
 
@@ -44,8 +45,19 @@ def _wikilink(state: StateInline, silent: bool) -> bool:
     if match is None:
         return False
     if not silent:
-        # Pending text becomes a plain text token, which the renderer escapes.
-        state.pending += wikilink_label(match.group(1))
+        inner = match.group(1)
+        label = wikilink_label(inner)
+        # `wikilink_url` is the caller's function from a note path to an address on this site.
+        resolve = state.env.get("wikilink_url") if isinstance(state.env, dict) else None
+        url = resolve(inner.replace("\\|", "|").partition("|")[0]) if resolve else None
+        if url:
+            # Ordinary link tokens, so the renderer escapes the address and the label.
+            state.push("link_open", "a", 1).attrs = {"href": url}
+            state.push("text", "", 0).content = label
+            state.push("link_close", "a", -1)
+        else:
+            # Pending text becomes a plain text token, which the renderer escapes.
+            state.pending += label
     state.pos = match.end()
     return True
 

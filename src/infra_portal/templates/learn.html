@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set section = "learn" %}
+{% block title %}Learning path{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  <div class="page-head">
+    <h1>Learning path</h1>
+    {% if member and member.is_admin %}<a class="button secondary by-email" href="/admin/labs">Edit the pages</a>{% endif %}
+  </div>
+  {% if not member %}
+    <p class="lede">The learning path is for members of the initiative.</p>
+    <p><a class="button" href="/auth/github/login">Member sign in</a></p>
+  {% elif not path %}
+    <p class="lede">Nothing is on the path yet.</p>
+  {% else %}
+    <p class="lede">Each stage starts with short video sittings. Then comes a build that uses them.</p>
+    {% if start %}
+      <a class="next-up" href="{{ start.url }}">
+        <span class="next-up-label">Start here · Stage {{ start.stage.number }}</span>
+        <strong>{{ start.label }}: {{ start.page.title }}</strong>
+        <span class="next-up-go">Open</span>
+      </a>
+    {% endif %}
+    <ol class="path">
+      {% for view in path %}
+        <li class="stage stage-{{ view.state }}" id="stage-{{ view.stage.number }}">
+          <span class="stage-number" aria-hidden="true">{{ view.stage.number }}</span>
+          <div class="stage-head">
+            <h2><span class="visually-hidden">Stage {{ view.stage.number }}: </span>{{ view.stage.title }}</h2>
+            <span class="stage-state">{% if view.is_draft %}Draft · {% endif %}{% if view.written %}{{ view.written | length }} {% if view.written | length == 1 %}step{% else %}steps{% endif %}{% elif not view.stage.summary %}Coming later{% endif %}</span>
+          </div>
+          {% if view.stage.summary %}<div class="stage-summary">{{ view.summary_html }}</div>{% endif %}
+          {% if view.steps %}
+            <ol class="steps">
+              {% for step in view.steps %}
+                {% include "_step.html" %}
+              {% endfor %}
+            </ol>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+{% endblock %}

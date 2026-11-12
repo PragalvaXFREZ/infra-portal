@@ -16,7 +16,18 @@
       </p>
     </div>
     {# The newest post, and the way to get the next one by email. With no posts yet it is only the offer. #}
-    {% if posts or follow_enabled() %}
+    {% if start %}
+      {# A member gets the way into the learning path here. #}
+      <aside class="hero-card">
+        <p class="hero-card-label">Learning path · Stage {{ start.stage.number }}</p>
+        <a class="hero-card-title" href="{{ start.url }}">{{ start.label }}: {{ start.page.title }}</a>
+        <p class="hero-card-meta">{{ start.stage.title }}</p>
+        <p class="hero-card-foot">
+          <span>Every stage and step</span>
+          <a class="button secondary" href="/learn">Open the path</a>
+        </p>
+      </aside>
+    {% elif posts or follow_enabled() %}
       <aside class="hero-card">
         {% if posts %}
           {% set latest = posts[0] %}

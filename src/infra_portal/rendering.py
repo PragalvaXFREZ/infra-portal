@@ -6,6 +6,7 @@ markdown-it also refuses javascript:, vbscript: and file: links.
 
 import re
 import unicodedata
+from collections.abc import Callable
 
 from markdown_it import MarkdownIt
 from markupsafe import Markup
@@ -28,9 +29,13 @@ def render_markdown(text: str) -> Markup:
     return Markup(_md.render(text or ""))
 
 
-def render_lab_markdown(text: str) -> Markup:
-    """Like render_markdown, plus wikilinks and callouts. See obsidian.py."""
-    return Markup(_lab_md.render(text or ""))
+def render_lab_markdown(text: str, link_for: Callable[[str], str | None] | None = None) -> Markup:
+    """Like render_markdown, plus wikilinks and callouts. See obsidian.py.
+
+    `link_for` turns a wikilink's target into an address on this site, or None to show the
+    label as plain text. Without it every wikilink is plain text.
+    """
+    return Markup(_lab_md.render(text or "", {"wikilink_url": link_for}))
 
 
 def slugify(title: str, max_length: int = 80) -> str:

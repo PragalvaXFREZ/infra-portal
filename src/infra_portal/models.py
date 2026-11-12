@@ -215,12 +215,43 @@ VISIBILITY_PUBLIC = "public"
 VISIBILITIES = (VISIBILITY_DRAFT, VISIBILITY_MEMBERS, VISIBILITY_PUBLIC)
 
 
+class CourseStage(Base):
+    """One stage of the learning path, such as "Stage 1: one Linux machine".
+
+    A stage holds pages (LabPage rows with `stage_id` set) in the order of their `position`.
+    A stage with no written page yet is still shown on the path, as something that is coming.
+    `visibility` works as it does for a page. A viewer sees a page on the path only if they may
+    see both the page and its stage.
+    """
+
+    __tablename__ = "course_stages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    number: Mapped[int] = mapped_column(unique=True)
+    title: Mapped[str] = mapped_column(String(200))
+    summary: Mapped[str] = mapped_column(String(300), default="")
+    visibility: Mapped[str] = mapped_column(String(16), default=VISIBILITY_DRAFT)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    pages: Mapped[list["LabPage"]] = relationship(
+        back_populates="stage", order_by="LabPage.position"
+    )
+
+
 class LabPage(Base):
     """A lab, experiment or learning session written on the admin pages instead of in a file.
 
     The repository and its image are public, so a page that must stay hidden cannot be a file.
     `visibility` decides who sees it: `draft` (admins), `members` (anyone signed in) or `public`.
     The slug is set when the page is created and does not follow later title edits.
+
+    A page with a `stage_id` is a step on the learning path: a chunk (videos, questions and a
+    warm-up) or a build. It is served under /learn and left out of the lab lists.
     """
 
     __tablename__ = "lab_pages"
@@ -247,4 +278,14 @@ class LabPage(Base):
         ForeignKey("members.id", ondelete="SET NULL")
     )
 
+    # SET NULL: removing a stage leaves its pages as ordinary lab pages.
+    stage_id: Mapped[int | None] = mapped_column(
+        ForeignKey("course_stages.id", ondelete="SET NULL"), index=True
+    )
+    # The order inside the stage, lowest first.
+    position: Mapped[int] = mapped_column(default=0, server_default="0")
+    # Minutes of video in a chunk, shown on the path. Empty for pages without videos.
+    minutes: Mapped[int | None] = mapped_column()
+
     edited_by: Mapped[Member | None] = relationship()
+    stage: Mapped[CourseStage | None] = relationship(back_populates="pages")
