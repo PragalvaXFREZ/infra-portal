@@ -45,6 +45,13 @@ FEEDS = re.compile(rf"\*\*Feeds:\*\*\s*build\s+{NUMBER}", re.IGNORECASE)
 RULE = re.compile(r"^ {0,3}-{3,}\s*$")
 FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 # A stage table row may end with a short note to the mentor, as in "Bread. Done.".
+# Where a chunk section ends: any first or second level heading, however it is indented.
+SECTION_END = re.compile(r"^ {0,3}#{1,2}(?:[ \t]|$)")
+# Text the notes app hides from its reader: `%% ... %%` and `<!-- ... -->`. The first group is
+# an inline code span, which is kept as it is.
+HIDDEN = re.compile(r"((`+)[^\n]*?\2)|%%.*?%%|<!--.*?-->", re.DOTALL)
+# What a warm-up note is put under, at the end of its chunk.
+WARM_UP_HEADING = "\n\n## Warm-up steps\n\n"
 TABLE_ENDING = re.compile(r"^(.*\S)\.\s+(?:done|this note)\.$", re.IGNORECASE)
 
 
@@ -179,7 +186,9 @@ def _fence_flags(lines: list[str]) -> list[bool]:
     for line in lines:
         match = FENCE.match(line)
         if opener is None:
-            if match:
+            # A line such as "```ls``` lists files" is inline code, not the start of a block:
+            # the text after an opening run of backticks may not hold another backtick.
+            if match and not (match.group(1)[0] == "`" and "`" in line[match.end() :]):
                 opener = match.group(1)
             flags.append(opener is not None)
         else:
@@ -189,6 +198,32 @@ def _fence_flags(lines: list[str]) -> list[bool]:
                 if not line.strip().strip(opener[0]):
                     opener = None
     return flags
+
+
+def _drop_hidden(body: str) -> str:
+    """Remove comments the notes app does not show: `%% ... %%` and `<!-- ... -->`.
+
+    The author cannot see them on the rendered note, so they may hold remarks for the mentor.
+    Code is left alone, both fenced blocks and inline spans, where `%%` is ordinary text.
+    """
+    lines = body.splitlines()
+    fenced = _fence_flags(lines)
+    out: list[str] = []
+    run: list[str] = []
+
+    def flush() -> None:
+        if run:
+            out.append(HIDDEN.sub(lambda m: m.group(1) or "", "\n".join(run)))
+            run.clear()
+
+    for line, inside in zip(lines, fenced, strict=True):
+        if inside:
+            flush()
+            out.append(line)
+        else:
+            run.append(line)
+    flush()
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
 
 
 def _strip_ends(lines: list[str], fenced: list[bool]) -> str:
@@ -221,8 +256,14 @@ def _read_stage_body(body: str) -> tuple[list[_Chunk], dict[int, str]]:
     chunks: list[_Chunk] = []
     build_titles: dict[int, str] = {}
 
-    # Where each `## ` heading starts. A chunk runs from its heading to the next one.
-    starts = [i for i, line in enumerate(lines) if line.startswith("## ") and not fenced[i]]
+    # Where a section starts: a first or second level heading, or the heading of a build's
+    # outline. A chunk runs from its own heading to the next of these, so text for the mentor
+    # that follows the last chunk under any such heading is not taken along.
+    starts = [
+        i
+        for i, line in enumerate(lines)
+        if not fenced[i] and (SECTION_END.match(line) or BUILD_HEADING.match(line.rstrip()))
+    ]
     for i, start in enumerate(starts):
         match = CHUNK_HEADING.match(lines[start].rstrip())
         if match is None:
@@ -344,7 +385,7 @@ def plan_import(files: Sequence[tuple[str, str]]) -> Plan:
         if reason := _refusal(name, header):
             refused.append(Refused(name, reason))
             continue
-        note = _read_note(header, body)
+        note = _read_note(header, _drop_hidden(body))
         slugs = note.slugs()
         if clash := next((s for s in slugs if s in owners), None):
             reason = f"It repeats the page {clash}, which {owners[clash]} already gives."
@@ -383,7 +424,7 @@ def plan_import(files: Sequence[tuple[str, str]]) -> Plan:
                 refused.append(Refused(name, reason))
                 continue
             warmed[key] = name
-            body = f"{chunks[key].body}\n\n## Warm-up steps\n\n{note.warmup[1]}"
+            body = f"{chunks[key].body}{WARM_UP_HEADING}{note.warmup[1]}"
             chunks[key] = replace(chunks[key], body=body)
         elif not (note.stage_title or note.build or note.table_rows):
             unused.append(name)

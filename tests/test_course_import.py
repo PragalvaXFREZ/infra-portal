@@ -1,3 +1,5 @@
+import pytest
+
 from infra_portal.course_import import PageDraft, Plan, StageDraft, plan_import
 
 # A made-up baking course, in the same shape as the real notes.
@@ -400,3 +402,51 @@ def test_a_second_warmup_for_the_same_chunk_is_refused():
     body = page(plan, "stage-2-chunk-1").body
     assert "100 g" in body
     assert "200 g" not in body
+
+
+FENCE_TICKS = "`" * 3
+
+
+def _stage_note(after_chunk: str) -> str:
+    return (
+        '---\ntitle: "Baking course, stage 2: bread"\n---\n\n'
+        "## Chunk 1. Flour\n\nFlour is ground grain.\n\n" + after_chunk
+    )
+
+
+@pytest.mark.parametrize(
+    "heading",
+    ["# Notes for the mentor", "  ## Answers", "##\tAnswers", "## Answers", "### Build 1. A loaf"],
+)
+def test_a_chunk_ends_at_any_heading_that_starts_another_part(heading):
+    plan = plan_import([("stage.md", _stage_note(f"{heading}\n\nONLY-FOR-THE-MENTOR\n"))])
+    [chunk] = [page for page in plan.pages if page.kind == "chunk"]
+    assert "ONLY-FOR-THE-MENTOR" not in chunk.body and chunk.body == "Flour is ground grain."
+
+
+def test_inline_code_at_the_start_of_a_line_does_not_open_a_code_block():
+    line = f"{FENCE_TICKS}ls{FENCE_TICKS} lists the files."
+    plan = plan_import([("stage.md", _stage_note(f"{line}\n\n## Answers\n\nONLY-FOR-THE-MENTOR\n"))])
+    [chunk] = [page for page in plan.pages if page.kind == "chunk"]
+    assert "lists the files." in chunk.body and "ONLY-FOR-THE-MENTOR" not in chunk.body
+
+
+def test_a_real_code_block_still_keeps_its_headings():
+    block = f"{FENCE_TICKS}text\n## not a heading\n{FENCE_TICKS}\n\nAfter the block.\n"
+    plan = plan_import([("stage.md", _stage_note(block))])
+    [chunk] = [page for page in plan.pages if page.kind == "chunk"]
+    assert "## not a heading" in chunk.body and "After the block." in chunk.body
+
+
+def test_comments_the_notes_app_hides_are_not_stored():
+    text = (
+        "Shown. %%HIDDEN-ONE%% Also shown.\n\n"
+        "<!-- HIDDEN-TWO\nover two lines -->\n\n"
+        "%%\nHIDDEN-THREE\n%%\n\n"
+        f"Inline `printf '%%d%%'` stays.\n\n{FENCE_TICKS}sh\necho %%KEPT-IN-CODE%%\n{FENCE_TICKS}\n"
+    )
+    plan = plan_import([("stage.md", _stage_note(text))])
+    [chunk] = [page for page in plan.pages if page.kind == "chunk"]
+    assert "HIDDEN" not in chunk.body
+    assert "Shown.  Also shown." in chunk.body
+    assert "printf '%%d%%'" in chunk.body and "echo %%KEPT-IN-CODE%%" in chunk.body
