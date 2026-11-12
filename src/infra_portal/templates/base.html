@@ -45,9 +45,8 @@
             <a href="/me/posts">My posts</a>
             <a href="/u/{{ member.github_login }}">Profile</a>
             <a href="/settings/profile">Edit profile</a>
-            {% if member.is_admin %}<a href="/admin/members">Members admin</a>{% endif %}
-            {% if member.is_admin %}<a href="/admin/mail">Email preview</a>{% endif %}
-            {% if member.is_admin %}<a href="/admin/labs">Labs admin</a>{% endif %}
+            {# One way in for admins. The admin pages have their own tabs. #}
+            {% if member.is_admin %}<a href="/admin">Admin</a>{% endif %}
             <form method="post" action="/auth/logout"><button class="item-button">Sign out</button></form>
           </div>
         </details>

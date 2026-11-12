@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, defer, selectinload
 
 from infra_portal.auth import require_admin
 from infra_portal.db import get_db
@@ -20,6 +20,7 @@ from infra_portal.models import (
     VISIBILITY_DRAFT,
     VISIBILITY_MEMBERS,
     VISIBILITY_PUBLIC,
+    CourseStage,
     LabPage,
     Member,
 )
@@ -58,6 +59,10 @@ class Fields:
     link: str = ""
     body: str = ""
     visibility: str = VISIBILITY_DRAFT
+    # The learning path: the stage's id, the place in it, and minutes of video. Text, as typed.
+    stage: str = ""
+    position: str = "0"
+    minutes: str = ""
 
     @classmethod
     def of(cls, page: LabPage) -> "Fields":
@@ -70,6 +75,9 @@ class Fields:
             link=page.link or "",
             body=page.body,
             visibility=page.visibility,
+            stage="" if page.stage_id is None else str(page.stage_id),
+            position=str(page.position),
+            minutes="" if page.minutes is None else str(page.minutes),
         )
 
 
@@ -82,8 +90,14 @@ def _form(
     link: str = Form(""),
     body: str = Form(""),
     visibility: str = Form(VISIBILITY_DRAFT),
+    stage: str = Form(""),
+    position: str = Form("0"),
+    minutes: str = Form(""),
 ) -> Fields:
     return Fields(
+        stage=stage.strip(),
+        position=position.strip() or "0",
+        minutes=minutes.strip(),
         title=title.strip(),
         slug=slug.strip().lower(),
         kind=kind,
@@ -123,6 +137,29 @@ def _check(fields: Fields) -> tuple[str | None, dt.date | None]:
     return None, day
 
 
+def _small_number(text: str) -> int | None:
+    """A whole number from 0 to 999, or None if the text is something else."""
+    return int(text) if text.isascii() and text.isdecimal() and len(text) <= 3 else None
+
+
+def _check_path(db: Session, fields: Fields) -> tuple[str | None, int | None, int, int | None]:
+    """An error or None, then the stage id, the place in the stage and the minutes of video."""
+    stage_id = None
+    if fields.stage:
+        # The value is a stage id from the list. Anything else can arrive in a form.
+        known = fields.stage.isascii() and fields.stage.isdecimal() and len(fields.stage) < 10
+        if not known or db.get(CourseStage, int(fields.stage)) is None:
+            return "Choose a stage from the list.", None, 0, None
+        stage_id = int(fields.stage)
+    position = _small_number(fields.position)
+    if position is None:
+        return "The place in the stage must be a whole number from 0 to 999.", None, 0, None
+    minutes = _small_number(fields.minutes) if fields.minutes else None
+    if fields.minutes and minutes is None:
+        return "Minutes of video must be a whole number from 0 to 999.", None, 0, None
+    return None, stage_id, position, minutes
+
+
 def _check_slug(db: Session, slug: str) -> str | None:
     if not SLUG.match(slug) or len(slug) > MAX_SLUG:
         return (
@@ -132,12 +169,13 @@ def _check_slug(db: Session, slug: str) -> str | None:
     if slug in file_slugs():
         return f"A lab file in the repository already uses /labs/{slug}. Choose another address."
     if db.scalar(select(LabPage.id).where(LabPage.slug == slug)) is not None:
-        return f"Another page already uses /labs/{slug}. Choose another address."
+        return f"Another page already uses the address {slug}. Choose another one."
     return None
 
 
 def _editor(
     request: Request,
+    db: Session,
     admin: Member,
     page: LabPage | None,
     fields: Fields,
@@ -155,17 +193,18 @@ def _editor(
             "preview_html": preview_html,
             "kinds": KIND_LABELS,
             "visibilities": VISIBILITY_CHOICES,
+            "stages": db.scalars(select(CourseStage).order_by(CourseStage.number)).all(),
         },
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT if error else status.HTTP_200_OK,
     )
 
 
-def _view(request: Request, admin: Member, page: LabPage | None, fields: Fields, action: str):
+def _view(request: Request, db: Session, admin: Member, page: LabPage | None, fields: Fields, action: str):
     """Show the editor on the Write or Preview tab, keeping every field. Saves nothing."""
     if len(fields.body) > MAX_BODY:
-        return _editor(request, admin, page, fields, f"The page must be at most {MAX_BODY:,} characters.")
+        return _editor(request, db, admin, page, fields, f"The page must be at most {MAX_BODY:,} characters.")
     preview_html = render_lab_markdown(fields.body) if action == "preview" else None
-    return _editor(request, admin, page, fields, None, preview_html)
+    return _editor(request, db, admin, page, fields, None, preview_html)
 
 
 def _get_page(db: Session, page_id: int) -> LabPage:
@@ -182,7 +221,9 @@ def list_pages(
     db: Session = Depends(get_db),
 ):
     pages = db.scalars(
-        select(LabPage).options(selectinload(LabPage.edited_by)).order_by(LabPage.date.desc(), LabPage.slug)
+        select(LabPage)
+        .options(selectinload(LabPage.edited_by), selectinload(LabPage.stage), defer(LabPage.body))
+        .order_by(LabPage.date.desc(), LabPage.slug)
     ).all()
     return templates.TemplateResponse(
         request,
@@ -192,8 +233,12 @@ def list_pages(
 
 
 @router.get("/new")
-def new_page_form(request: Request, admin: Member = Depends(require_admin)):
-    return _editor(request, admin, None, Fields(date=dt.date.today().isoformat()))
+def new_page_form(
+    request: Request,
+    admin: Member = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return _editor(request, db, admin, None, Fields(date=dt.date.today().isoformat()))
 
 
 @router.post("/new")
@@ -205,15 +250,20 @@ def create_page(
     db: Session = Depends(get_db),
 ):
     if action in VIEW_ACTIONS:
-        return _view(request, admin, None, fields, action)
+        return _view(request, db, admin, None, fields, action)
     # Like a post, an empty address comes from the title. It is set once, here.
     if not fields.slug and fields.title:
         fields.slug = slugify(fields.title, max_length=MAX_SLUG)
     error, day = _check(fields)
     error = error or _check_slug(db, fields.slug)
+    path_error, stage_id, position, minutes = _check_path(db, fields)
+    error = error or path_error
     if error:
-        return _editor(request, admin, None, fields, error)
+        return _editor(request, db, admin, None, fields, error)
     page = LabPage(
+        stage_id=stage_id,
+        position=position,
+        minutes=minutes,
         slug=fields.slug,
         title=fields.title,
         kind=fields.kind,
@@ -237,7 +287,7 @@ def edit_page_form(
     db: Session = Depends(get_db),
 ):
     page = _get_page(db, page_id)
-    return _editor(request, admin, page, Fields.of(page))
+    return _editor(request, db, admin, page, Fields.of(page))
 
 
 @router.post("/{page_id}/edit")
@@ -253,10 +303,13 @@ def update_page(
     # The address never changes after creation, so links to the page keep working.
     fields.slug = page.slug
     if action in VIEW_ACTIONS:
-        return _view(request, admin, page, fields, action)
+        return _view(request, db, admin, page, fields, action)
     error, day = _check(fields)
+    path_error, stage_id, position, minutes = _check_path(db, fields)
+    error = error or path_error
     if error:
-        return _editor(request, admin, page, fields, error)
+        return _editor(request, db, admin, page, fields, error)
+    page.stage_id, page.position, page.minutes = stage_id, position, minutes
     page.title, page.kind, page.date = fields.title, fields.kind, day
     page.summary, page.link, page.body = fields.summary, fields.link or None, fields.body
     page.visibility = fields.visibility

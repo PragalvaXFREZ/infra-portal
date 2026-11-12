@@ -2,6 +2,8 @@
 {% block title %}Email preview{% endblock %}
 {% block sheet_class %}wide{% endblock %}
 {% block content %}
+  {% set admin_tab = "mail" %}
+  {% include "_admin_tabs.html" %}
   <h1>Email preview</h1>
   <p>The four emails the site sends, built by the same code as the real ones, with made-up data. Their links carry a token that matches nothing, so opening one changes nothing.</p>
   {% if mail_enabled %}

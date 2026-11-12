@@ -1,27 +1,34 @@
 {% extends "base.html" %}
-{% block title %}Labs admin{% endblock %}
+{% block title %}Pages{% endblock %}
 {% block sheet_class %}wide{% endblock %}
 {% block content %}
-  <h1>Labs admin</h1>
+  {% set admin_tab = "pages" %}
+  {% include "_admin_tabs.html" %}
+  <div class="page-head">
+    <h1>Pages</h1>
+    <a class="button secondary" href="/admin/labs/new">Add a page</a>
+  </div>
   <p class="muted small">
-    Pages written here live in the database, so they can stay hidden until they are ready. Lab files in the
-    repository are always public and are not listed here.
+    Every page written here: labs, experiments, and the steps of the learning path. They live in the
+    database, so they can stay hidden until they are ready. Lab files in the repository are always public
+    and are not listed here.
   </p>
-  <p><a href="/admin/labs/new">Add a page</a></p>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>Title</th><th>Address</th><th>Kind</th><th>Who sees it</th><th>Updated</th></tr></thead>
+    <thead><tr><th>Title</th><th>Address</th><th>Kind</th><th>On the path</th><th>Who sees it</th><th>Updated</th></tr></thead>
     <tbody>
     {% for page in pages %}
       <tr>
         <td><a href="/admin/labs/{{ page.id }}/edit">{{ page.title }}</a></td>
-        <td class="muted"><a href="/labs/{{ page.slug }}">/labs/{{ page.slug }}</a></td>
+        {% set address = ("/learn/" if page.stage else "/labs/") ~ page.slug %}
+        <td class="muted"><a href="{{ address }}">{{ address }}</a></td>
         <td class="status">{{ kinds.get(page.kind, page.kind) }}</td>
+        <td class="status">{% if page.stage %}<a href="/admin/course#stage-{{ page.stage.number }}">Stage {{ page.stage.number }}</a>{% endif %}</td>
         <td class="status">{{ visibilities.get(page.visibility, page.visibility) }}</td>
         <td class="muted">{{ page.updated_at.strftime("%Y-%m-%d") }}{% if page.edited_by %} by @{{ page.edited_by.github_login }}{% endif %}</td>
       </tr>
     {% else %}
-      <tr><td colspan="5" class="muted">No pages yet.</td></tr>
+      <tr><td colspan="6" class="muted">No pages yet.</td></tr>
     {% endfor %}
     </tbody>
   </table>

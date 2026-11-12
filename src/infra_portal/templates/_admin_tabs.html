@@ -1,0 +1,13 @@
+{# The row of tabs at the top of every admin page. Needs `admin_tab`, the name of the current one. #}
+<nav class="admin-tabs" aria-label="Admin">
+  <span class="admin-tabs-name">Admin</span>
+  {% for key, href, name in [
+    ("overview", "/admin", "Overview"),
+    ("course", "/admin/course", "Course"),
+    ("pages", "/admin/labs", "Pages"),
+    ("members", "/admin/members", "Members"),
+    ("mail", "/admin/mail", "Email"),
+  ] %}
+    <a href="{{ href }}"{% if key == admin_tab %} aria-current="page"{% endif %}>{{ name }}</a>
+  {% endfor %}
+</nav>

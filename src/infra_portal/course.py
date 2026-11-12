@@ -27,7 +27,14 @@ from sqlalchemy.orm import Session, defer
 from infra_portal.auth import current_member, require_member
 from infra_portal.db import get_db
 from infra_portal.labs import KIND_LABELS, can_see
-from infra_portal.models import VISIBILITY_DRAFT, CourseStage, LabPage, Member, PageProgress
+from infra_portal.models import (
+    ROLE_MEMBER,
+    VISIBILITY_DRAFT,
+    CourseStage,
+    LabPage,
+    Member,
+    PageProgress,
+)
 from infra_portal.rendering import render_lab_markdown, render_markdown
 from infra_portal.templating import templates
 
@@ -167,6 +174,49 @@ def totals(path: list[StageView]) -> tuple[int, int]:
 def builds(path: list[StageView]) -> list[Step]:
     """The written builds, for the labs page."""
     return [step for step in all_steps(path) if step.is_build and step.written]
+
+
+@dataclass(frozen=True)
+class MemberProgress:
+    """How far one member is, for the mentor's overview."""
+
+    member: Member
+    done: int
+    total: int
+    # The first step they have not ticked, or None when they are through.
+    next: Step | None
+    last_tick: datetime | None
+
+
+def everyone(db: Session) -> list[MemberProgress]:
+    """Every member who has signed in, with their ticks on the steps a member can open.
+
+    Drafts are left out of the count: a member cannot see them, so they are not behind on them.
+    """
+    # The path as someone who is not an admin sees it. This Member is never saved.
+    steps = [step for step in all_steps(load_path(db, Member(role=ROLE_MEMBER))) if step.written]
+    ticks: dict[int, dict[int, datetime]] = {}
+    for member_id, page_id, done_at in db.execute(
+        select(PageProgress.member_id, PageProgress.page_id, PageProgress.done_at)
+    ):
+        ticks.setdefault(member_id, {})[page_id] = done_at
+    members = db.scalars(
+        select(Member).where(Member.github_id.is_not(None)).order_by(Member.github_login)
+    ).all()
+    rows = []
+    for member in members:
+        mine = ticks.get(member.id, {})
+        done = [mine[step.page.id] for step in steps if step.page.id in mine]
+        rows.append(
+            MemberProgress(
+                member=member,
+                done=len(done),
+                total=len(steps),
+                next=next((step for step in steps if step.page.id not in mine), None),
+                last_tick=max(done, default=None),
+            )
+        )
+    return rows
 
 
 def link_resolver(path: list[StageView]) -> Callable[[str], str | None]:

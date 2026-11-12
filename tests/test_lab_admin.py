@@ -265,10 +265,11 @@ def test_admin_gets_through(client, page_id, sign_in):
         assert response.status_code in (200, 303), (method, url, response.status_code)
 
 
-def test_account_menu_links_to_labs_admin(client, boss, add_member, sign_in):
-    assert 'href="/admin/labs"' in client.get("/").text
+def test_account_menu_links_to_the_admin_pages(client, boss, add_member, sign_in):
+    assert 'href="/admin"' in client.get("/").text
+    assert 'href="/admin/labs"' in client.get("/admin").text
 
     client.post("/auth/logout")
     add_member("alice")
     sign_in("alice", github_id=42)
-    assert 'href="/admin/labs"' not in client.get("/").text
+    assert 'href="/admin' not in client.get("/").text

@@ -2,6 +2,8 @@
 {% block title %}Members{% endblock %}
 {% block sheet_class %}wide{% endblock %}
 {% block content %}
+  {% set admin_tab = "members" %}
+  {% include "_admin_tabs.html" %}
   <h1>Members</h1>
   <form method="post" action="/admin/members" class="inline">
     <label for="github_login">Invite by GitHub login</label>

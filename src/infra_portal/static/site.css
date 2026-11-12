@@ -775,6 +775,47 @@ form[aria-busy="true"] .subscribe-field button { opacity: 0.6; cursor: progress;
 @keyframes subscribe-settle { from { transform: scale(1.1); } }
 @keyframes subscribe-panel { from { opacity: 0; transform: translateY(6px); } }
 
+/* ---------- admin ---------- */
+
+/* The tabs on every admin page: plain words, the current one underlined, like the editor's tabs. */
+.admin-tabs { display: flex; align-items: baseline; gap: 1.4rem; margin: -0.6rem 0 1.8rem; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.admin-tabs-name { color: var(--muted); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; }
+.admin-tabs a { flex: none; margin-bottom: -1px; padding: 0.55rem 0; border-bottom: 2px solid transparent; color: var(--muted); font-size: 0.95rem; font-weight: 500; text-decoration: none; }
+.admin-tabs a:hover { color: var(--ink); }
+.admin-tabs a[aria-current="page"] { border-bottom-color: var(--ink); color: var(--ink); }
+.page-head .actions { margin-top: 0; }
+.page-head .actions .button, .page-head > .button { padding: 0.55rem 0.85rem; font-size: 0.88rem; }
+
+/* Four numbers on the overview, each a link to the tab behind it. */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; margin: 1.2rem 0 0; }
+.tile { display: grid; gap: 0.1rem; padding: 1rem 1.15rem 1.05rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); text-decoration: none; transition: border-color 0.2s ease; }
+.tile:hover { border-color: var(--muted); }
+.tile strong { font-size: 2rem; font-weight: 600; line-height: 1.1; letter-spacing: -0.03em; }
+.tile span { color: var(--ink-2); font-size: 0.95rem; }
+.tile small { margin-top: 0.35rem; color: var(--muted); font-size: 0.82rem; }
+.notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; margin: 0.9rem 0 0; padding: 0.8rem 0.9rem 0.8rem 1.1rem; border: 1px solid var(--line); border-left: 3px solid #a8741a; border-radius: 10px; background: var(--card); }
+.notice .button { padding: 0.5rem 0.85rem; font-size: 0.88rem; }
+.bar { display: inline-block; width: 6rem; height: 6px; margin-right: 0.6rem; border-radius: 6px; background: var(--sunk); overflow: hidden; vertical-align: middle; }
+.bar span { display: block; height: 100%; border-radius: 6px; background: var(--link); }
+table.progress td { white-space: nowrap; }
+
+/* One stage on the Course tab: its name, who sees it, the button that approves it, then its steps. */
+.admin-stage { margin-top: 2.2rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+.admin-stage-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.admin-stage-head h2 { margin: 0; font-size: 1.2rem; }
+.admin-stage-head h2 .muted { margin-right: 0.3rem; font-weight: 500; }
+.admin-stage-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-left: auto; font-size: 0.92rem; }
+.admin-stage-actions form, .admin-stage td form { margin: 0; }
+.admin-stage-actions button:not(.link) { padding: 0.5rem 0.8rem; font-size: 0.86rem; }
+.admin-stage table { margin-top: 0.6rem; }
+.admin-stage td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.admin-stage td:last-child { text-align: right; white-space: nowrap; font-size: 0.9rem; }
+/* Who sees a stage or a step: a hollow dot for a draft, a filled one once members see it. */
+.seen { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--ink-2); font-size: 0.9rem; white-space: nowrap; }
+.seen::before { content: ""; width: 0.55rem; height: 0.55rem; border: 1.5px solid var(--link); border-radius: 50%; background: var(--link); }
+.seen-draft { color: var(--muted); }
+.seen-draft::before { border-color: var(--muted); background: none; }
+
 /* ---------- tables ---------- */
 
 .table-wrap { overflow-x: auto; }

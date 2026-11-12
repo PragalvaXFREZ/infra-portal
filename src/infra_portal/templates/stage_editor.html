@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{% if stage %}Edit stage{% else %}New stage{% endif %}{% endblock %}
+{% block content %}
+  {% set admin_tab = "course" %}
+  {% include "_admin_tabs.html" %}
+  <p class="crumb"><a href="/admin/course">Course</a></p>
+  <h1>{% if stage %}Edit stage {{ stage.number }}{% else %}New stage{% endif %}</h1>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{% if stage %}/admin/course/stages/{{ stage.id }}{% else %}/admin/course/stages/new{% endif %}" class="stack">
+    <div class="field-row">
+      <div>
+        <label for="number">Number <span class="muted small">(its place on the path)</span></label>
+        <input id="number" name="number" type="number" min="0" max="99" required value="{{ number }}">
+      </div>
+      <div>
+        <label for="visibility">Who can see it</label>
+        <select id="visibility" name="visibility">
+          {% for value, name in visibilities.items() %}<option value="{{ value }}"{% if value == visibility %} selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <label for="title">Title</label>
+    <input id="title" name="title" required maxlength="200" value="{{ title }}">
+    <label for="summary">Summary <span class="muted small">(optional, one or two sentences; Markdown links work)</span></label>
+    <input id="summary" name="summary" maxlength="300" value="{{ summary }}">
+    <div class="actions"><button>Save</button></div>
+  </form>
+  {% if stage %}
+    <form method="post" action="/admin/course/stages/{{ stage.id }}/delete" class="danger-zone">
+      <p class="muted small">Deleting a stage keeps its pages. They become drafts with no stage, on the Pages tab.</p>
+      <button class="link danger">Delete this stage</button>
+    </form>
+  {% endif %}
+{% endblock %}
