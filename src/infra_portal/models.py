@@ -3,10 +3,12 @@
 A change here needs a migration: `uv run alembic revision --autogenerate -m "..."`.
 """
 
+import datetime as dt
 from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    Date,
     DateTime,
     ForeignKey,
     LargeBinary,
@@ -205,3 +207,44 @@ class SubscriberMute(Base):
 
     subscriber: Mapped[Subscriber] = relationship(back_populates="mutes")
     author: Mapped[Member] = relationship()
+
+
+VISIBILITY_DRAFT = "draft"
+VISIBILITY_MEMBERS = "members"
+VISIBILITY_PUBLIC = "public"
+VISIBILITIES = (VISIBILITY_DRAFT, VISIBILITY_MEMBERS, VISIBILITY_PUBLIC)
+
+
+class LabPage(Base):
+    """A lab, experiment or learning session written on the admin pages instead of in a file.
+
+    The repository and its image are public, so a page that must stay hidden cannot be a file.
+    `visibility` decides who sees it: `draft` (admins), `members` (anyone signed in) or `public`.
+    The slug is set when the page is created and does not follow later title edits.
+    """
+
+    __tablename__ = "lab_pages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True)
+    title: Mapped[str] = mapped_column(String(200))
+    kind: Mapped[str] = mapped_column(String(16))
+    date: Mapped[dt.date] = mapped_column(Date)
+    summary: Mapped[str] = mapped_column(String(300))
+    link: Mapped[str | None] = mapped_column(String(500))
+    body: Mapped[str] = mapped_column(Text, default="")
+    visibility: Mapped[str] = mapped_column(String(16), default=VISIBILITY_DRAFT)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    # SET NULL, not CASCADE: removing a member must not remove the course pages they edited.
+    # Member has no relationship back to this table on purpose, so the ORM never deletes pages
+    # along with a member either.
+    edited_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("members.id", ondelete="SET NULL")
+    )
+
+    edited_by: Mapped[Member | None] = relationship()

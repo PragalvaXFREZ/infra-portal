@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{% if page %}Edit lab page{% else %}New lab page{% endif %}{% endblock %}
+{% block content %}
+  <p class="crumb"><a href="/admin/labs">Labs admin</a></p>
+  <h1>{% if page %}Edit lab page{% else %}New lab page{% endif %}</h1>
+  {% if page %}
+    <p class="muted small">At <a href="/labs/{{ page.slug }}">/labs/{{ page.slug }}</a>. The address does not change.</p>
+  {% endif %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{% if page %}/admin/labs/{{ page.id }}/edit{% else %}/admin/labs/new{% endif %}"
+        class="stack" data-editor data-preview-url="/admin/labs/preview">
+    {# Enter in a text field presses the first button in the form, so that one is Save. #}
+    <button name="action" value="save" class="visually-hidden" tabindex="-1" aria-hidden="true">Save</button>
+    <label for="title">Title</label>
+    <input id="title" name="title" required maxlength="200" value="{{ title }}">
+    {% if page %}
+      <input type="hidden" name="slug" value="{{ slug }}">
+    {% else %}
+      <label for="slug">Address <span class="muted small">(/labs/..., set once; empty means from the title)</span></label>
+      <input id="slug" name="slug" maxlength="80" value="{{ slug }}" pattern="[a-z0-9]+(-[a-z0-9]+)*" autocomplete="off">
+    {% endif %}
+    <div class="field-row">
+      <div>
+        <label for="kind">Kind</label>
+        <select id="kind" name="kind">
+          {% for value, name in kinds.items() %}<option value="{{ value }}"{% if value == kind %} selected{% endif %}>{{ name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="date">Date</label>
+        <input id="date" name="date" type="date" required value="{{ date }}">
+      </div>
+    </div>
+    <label for="summary">Summary <span class="muted small">(one sentence for the list)</span></label>
+    <input id="summary" name="summary" required maxlength="300" value="{{ summary }}">
+    <label for="link">Link <span class="muted small">(optional, https://...)</span></label>
+    <input id="link" name="link" type="url" maxlength="500" value="{{ link }}">
+    <label for="visibility">Who can see it</label>
+    <select id="visibility" name="visibility">
+      {% for value, name in visibilities.items() %}<option value="{{ value }}"{% if value == visibility %} selected{% endif %}>{{ name }}</option>{% endfor %}
+    </select>
+    {% set body_label = "Page" %}
+    {% include "_editor_tabs.html" %}
+    <div class="actions">
+      <button name="action" value="save">Save</button>
+    </div>
+  </form>
+  {% if page %}
+    <form method="post" action="/admin/labs/{{ page.id }}/delete" class="danger-zone">
+      <button class="link danger">Delete this page</button>
+    </form>
+  {% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ static_url('editor.js') }}" defer></script>{% endblock %}

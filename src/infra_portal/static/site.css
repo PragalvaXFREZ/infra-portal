@@ -297,6 +297,8 @@ header.site .account[open] summary { box-shadow: 0 0 0 2px var(--line); }
 .lab-card strong { font-size: 1.08rem; font-weight: 600; line-height: 1.3; }
 .lab-card .summary { color: var(--ink-2); font-size: 0.95rem; line-height: 1.55; }
 .lab-card .foot { margin-top: auto; padding-top: 0.6rem; color: var(--muted); font-size: 0.85rem; }
+/* "Draft" or "Members only" on a page that not everyone can see. Plain text, no chip. */
+.lab-card .visibility { color: var(--muted); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.02em; }
 
 
 .crumb { margin: 0 0 0.6rem; font-size: 0.92rem; }
@@ -393,7 +395,7 @@ button.link {
 button.link:hover { background: none; }
 button.danger, button.link.danger { color: var(--danger); }
 
-input, textarea {
+input, textarea, select {
   font: inherit;
   width: 100%;
   padding: 0.6rem 0.75rem;
@@ -402,7 +404,7 @@ input, textarea {
   background: var(--card);
   color: var(--ink);
 }
-input:focus, textarea:focus {
+input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--link);
   box-shadow: 0 0 0 3px rgb(47 107 94 / 0.15);
@@ -410,6 +412,9 @@ input:focus, textarea:focus {
 textarea { font: 0.93rem/1.6 var(--mono); }
 form.stack { display: grid; gap: 0.4rem; }
 form.stack label { margin-top: 0.8rem; font-weight: 500; }
+/* Two short fields side by side, such as a lab's kind and date. */
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0 1rem; }
+.field-row > div { display: grid; gap: 0.4rem; align-content: start; }
 form.inline { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 1.2rem 0 1.6rem; }
 form.inline label { font-weight: 500; }
 form.inline input { width: auto; flex: 1 1 12rem; }
@@ -495,7 +500,36 @@ td.status { color: var(--ink-2); font-size: 0.92rem; }
 .prose img { max-width: 100%; border-radius: 8px; }
 .prose table { display: block; overflow-x: auto; border-collapse: collapse; font-size: 0.95rem; margin: 1.4rem 0; }
 .prose th, .prose td { padding: 0.5rem 0.75rem 0.5rem 0; vertical-align: top; }
+/* `anywhere` would let a column shrink to one letter; break-word only breaks what cannot fit. */
+.prose table { overflow-wrap: break-word; }
+.prose th { color: var(--ink-2); font-weight: 600; border-bottom-color: var(--muted); }
 .prose hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
+/* Long guides: fourth-level headings, nested lists and the last line of a quote. */
+.prose h4 { font-size: 1rem; font-weight: 600; margin: 1.6rem 0 0.5rem; }
+.prose li > ul, .prose li > ol { margin-bottom: 0; }
+.prose blockquote > :last-child { margin-bottom: 0; }
+.prose pre { tab-size: 4; }
+
+/* Callouts in lab guides: `> [!warning] Title` becomes a box with the title on top. */
+.prose .callout {
+  margin: 1.4rem 0;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--callout, var(--muted));
+  border-radius: 8px;
+  background: var(--card);
+}
+.prose .callout > :last-child { margin-bottom: 0; }
+.prose .callout-title { margin: 0 0 0.35rem; font-weight: 600; color: var(--ink); }
+.callout-note, .callout-info { --callout: var(--link); }
+.callout-tip { --callout: #4f7a3a; }
+.callout-important { --callout: var(--ink-2); }
+.callout-warning { --callout: #a8741a; }
+.callout-caution { --callout: var(--danger); }
+@media (prefers-color-scheme: dark) {
+  .callout-tip { --callout: #9cc58a; }
+  .callout-warning { --callout: #dcb36b; }
+}
 
 /* ---------- footer ---------- */
 

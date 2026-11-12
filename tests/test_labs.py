@@ -23,6 +23,13 @@ def test_parse_lab_reads_header_and_body():
     assert lab.url == "/labs/a-lab"
 
 
+def test_parse_lab_accepts_a_learning_session():
+    lab = parse_lab("a-session", GOOD.replace("kind: lab", "kind: session"))
+    assert lab.kind == "session"
+    assert lab.kind_label == "Learning session"
+    assert lab.visibility == "public"
+
+
 @pytest.mark.parametrize(
     ("text", "message"),
     [

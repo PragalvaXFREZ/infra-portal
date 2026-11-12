@@ -1,0 +1,17 @@
+{# The Write and Preview tabs over a Markdown body, shared by the post and lab editors.
+   Needs: title, body, preview_html (None on the Write tab) and body_label. The form around it
+   carries data-editor, and data-preview-url when the preview is not /preview. #}
+{% set previewing = preview_html is not none %}
+<div class="editor-head">
+  <label for="body">{{ body_label }} <span class="muted small">(Markdown)</span></label>
+  <div class="tabs">
+    <button name="action" value="write" class="tab" formnovalidate aria-pressed="{{ 'false' if previewing else 'true' }}">Write</button>
+    <button name="action" value="preview" class="tab" formnovalidate aria-pressed="{{ 'true' if previewing else 'false' }}">Preview</button>
+  </div>
+</div>
+<textarea id="body" name="body" rows="20"{% if previewing %} hidden{% endif %}>{{ body }}</textarea>
+<article class="preview" data-preview aria-live="polite"{% if not previewing %} hidden{% endif %}>
+  <h1 data-preview-title>{{ title or "Untitled" }}</h1>
+  <div class="prose" data-preview-body>{% if previewing %}{{ preview_html if body.strip() else "" }}{% endif %}</div>
+  <p class="muted" data-preview-empty{% if body.strip() %} hidden{% endif %}>Nothing written yet.</p>
+</article>
