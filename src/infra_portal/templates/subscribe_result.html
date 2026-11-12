@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% set subscribe_entry = false %}
 {% block art %}eatons{% endblock %}
 {% block title %}{% if outcome == "confirmed" %}Subscribed{% elif outcome == "unsubscribed" %}Unsubscribed{% elif outcome == "sent" %}Check your inbox{% else %}Subscribe{% endif %}{% endblock %}
 {% block content %}

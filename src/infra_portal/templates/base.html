@@ -9,6 +9,8 @@
   <link rel="apple-touch-icon" href="{{ static_url('icon/apple-touch-icon.png') }}">
   <link rel="stylesheet" href="{{ static_url('site.css') }}">
 </head>
+{# A page turns the Subscribe buttons and the pop-up off with {% set subscribe_entry = false %}. #}
+{% set subscribing = follow_enabled() and subscribe_entry | default(true) %}
 <body class="{% block body_class %}inner{% endblock %} art-{% block art %}tools{% endblock %}">
   <div class="scene">
     <header class="site">
@@ -19,6 +21,7 @@
         <a href="/members">Members</a>
       </nav>
       <div class="end">
+        {% if subscribing %}<a class="subscribe-open" href="/subscribe" data-subscribe-open>Subscribe</a>{% endif %}
         {# On phones the three links above move into this menu. #}
         <details class="menu site-menu">
           <summary>Menu</summary>
@@ -58,7 +61,11 @@
     {% block content %}{% endblock %}
   </main>
   {% endblock %}
-  <footer class="site">infra · Deerwalk Institute of Technology</footer>
+  <footer class="site">infra · Deerwalk Institute of Technology{% if subscribing %} · <a href="/subscribe" data-subscribe-open>Posts by email</a>{% endif %}</footer>
+  {% if subscribing %}
+    {% include "_subscribe_dialog.html" %}
+    <script src="{{ static_url('subscribe.js') }}" defer></script>
+  {% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

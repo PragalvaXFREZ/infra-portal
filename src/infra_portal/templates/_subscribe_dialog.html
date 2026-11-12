@@ -1,0 +1,62 @@
+{# The subscribe pop-up, included once by base.html. static/subscribe.js opens it from any link
+   marked data-subscribe-open and sends the form without leaving the page. The email field starts
+   empty on purpose: a page's own `email` value must not leak into it. Nothing here may have the
+   id "subscribe": a browser would move the cursor to it when a page is opened at #subscribe. #}
+<dialog class="subscribe" aria-labelledby="subscribe-title" data-step="form">
+  {# A drawing, not a photo: an envelope on a desk. subscribe.js writes the address on it while the
+     reader types, and the postmark with today's date lands once the confirmation email is sent. #}
+  <div class="subscribe-desk" aria-hidden="true">
+    <div class="envelope">
+      <p class="envelope-from"><b>infra</b><span>Deerwalk Institute of Technology</span></p>
+      <svg class="envelope-stamp" viewBox="0 0 48 60" width="48" height="60">
+        <rect class="paper" x="2" y="2" width="44" height="56"/>
+        <rect class="teeth" x="2" y="2" width="44" height="56"/>
+        <rect x="7" y="7" width="34" height="37" fill="#e3c487"/>
+        <circle cx="30" cy="19" r="4.5" fill="#f4e6c0"/>
+        <path d="M7 33q9-8 17-3t17-4v18H7z" fill="#93a06a"/>
+        <path d="M7 39q10-6 18-1t16-3v9H7z" fill="#506a4b"/>
+        <text x="24" y="54" text-anchor="middle">infra</text>
+      </svg>
+      <svg class="postmark" viewBox="0 0 210 120" width="210" height="120">
+        <defs><path id="postmark-ring" d="M 17,60 a 43,43 0 1,1 86,0 a 43,43 0 1,1 -86,0"/></defs>
+        <circle cx="60" cy="60" r="54"/>
+        <circle cx="60" cy="60" r="33"/>
+        <text class="ring"><textPath href="#postmark-ring" textLength="262">INFRA · POSTS BY EMAIL · DEERWALK ·</textPath></text>
+        <text class="day" x="60" y="59" text-anchor="middle" data-subscribe-day></text>
+        <text class="year" x="60" y="73" text-anchor="middle" data-subscribe-year></text>
+        <path d="M118,36 q10,-7 20,0 t20,0 t20,0 t20,0 M118,48 q10,-7 20,0 t20,0 t20,0 t20,0 M118,60 q10,-7 20,0 t20,0 t20,0 t20,0 M118,72 q10,-7 20,0 t20,0 t20,0 t20,0 M118,84 q10,-7 20,0 t20,0 t20,0 t20,0"/>
+      </svg>
+      <p class="envelope-to"><span>To</span><b class="empty" data-subscribe-mirror data-empty="you@example.com">you@example.com</b></p>
+    </div>
+  </div>
+  <div class="subscribe-sheet">
+    <button type="button" class="subscribe-close" data-subscribe-close aria-label="Close">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>
+    </button>
+    <div data-subscribe-panel="form">
+      <h2 id="subscribe-title">Posts by email</h2>
+      <p class="subscribe-lede">One email each time a member publishes a post. Nothing else.</p>
+      <form method="post" action="/subscribe" data-subscribe-form>
+        <label class="visually-hidden" for="subscribe-dialog-email">Your email address</label>
+        <div class="subscribe-field">
+          <input id="subscribe-dialog-email" type="email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+          <button>Subscribe</button>
+        </div>
+        {# People never see this field; bots that fill every field give themselves away. #}
+        <div class="visually-hidden" aria-hidden="true">
+          <label for="subscribe-dialog-nickname">Leave this empty</label>
+          <input id="subscribe-dialog-nickname" name="nickname" tabindex="-1" autocomplete="off">
+        </div>
+        <p class="error small" role="alert" data-subscribe-error="invalid" hidden>That doesn't look like an email address.</p>
+        <p class="error small" role="alert" data-subscribe-error="failed" hidden>The email didn't go out. Try again in a few minutes.</p>
+      </form>
+      <p class="muted small">You'll get a link to confirm first. Every email has a link to stop emails about one member, or all of them.</p>
+    </div>
+    <div data-subscribe-panel="sent" hidden>
+      <h2 tabindex="-1" data-subscribe-sent-title>Check your inbox</h2>
+      <p class="subscribe-lede">A link to confirm is on its way to <strong data-subscribe-address></strong>, unless one was sent in the last day.</p>
+      <p class="muted small">Nothing arrives? Look in spam, or try again tomorrow.</p>
+      <p class="subscribe-done"><button type="button" class="secondary" data-subscribe-close>Done</button></p>
+    </div>
+  </div>
+</dialog>

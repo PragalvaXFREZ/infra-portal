@@ -4,7 +4,6 @@
 {% block content %}
   <h1>Writing</h1>
   <p class="lede">Posts by members, written while working through the labs.</p>
-  {% include "_subscribe_form.html" %}
   {% for post in posts %}
     {% include "_post_item.html" %}
   {% else %}

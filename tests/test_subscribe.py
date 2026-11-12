@@ -29,15 +29,73 @@ def _rows(session_factory, model):
         return session.scalars(select(model)).all()
 
 
-def test_forms_are_hidden_until_email_is_configured(client):
-    assert "Get an email when anyone posts" not in client.get("/").text
-    assert "Get an email when anyone posts" not in client.get("/writing").text
+POP_UP = '<dialog class="subscribe"'
+OPENER = 'href="/subscribe" data-subscribe-open'
+
+
+def test_subscribing_is_hidden_until_email_is_configured(client):
+    assert OPENER not in client.get("/").text
+    assert OPENER not in client.get("/writing").text
     assert _subscribe(client).status_code == 404
 
 
-def test_form_shows_on_home_and_writing(client, mailer):
-    assert "Get an email when anyone posts" in client.get("/").text
-    assert "Get an email when anyone posts" in client.get("/writing").text
+def test_subscribe_page_has_the_form_for_readers_without_javascript(client, mailer):
+    page = client.get("/subscribe")
+    assert page.status_code == 200
+    assert 'action="/subscribe"' in page.text and 'id="subscribe-email"' in page.text
+    # The page is the form, so it has no pop-up and no buttons that would open one.
+    assert POP_UP not in page.text and OPENER not in page.text
+
+
+def test_subscribe_page_and_pop_up_are_missing_until_email_is_configured(client, add_member, sign_in):
+    assert client.get("/subscribe").status_code == 404
+    add_member("alice")
+    sign_in("alice", 42)
+    for path in ("/", "/writing", "/labs", "/members", "/u/alice"):
+        response = client.get(path)
+        page = response.text
+        assert response.status_code == 200, path
+        assert POP_UP not in page and "subscribe.js" not in page and "/subscribe" not in page, path
+
+
+def test_every_page_has_one_pop_up_and_a_button_that_opens_it(client, mailer, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", 42)
+    for path in ("/", "/writing", "/labs", "/members", "/u/alice", "/write"):
+        response = client.get(path)
+        page = response.text
+        assert response.status_code == 200, path
+        assert page.count(POP_UP) == 1 and "/static/subscribe.js" in page, path
+        assert OPENER in page, path
+        # The pop-up's fields have their own ids, and the address field starts empty.
+        assert page.count('id="subscribe-dialog-email"') == 1 and 'id="subscribe-email"' not in page, path
+        assert 'id="subscribe-dialog-email" type="email" name="email" required maxlength="254" autocomplete="email" placeholder' in page, path
+
+
+def test_editor_keeps_its_own_script_next_to_the_pop_up(client, mailer, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", 42)
+    page = client.get("/write").text
+    assert "/static/editor.js" in page and "/static/subscribe.js" in page
+
+
+def test_follow_form_offers_every_members_posts(client, mailer, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", 42)
+    page = client.get("/u/alice").text
+    assert "get every member's posts" in page.replace("&#39;", "'")
+
+
+def test_pages_about_a_subscription_have_no_pop_up(client, mailer):
+    sent = _subscribe(client, "new@example.com")
+    bad = _subscribe(client, "not-an-address")
+    token = _subscriber(client, mailer)
+    manage = client.get(f"/subscription/{token}")
+    for page in (sent, bad, manage):
+        assert POP_UP not in page.text and OPENER not in page.text
+    # The page that asks again for the address has the form once, with the form's own ids.
+    assert bad.text.count('id="subscribe-email"') == 1
+    assert manage.text.count("reader@example.com") == 1
 
 
 def test_subscribe_sends_one_confirmation_and_stores_a_pending_row(client, mailer, session_factory):
