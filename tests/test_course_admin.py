@@ -224,12 +224,13 @@ def test_deleting_a_stage_keeps_its_pages_as_hidden_drafts(client, stage, boss, 
 def test_the_page_editor_puts_a_page_on_the_path_and_keeps_it_there(client, stage, boss, session_factory):
     created = client.post(
         "/admin/labs/new",
-        data={**PAGE_FORM, "slug": "stage-1-chunk-9", "title": "Salt", "stage": str(stage), "position": "7", "minutes": "12"},
+        data={**PAGE_FORM, "slug": "stage-1-chunk-9", "title": "Salt", "stage": str(stage), "position": "7", "number": "9", "minutes": "12"},
         follow_redirects=False,
     )
     assert created.status_code == 303, created.text
     page = _page(session_factory, "stage-1-chunk-9")
-    assert (page.stage_id, page.position, page.minutes) == (stage, 7, 12)
+    assert (page.stage_id, page.position, page.number, page.minutes) == (stage, 7, 9, 12)
+    assert 'name="number" type="number" min="0" max="999" value="9"' in client.get(f"/admin/labs/{page.id}/edit").text
     # The form shows what is stored, so saving it again changes nothing.
     form = client.get(f"/admin/labs/{page.id}/edit").text
     assert f'<option value="{stage}" selected>Stage 1: Bread</option>' in form
@@ -252,10 +253,11 @@ def test_the_page_editor_puts_a_page_on_the_path_and_keeps_it_there(client, stag
         ({"position": "-1"}, "place in the stage"),
         ({"position": "1000"}, "place in the stage"),
         ({"minutes": "many"}, "Minutes of video"),
+        ({"number": "third"}, "s number must be a whole number"),
     ],
 )
 def test_the_page_editor_refuses_bad_path_fields(client, stage, boss, session_factory, change, message):
-    data = {**PAGE_FORM, "slug": "new-page", "stage": str(stage), "position": "1", "minutes": "", **change}
+    data = {**PAGE_FORM, "slug": "new-page", "stage": str(stage), "position": "1", "number": "", "minutes": "", **change}
     response = client.post("/admin/labs/new", data=data)
     assert response.status_code == 422 and message in response.text
     assert _page(session_factory, "new-page") is None

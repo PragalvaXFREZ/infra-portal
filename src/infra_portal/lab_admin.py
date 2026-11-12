@@ -62,6 +62,7 @@ class Fields:
     # The learning path: the stage's id, the place in it, and minutes of video. Text, as typed.
     stage: str = ""
     position: str = "0"
+    number: str = ""
     minutes: str = ""
 
     @classmethod
@@ -77,6 +78,7 @@ class Fields:
             visibility=page.visibility,
             stage="" if page.stage_id is None else str(page.stage_id),
             position=str(page.position),
+            number="" if page.number is None else str(page.number),
             minutes="" if page.minutes is None else str(page.minutes),
         )
 
@@ -92,11 +94,13 @@ def _form(
     visibility: str = Form(VISIBILITY_DRAFT),
     stage: str = Form(""),
     position: str = Form("0"),
+    number: str = Form(""),
     minutes: str = Form(""),
 ) -> Fields:
     return Fields(
         stage=stage.strip(),
         position=position.strip() or "0",
+        number=number.strip(),
         minutes=minutes.strip(),
         title=title.strip(),
         slug=slug.strip().lower(),
@@ -142,8 +146,26 @@ def _small_number(text: str) -> int | None:
     return int(text) if text.isascii() and text.isdecimal() and len(text) <= 3 else None
 
 
-def _check_path(db: Session, fields: Fields) -> tuple[str | None, int | None, int, int | None]:
-    """An error or None, then the stage id, the place in the stage and the minutes of video."""
+@dataclass
+class PathFields:
+    """The checked values of the learning path fields."""
+
+    stage_id: int | None = None
+    position: int = 0
+    number: int | None = None
+    minutes: int | None = None
+
+
+def _check_path(db: Session, fields: Fields) -> tuple[str | None, PathFields]:
+    """An error or None, then the stage, the place in it, the step's number and the minutes."""
+    error, stage_id, position, minutes = _check_stage(db, fields)
+    number = _small_number(fields.number) if fields.number else None
+    if not error and fields.number and number is None:
+        error = "The step's number must be a whole number from 0 to 999."
+    return error, PathFields(stage_id=stage_id, position=position, number=number, minutes=minutes)
+
+
+def _check_stage(db: Session, fields: Fields) -> tuple[str | None, int | None, int, int | None]:
     stage_id = None
     if fields.stage:
         # The value is a stage id from the list. Anything else can arrive in a form.
@@ -256,14 +278,15 @@ def create_page(
         fields.slug = slugify(fields.title, max_length=MAX_SLUG)
     error, day = _check(fields)
     error = error or _check_slug(db, fields.slug)
-    path_error, stage_id, position, minutes = _check_path(db, fields)
+    path_error, path = _check_path(db, fields)
     error = error or path_error
     if error:
         return _editor(request, db, admin, None, fields, error)
     page = LabPage(
-        stage_id=stage_id,
-        position=position,
-        minutes=minutes,
+        stage_id=path.stage_id,
+        position=path.position,
+        number=path.number,
+        minutes=path.minutes,
         slug=fields.slug,
         title=fields.title,
         kind=fields.kind,
@@ -305,11 +328,12 @@ def update_page(
     if action in VIEW_ACTIONS:
         return _view(request, db, admin, page, fields, action)
     error, day = _check(fields)
-    path_error, stage_id, position, minutes = _check_path(db, fields)
+    path_error, path = _check_path(db, fields)
     error = error or path_error
     if error:
         return _editor(request, db, admin, page, fields, error)
-    page.stage_id, page.position, page.minutes = stage_id, position, minutes
+    page.stage_id, page.position = path.stage_id, path.position
+    page.number, page.minutes = path.number, path.minutes
     page.title, page.kind, page.date = fields.title, fields.kind, day
     page.summary, page.link, page.body = fields.summary, fields.link or None, fields.body
     page.visibility = fields.visibility

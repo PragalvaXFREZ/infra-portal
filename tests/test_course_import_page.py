@@ -203,3 +203,56 @@ def test_only_admins_reach_the_import_page(client, add_member, sign_in):
     sign_in("alice", 42)
     assert client.get("/admin/course/import").status_code == 403
     assert _upload(client, **{"stage-2-bread.md": STAGE_NOTE}).status_code == 403
+
+
+def test_an_answer_key_with_a_very_long_name_is_still_refused(client, boss, session_factory):
+    name = "x" * 200 + "-mentor.md"
+    response = _upload(client, **{name: BUILD_NOTE})
+    assert "file name is longer than 200" in response.text and "Nothing was stored." in response.text
+    assert _pages(session_factory) == {}
+
+
+CROSSED = STAGE_NOTE.replace(
+    "## The path",
+    "## Chunk 3. Salt\n\nSalt slows the yeast.\n\n**Feeds:** build 1.\n\n---\n\n## The path",
+)
+
+
+def test_a_step_keeps_its_own_number_when_the_order_differs(client, boss, session_factory):
+    # Chunk 3 feeds build 1, so it comes before chunk 2 on the path. It is still chunk 3.
+    _upload(client, **{"stage-2-bread.md": CROSSED})
+    pages = _pages(session_factory)
+    order = [p.slug for p in sorted(pages.values(), key=lambda p: p.position)]
+    assert order.index("stage-2-chunk-3") < order.index("stage-2-chunk-2")
+    assert (pages["stage-2-chunk-3"].number, pages["stage-2-chunk-2"].number) == (3, 2)
+    assert "Chunk 3" in client.get("/learn/stage-2-chunk-3").text
+    assert "Chunk 2" in client.get("/learn/stage-2-chunk-2").text
+
+
+def test_uploading_one_build_note_again_keeps_the_order(client, boss, session_factory):
+    _upload(client, **{"stage-2-bread.md": STAGE_NOTE, "stage-2-build-1.md": BUILD_NOTE})
+    before = {slug: page.position for slug, page in _pages(session_factory).items()}
+    _upload(client, **{"stage-2-build-1.md": BUILD_NOTE.replace("Mix, wait", "Mix, rest")})
+    pages = _pages(session_factory)
+    assert {slug: page.position for slug, page in pages.items()} == before
+    assert "Mix, rest" in pages["stage-2-build-1"].body
+
+
+def test_a_build_note_for_a_stage_without_its_stage_note_goes_last(client, boss, session_factory):
+    _upload(client, **{"stage-2-bread.md": STAGE_NOTE})
+    third = BUILD_NOTE.replace("build 1: a first loaf", "build 3: a sourdough")
+    _upload(client, **{"stage-2-build-3.md": third})
+    pages = _pages(session_factory)
+    assert pages["stage-2-build-3"].position == max(page.position for page in pages.values())
+    assert sorted(page.position for page in pages.values()) == [1, 2, 3, 4, 5]
+
+
+def test_uploading_the_stage_note_alone_keeps_a_warm_up_that_is_already_there(client, boss, session_factory):
+    _upload(client, **{"stage-2-bread.md": STAGE_NOTE, "stage-2-chunk-1.md": WARM_UP})
+    _upload(client, **{"stage-2-bread.md": STAGE_NOTE.replace("ground grain", "milled grain")})
+    body = _pages(session_factory)["stage-2-chunk-1"].body
+    assert "milled grain" in body and body.count("Weigh 100 g") == 1
+    # With both notes again the warm-up is the new one, once.
+    _upload(client, **{"stage-2-bread.md": STAGE_NOTE, "stage-2-chunk-1.md": WARM_UP.replace("100 g", "250 g")})
+    body = _pages(session_factory)["stage-2-chunk-1"].body
+    assert "250 g" in body and "100 g" not in body and body.count("## Warm-up steps") == 1

@@ -17,7 +17,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    # Additive only: a new table and three new columns. Existing pages get no stage, so they
+    # Additive only: a new table and four new columns. Existing pages get no stage, so they
     # stay ordinary lab pages, and the code before this revision ignores the new columns.
     op.create_table(
         "course_stages",
@@ -33,6 +33,7 @@ def upgrade() -> None:
     )
     op.add_column("lab_pages", sa.Column("stage_id", sa.Integer(), nullable=True))
     op.add_column("lab_pages", sa.Column("position", sa.Integer(), server_default="0", nullable=False))
+    op.add_column("lab_pages", sa.Column("number", sa.Integer(), nullable=True))
     op.add_column("lab_pages", sa.Column("minutes", sa.Integer(), nullable=True))
     # SET NULL, so removing a stage keeps its pages.
     op.create_foreign_key(
@@ -45,6 +46,7 @@ def downgrade() -> None:
     op.drop_index("ix_lab_pages_stage_id", table_name="lab_pages")
     op.drop_constraint("lab_pages_stage_id_fkey", "lab_pages", type_="foreignkey")
     op.drop_column("lab_pages", "minutes")
+    op.drop_column("lab_pages", "number")
     op.drop_column("lab_pages", "position")
     op.drop_column("lab_pages", "stage_id")
     op.drop_table("course_stages")

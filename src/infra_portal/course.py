@@ -52,8 +52,9 @@ class Step:
 
     page: LabPage
     stage: CourseStage
-    # "Chunk 3" or "Build 1". Counted over every page of the stage, hidden ones too, so a
-    # hidden chunk 2 does not turn chunk 3 into "Chunk 2" for members.
+    # "Chunk 3" or "Build 1". The number is the step's own when it has one. Otherwise it is
+    # counted over every page of the stage, hidden ones too, so a hidden chunk 2 does not turn
+    # the next chunk into "Chunk 2" for members.
     label: str
     # False for a page with no text yet. It is listed as coming and cannot be opened.
     written: bool
@@ -138,7 +139,8 @@ def load_path(db: Session, member: Member | None) -> list[StageView]:
                 continue
             if page.kind in NUMBERED:
                 counts[page.kind] += 1
-                label = f"{NUMBERED[page.kind]} {counts[page.kind]}"
+                number = counts[page.kind] if page.number is None else page.number
+                label = f"{NUMBERED[page.kind]} {number}"
             else:
                 label = KIND_LABELS.get(page.kind, page.kind.capitalize())
             if can_see(page.visibility, member):

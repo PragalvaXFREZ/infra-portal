@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from infra_portal import course
 from infra_portal.auth import require_admin
-from infra_portal.course_import import Plan, plan_import
+from infra_portal.course_import import WARM_UP_HEADING, Plan, plan_import
 from infra_portal.db import get_db
 from infra_portal.labs import file_slugs
 from infra_portal.models import (
@@ -39,6 +39,7 @@ MAX_NUMBER = 99
 # An upload is a handful of notes of a few thousand words each.
 MAX_FILES = 40
 MAX_FILE_BYTES = 400_000
+MAX_FILE_NAME = 200
 # The same limit as the page editor.
 MAX_BODY = 200_000
 # The path is for members only, so a stage has two states, not three.
@@ -268,8 +269,13 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
     """Store what the notes hold. Does not commit.
 
     Everything new is a draft, so an upload never shows anything to members by itself. A page
-    that already exists keeps who sees it; its text, title and place are replaced. A stage that
-    already exists is left as it is, so a title or summary edited here survives the next upload.
+    that already exists keeps who sees it; its text and title are replaced. A stage that already
+    exists is left as it is, so a title or summary edited here survives the next upload.
+
+    The order of a stage comes from its stage note, the only file that names every step. An
+    upload without that note, such as one build note by itself, leaves the order alone and puts
+    a new page at the end. A chunk keeps the warm-up it already has when the upload brings its
+    stage note without the warm-up note.
     """
     result = ImportResult(
         refused=[(item.name, item.reason) for item in plan.refused], unused=list(plan.unused)
@@ -283,6 +289,9 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
             result.new_stages.append(f"Stage {stage.number}: {stage.title}")
     db.flush()
 
+    # Chunks come only from a stage note, so a stage with a chunk in the plan has its whole order.
+    ordered = {draft.stage for draft in plan.pages if draft.kind == course.KIND_CHUNK}
+    last: dict[int, int] = {}
     taken = file_slugs()
     for draft in plan.pages:
         name = f"Stage {draft.stage}, {draft.kind} {draft.number}: {draft.title}"
@@ -293,20 +302,37 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
             result.refused.append((name, f"The page is longer than {MAX_BODY:,} characters."))
             continue
         page = db.scalar(select(LabPage).where(LabPage.slug == draft.slug))
-        if page is None:
+        is_new = page is None
+        if is_new:
             page = LabPage(slug=draft.slug, date=today, visibility=VISIBILITY_DRAFT, body="")
-            db.add(page)
             result.new_pages.append(name)
         else:
             result.updated_pages.append(name)
-        page.stage_id = stages[draft.stage].id
-        page.kind, page.position, page.title = draft.kind, draft.position, draft.title
+        stage = stages[draft.stage]
+        if draft.stage in ordered:
+            page.position = draft.position
+        elif page.stage_id != stage.id:
+            # New to this stage, and nothing here says where it belongs: after everything else.
+            if draft.stage not in last:
+                last[draft.stage] = (
+                    db.scalar(select(func.max(LabPage.position)).where(LabPage.stage_id == stage.id)) or 0
+                )
+            last[draft.stage] += 1
+            page.position = last[draft.stage]
+        page.stage_id = stage.id
+        page.kind, page.number, page.title = draft.kind, draft.number, draft.title
         page.edited_by_id = admin.id
         # A build known only by its title must not wipe a guide that is already here.
         if draft.body or not page.body:
-            page.body = draft.body
+            body = draft.body
+            if WARM_UP_HEADING in (page.body or "") and WARM_UP_HEADING not in body:
+                body += page.body[page.body.index(WARM_UP_HEADING) :]
+            page.body = body
             page.minutes = draft.minutes
             page.summary = draft.summary or ("Not written yet." if not draft.body else draft.title)
+        # Added only now, with every field set, so a query above never stores half a page.
+        if is_new:
+            db.add(page)
     return result
 
 
@@ -339,8 +365,12 @@ def import_notes(
     files: list[tuple[str, str]] = []
     unreadable: list[tuple[str, str]] = []
     for note in notes:
-        # Only the last part of the name is kept: browsers may send a path.
-        name = (note.filename or "").replace("\\", "/").rsplit("/", 1)[-1][:200]
+        # Only the last part of the name is kept: browsers may send a path. The name is never
+        # cut short, because the end of it is what marks an answer key.
+        name = (note.filename or "").replace("\\", "/").rsplit("/", 1)[-1]
+        if len(name) > MAX_FILE_NAME:
+            unreadable.append((name[:60] + "…", f"The file name is longer than {MAX_FILE_NAME} characters."))
+            continue
         raw = note.file.read(MAX_FILE_BYTES + 1)
         if len(raw) > MAX_FILE_BYTES:
             unreadable.append((name, f"The file is larger than {MAX_FILE_BYTES // 1000} kB."))

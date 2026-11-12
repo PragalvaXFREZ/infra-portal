@@ -284,6 +284,9 @@ class LabPage(Base):
     )
     # The order inside the stage, lowest first.
     position: Mapped[int] = mapped_column(default=0, server_default="0")
+    # The step's own number in its stage, as the course gives it: 3 for "Chunk 3". It is kept
+    # apart from `position`, because the order on the path is not always the order of numbers.
+    number: Mapped[int | None] = mapped_column()
     # Minutes of video in a chunk, shown on the path. Empty for pages without videos.
     minutes: Mapped[int | None] = mapped_column()
 
