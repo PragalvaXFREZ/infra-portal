@@ -3,9 +3,9 @@
 These are the pages that may stay hidden. File labs are edited with a pull request instead.
 """
 
+import datetime as dt
 import re
 from dataclasses import asdict, dataclass
-import datetime as dt
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
