@@ -83,7 +83,7 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | Page | Who | What |
 | --- | --- | --- |
 | `/` | everyone | What the initiative is, recent labs, recent posts, members, the form to get an email when anyone posts |
-| `/labs`, `/labs/<slug>` | everyone | Labs and experiments |
+| `/labs`, `/labs/<slug>` | everyone; hidden pages only for members or admins | Labs, experiments and learning sessions |
 | `/writing` | everyone | All published posts, and the form to get an email when anyone posts |
 | `/members` | everyone | Members who have signed in |
 | `/u/<login>` | everyone | Profile and published posts |
@@ -94,6 +94,7 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | `/subscription/<token>` | the subscriber, from a link in an email | Stop one member's posts, start them again, or stop all emails |
 | `/admin/members` | admins | Invite and remove members |
 | `/admin/mail` | admins | Preview every email the site sends, and send the samples to one address |
+| `/admin/labs` | admins | Write, preview, show or hide, and delete database labs |
 
 Posts and bios are Markdown. Raw HTML in them is escaped, and `javascript:` links are not rendered. A post's
 link is set when the post is created and does not change when the title changes. Admins can delete any
@@ -143,13 +144,19 @@ are built by `mail.sample_emails`, the same code as the real messages, and the t
 
 ## Labs and experiments
 
-Labs are Markdown files in `src/infra_portal/content/labs/`, not database rows. Add a lab with a pull request
-that adds a file. The file name is the address: `ci.md` is served at `/labs/ci`.
+A lab page has a kind: `lab` (a bigger build), `experiment` (something we tried and wrote up) or `session` (a
+learning session: videos, questions and a short warm-up). Pages come from two places, and `/labs` and the
+home page show them as one list, newest first.
+
+### File labs: always public
+
+Files in `src/infra_portal/content/labs/`. Add one with a pull request that adds a file. The file name is the
+address: `ci.md` is served at `/labs/ci`.
 
 ```markdown
 ---
 title: CI, one step at a time
-kind: lab            # lab or experiment
+kind: lab            # lab, experiment or session
 date: 2026-10-09
 link: https://github.com/...   # optional
 summary: One sentence for the list.
@@ -157,7 +164,45 @@ summary: One sentence for the list.
 Body in Markdown.
 ```
 
-A file with a bad header fails the tests, so a broken lab never reaches the image.
+A file with a bad header fails the tests, so a broken lab never reaches the image. The files are read once at
+start-up.
+
+### Database labs: hidden until they are ready
+
+This repository and its container image are public. Anything in a file here can be read by anyone, so a
+page that must stay hidden cannot be a file. Those pages are rows in the `lab_pages` table instead, written by
+an admin at `/admin/labs`. Each row has a visibility:
+
+| Visibility | Shown in the form as | Who sees it |
+| --- | --- | --- |
+| `draft` | Draft | Admins only. Every new page starts here. |
+| `members` | Members only (approved) | Any signed-in member |
+| `public` | Public (finished) | Everyone |
+
+- One function, `labs.can_see`, decides what a viewer may see, and `/labs`, `/labs/<slug>` and the home page
+  all list through it. Database rows are read on every request, so a change shows at once.
+- A page you may not see answers `404`, the same answer as an address that does not exist, so an address
+  does not reveal that a hidden page is there.
+- Admins see every page. Pages that are not public carry a small "Draft" or "Members only" label; members see
+  "Members only" on the pages they can see. Signed-out visitors get one line on `/labs` saying that members
+  see more after signing in. It is the same line whether or not anything is hidden.
+- The address is set once, when the page is created, like a post's. It may not be the address of a file
+  lab. If a file lab later takes the address of a database page, the file wins.
+- The editor has the same Write and Preview tabs as the post editor. Removing a member keeps the pages
+  they edited.
+
+### Notes syntax in lab bodies
+
+Lab guides are first written in Obsidian, so lab bodies (files and database pages, not posts or bios) also
+understand two pieces of its syntax:
+
+- Wikilinks, `[[some/path|Label]]` or `[[some/path]]`. Their targets are notes elsewhere, so only the label,
+  or the last part of the path, is shown, as plain text. In a table, write the separator as `\|`.
+- Callouts, a quote whose first line is `> [!warning] Optional title`. The types `note`, `info`, `tip`,
+  `important`, `warning` and `caution` each have a look; any other type looks like `note`. Without a title,
+  the type is the title.
+
+Raw HTML stays escaped here too, in the body, the callout title and the wikilink label.
 
 ## Database migrations
 
@@ -213,7 +258,7 @@ Each stage ends with a git tag. Check out a tag to see the project at that point
 src/infra_portal/   application package
   migrations/       Alembic migrations
   templates/        Jinja2 pages
-  content/labs/     labs and experiments, one Markdown file each
+  content/labs/     public labs, experiments and sessions, one Markdown file each
   static/           CSS, the background painting (art/), self-hosted fonts (fonts/)
 tests/              pytest suite
 docs/adr/           architecture decision records
