@@ -33,7 +33,9 @@
   --line: #e3e0d8;
   --link: #2f6b5e;
   --danger: #a33a2c;
-  --bar: rgb(247 246 242 / 0.9);
+  --bar: rgb(247 246 242 / 0.74);
+  --bar-edge: rgb(255 255 255 / 0.55);
+  --tint: rgb(28 26 23 / 0.07);
   --scrim: rgb(247 246 242 / 0.4);
   --shadow: 0 1px 2px rgb(40 30 15 / 0.06), 0 8px 24px -12px rgb(40 30 15 / 0.18);
   /* The desk and the envelope drawn at the top of the subscribe pop-up. */
@@ -57,7 +59,9 @@
     --line: #2e2a26;
     --link: #9fd8c4;
     --danger: #e0806f;
-    --bar: rgb(30 27 24 / 0.9);
+    --bar: rgb(30 27 24 / 0.68);
+    --bar-edge: rgb(255 255 255 / 0.09);
+    --tint: rgb(255 255 255 / 0.09);
     --scrim: rgb(22 20 18 / 0.35);
     --shadow: 0 8px 24px -12px rgb(0 0 0 / 0.6);
     --desk-light: rgb(255 255 255 / 0.05);
@@ -104,7 +108,8 @@ h3 { font-size: 1.1rem; }
 .scene {
   position: relative;
   isolation: isolate;
-  padding: 1rem 1rem 0;
+  /* The bar floats over the top of the painting, so the first rem of this is its room. */
+  padding: 4.4rem 1rem 0;
   min-height: 16rem;
 }
 .inner .scene { min-height: clamp(18rem, 44vh, 26rem); }
@@ -135,50 +140,54 @@ h3 { font-size: 1.1rem; }
 
 /* ---------- header ---------- */
 
+/* A small bar that floats over the painting: frosted, only as wide as what is in it. */
 header.site {
-  position: relative;
-  z-index: 2;
+  position: absolute;
+  top: 0.9rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 5;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  max-width: 64rem;
-  margin: 0 auto;
-  padding: 0.45rem 0.45rem 0.45rem 0.6rem;
+  gap: 0.15rem;
+  width: max-content;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.35rem;
+  border: 1px solid var(--bar-edge);
+  border-radius: 14px;
   background: var(--bar);
-  border-radius: 10px;
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
   box-shadow: var(--shadow);
 }
 .brand {
   font-weight: 600;
-  font-size: 1.12rem;
+  font-size: 1.08rem;
   letter-spacing: -0.02em;
   color: var(--ink);
   text-decoration: none;
-  padding: 0 0.4rem;
-  margin-right: auto;
+  padding: 0.25rem 0.9rem 0.25rem 0.65rem;
 }
 header.site nav.primary { display: flex; align-items: center; gap: 0.1rem; }
-header.site .end { display: flex; align-items: center; gap: 0.35rem; }
+header.site .end { display: flex; align-items: center; gap: 0.3rem; margin-left: 0.4rem; }
 header.site form { margin: 0; }
 header.site nav.primary a,
-header.site .menu summary,
-header.site .sign-in {
+header.site .menu summary {
   color: var(--ink-2);
   text-decoration: none;
   font-size: 0.93rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 6px;
+  padding: 0.42rem 0.75rem;
+  border-radius: 9px;
 }
 header.site nav.primary a:hover,
-header.site .menu summary:hover,
-header.site .sign-in:hover { background: var(--sunk); color: var(--ink); }
-/* Sign-in is only for the few members, so it stays a quiet link at the end of the bar. */
-header.site .sign-in { color: var(--muted); font-size: 0.86rem; }
+header.site .menu summary:hover { background: var(--tint); color: var(--ink); }
+/* The section the reader is in. */
+header.site nav.primary a[aria-current="page"] { background: var(--tint); color: var(--ink); font-weight: 500; }
 
-/* The one filled button in the bar. It opens the subscribe pop-up. */
+/* The one filled button in the bar, always at its right end. It opens the subscribe pop-up. */
 header.site .subscribe-open {
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  padding: 0.6rem 0.85rem;
+  border-radius: 9px;
   background: var(--ink);
   color: var(--paper);
   font: 500 0.86rem/1 var(--sans);
@@ -190,7 +199,7 @@ header.site .subscribe-open:hover { background: var(--ink-2); }
 .menu { position: relative; }
 .menu summary { display: block; list-style: none; cursor: pointer; user-select: none; }
 .menu summary::-webkit-details-marker { display: none; }
-.menu[open] summary { background: var(--sunk); color: var(--ink); }
+.menu[open] summary { background: var(--tint); color: var(--ink); }
 .menu .panel {
   position: absolute;
   right: 0;
@@ -232,7 +241,7 @@ header.site .subscribe-open:hover { background: var(--ink-2); }
 .menu .who span { font-weight: 400; font-size: 0.85rem; color: var(--muted); }
 header.site .account summary { padding: 0.2rem; border-radius: 50%; display: flex; }
 header.site .account summary .avatar { display: block; width: 30px; height: 30px; }
-header.site .account[open] summary { box-shadow: 0 0 0 2px var(--line); }
+header.site .account[open] summary { box-shadow: 0 0 0 2px var(--tint); }
 .site-menu { display: none; }
 .avatar-empty { display: inline-block; width: 30px; height: 30px; }
 
@@ -710,16 +719,19 @@ footer.site {
   font-size: 0.85rem;
   color: var(--muted);
 }
+/* The links sit on their own line, so they never wrap away from each other on a phone. */
+.foot-links { display: flex; justify-content: center; gap: 1.2rem; margin-top: 0.5rem; }
+footer.site a { color: var(--ink-2); }
 
 /* ---------- small screens ---------- */
 
 @media (max-width: 760px) {
   body { font-size: 16px; }
-  header.site { padding: 0.4rem 0.4rem 0.4rem 0.5rem; }
-  /* One row on phones: the name, then Menu, then the account picture or Sign in. */
+  /* One row across the phone: the name, then Menu, the account picture and Subscribe. */
+  header.site { width: calc(100% - 1.5rem); }
+  .brand { margin-right: auto; }
   header.site nav.primary { display: none; }
   .site-menu { display: block; }
-  header.site .sign-in { display: none; }
   .menu .panel { min-width: 12rem; }
   /* The hero is as tall as its text plus a band of the painting, not most of the screen. */
   .home .scene { min-height: 0; padding-bottom: clamp(10rem, 30svh, 14rem); }

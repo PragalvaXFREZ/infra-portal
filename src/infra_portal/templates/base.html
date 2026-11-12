@@ -12,48 +12,48 @@
 {# A page turns the Subscribe buttons and the pop-up off with {% set subscribe_entry = false %}. #}
 {% set subscribing = follow_enabled() and subscribe_entry | default(true) %}
 <body class="{% block body_class %}inner{% endblock %} art-{% block art %}tools{% endblock %}">
-  <div class="scene">
-    <header class="site">
-      <a class="brand" href="/">infra</a>
-      <nav class="primary" aria-label="Site">
-        <a href="/labs">Labs</a>
-        <a href="/writing">Writing</a>
-        <a href="/members">Members</a>
-      </nav>
-      <div class="end">
-        {% if subscribing %}<a class="subscribe-open" href="/subscribe" data-subscribe-open>Subscribe</a>{% endif %}
-        {# On phones the three links above move into this menu. #}
-        <details class="menu site-menu">
-          <summary>Menu</summary>
+  {# A page names its section with {% set section = "labs" %}, and that link is marked in the bar. #}
+  <header class="site">
+    <a class="brand" href="/">infra</a>
+    <nav class="primary" aria-label="Site">
+      <a href="/labs"{% if section == "labs" %} aria-current="page"{% endif %}>Labs</a>
+      <a href="/writing"{% if section == "writing" %} aria-current="page"{% endif %}>Writing</a>
+      <a href="/members"{% if section == "members" %} aria-current="page"{% endif %}>Members</a>
+    </nav>
+    <div class="end">
+      {# On phones the three links above move into this menu. #}
+      <details class="menu site-menu">
+        <summary>Menu</summary>
+        <div class="panel">
+          <a href="/labs">Labs</a>
+          <a href="/writing">Writing</a>
+          <a href="/members">Members</a>
+          {% if not member %}<a class="quiet" href="/auth/github/login">Member sign in</a>{% endif %}
+        </div>
+      </details>
+      {% if member %}
+        <details class="menu account">
+          <summary aria-label="Your account">
+            {% if member.avatar_src %}<img class="avatar" src="{{ member.avatar_src }}" alt="" width="30" height="30">{% else %}<span class="avatar avatar-empty"></span>{% endif %}
+          </summary>
           <div class="panel">
-            <a href="/labs">Labs</a>
-            <a href="/writing">Writing</a>
-            <a href="/members">Members</a>
-            {% if not member %}<a class="quiet" href="/auth/github/login">Member sign in</a>{% endif %}
+            <p class="who">{{ member.name }}<span>@{{ member.github_login }}</span></p>
+            <a href="/write">New post</a>
+            <a href="/me/posts">My posts</a>
+            <a href="/u/{{ member.github_login }}">Profile</a>
+            <a href="/settings/profile">Edit profile</a>
+            {% if member.is_admin %}<a href="/admin/members">Members admin</a>{% endif %}
+            {% if member.is_admin %}<a href="/admin/mail">Email preview</a>{% endif %}
+            {% if member.is_admin %}<a href="/admin/labs">Labs admin</a>{% endif %}
+            <form method="post" action="/auth/logout"><button class="item-button">Sign out</button></form>
           </div>
         </details>
-        {% if member %}
-          <details class="menu account">
-            <summary aria-label="Your account">
-              {% if member.avatar_src %}<img class="avatar" src="{{ member.avatar_src }}" alt="" width="30" height="30">{% else %}<span class="avatar avatar-empty"></span>{% endif %}
-            </summary>
-            <div class="panel">
-              <p class="who">{{ member.name }}<span>@{{ member.github_login }}</span></p>
-              <a href="/write">New post</a>
-              <a href="/me/posts">My posts</a>
-              <a href="/u/{{ member.github_login }}">Profile</a>
-              <a href="/settings/profile">Edit profile</a>
-              {% if member.is_admin %}<a href="/admin/members">Members admin</a>{% endif %}
-              {% if member.is_admin %}<a href="/admin/mail">Email preview</a>{% endif %}
-              {% if member.is_admin %}<a href="/admin/labs">Labs admin</a>{% endif %}
-              <form method="post" action="/auth/logout"><button class="item-button">Sign out</button></form>
-            </div>
-          </details>
-        {% else %}
-          <a class="sign-in" href="/auth/github/login">Sign in</a>
-        {% endif %}
-      </div>
-    </header>
+      {% endif %}
+      {# Always the last thing in the bar. Members sign in from the foot of the page. #}
+      {% if subscribing %}<a class="subscribe-open" href="/subscribe" data-subscribe-open>Subscribe</a>{% endif %}
+    </div>
+  </header>
+  <div class="scene">
     {% block scene %}{% endblock %}
   </div>
   {% block main %}
@@ -61,7 +61,15 @@
     {% block content %}{% endblock %}
   </main>
   {% endblock %}
-  <footer class="site">infra · Deerwalk Institute of Technology{% if subscribing %} · <a href="/subscribe" data-subscribe-open>Posts by email</a>{% endif %}</footer>
+  <footer class="site">
+    infra · Deerwalk Institute of Technology
+    {% if subscribing or not member %}
+      <span class="foot-links">
+        {% if subscribing %}<a href="/subscribe" data-subscribe-open>Posts by email</a>{% endif %}
+        {% if not member %}<a href="/auth/github/login">Member sign in</a>{% endif %}
+      </span>
+    {% endif %}
+  </footer>
   {% if subscribing %}
     {% include "_subscribe_dialog.html" %}
     <script src="{{ static_url('subscribe.js') }}" defer></script>

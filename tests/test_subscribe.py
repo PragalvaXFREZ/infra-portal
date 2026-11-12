@@ -454,3 +454,18 @@ def test_removing_a_member_removes_the_mutes_of_them(client, mailer, add_member,
     assert [m.author_id for m in _rows(session_factory, SubscriberMute)] == [bob.id]
     page = client.get(f"/subscription/{token}?author={alice.id}")
     assert page.status_code == 200 and "Bob" in page.text and "Alice" not in page.text
+
+
+def test_subscribe_is_the_last_thing_in_the_bar_and_sign_in_is_at_the_foot(client, mailer):
+    page = client.get("/writing").text
+    bar = page[page.index('<header class="site">') : page.index("</header>")]
+    assert bar.rstrip().endswith("</div>") and bar.rindex(OPENER) > bar.rindex("</details>")
+    assert "Sign in" not in bar.replace("Member sign in", "")
+    foot = page[page.index('<footer class="site">') :]
+    assert 'href="/auth/github/login">Member sign in</a>' in foot
+
+
+def test_bar_marks_the_section_being_read(client, mailer):
+    assert '<a href="/writing" aria-current="page">Writing</a>' in client.get("/writing").text
+    assert '<a href="/labs" aria-current="page">Labs</a>' in client.get("/labs").text
+    assert "aria-current" not in client.get("/").text
