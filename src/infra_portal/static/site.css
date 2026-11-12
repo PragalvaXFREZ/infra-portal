@@ -445,6 +445,10 @@ form.follow > label { font-weight: 500; }
 .follow-row { display: flex; gap: 0.5rem; }
 .follow-row input { flex: 1 1 auto; min-width: 0; }
 form.follow .muted.small { margin: 0; }
+/* The members a subscriber gets no emails about, each with a button to start them again. */
+ul.mutes { padding-left: 1.1rem; }
+ul.mutes li { margin: 0.3rem 0; }
+ul.mutes form { display: inline; margin-left: 0.6rem; }
 .after-post { margin-top: 2.4rem; padding-top: 0.4rem; border-top: 1px solid var(--line); }
 .danger-zone { margin-top: 2.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
 .error { color: var(--danger); background: rgb(163 58 44 / 0.08); padding: 0.6rem 0.9rem; border-radius: 7px; }
