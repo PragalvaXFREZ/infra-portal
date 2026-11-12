@@ -63,6 +63,19 @@ def test_new_form_starts_as_a_draft(client, boss):
 
     assert '<option value="draft" selected>' in form
     assert 'data-preview-url="/admin/labs/preview"' in form
+    assert 'Page <span class="muted small">(Markdown)</span>' in form
+
+
+def test_post_editor_keeps_its_tabs_after_the_shared_template(client, add_member, sign_in):
+    add_member("alice")
+    sign_in("alice", github_id=42)
+
+    form = client.get("/write").text
+
+    assert 'Post <span class="muted small">(Markdown)</span>' in form
+    assert 'value="preview" class="tab"' in form
+    # Posts keep the default preview address.
+    assert "data-preview-url" not in form
 
 
 def test_an_empty_address_comes_from_the_title(client, boss, session_factory):
