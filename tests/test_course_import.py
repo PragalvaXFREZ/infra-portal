@@ -385,3 +385,18 @@ def test_slug_stays_short_and_long_numbers_are_not_read():
     assert len(slug) <= 80
     too_big = f'---\ntitle: "C, stage 1: x"\n---\n## Chunk {"9" * 90}. Big\n\nText.\n'
     assert plan_import([("s.md", too_big)]).pages == ()
+
+
+def test_a_file_with_the_same_chunk_twice_is_refused():
+    text = '---\ntitle: "C, stage 1: x"\n---\n## Chunk 1. A\n\nOne.\n\n## Chunk 1. B\n\nTwo.\n'
+    plan = plan_import([("s.md", text)])
+    assert (plan.pages, plan.stages) == ((), ())
+    assert "stage-1-chunk-1" in plan.refused[0].reason
+
+
+def test_a_second_warmup_for_the_same_chunk_is_refused():
+    plan = plan_import([("s.md", STAGE), ("w1.md", WARMUP), ("w2.md", WARMUP.replace("100 g", "200 g"))])
+    assert [r.name for r in plan.refused] == ["w2.md"]
+    body = page(plan, "stage-2-chunk-1").body
+    assert "100 g" in body
+    assert "200 g" not in body
