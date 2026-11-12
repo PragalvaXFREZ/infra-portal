@@ -147,13 +147,33 @@ def test_subscription_page_changes_nothing(client, mailer, add_member, session_f
     assert _rows(session_factory, SubscriberMute) == []
 
 
-def test_subscription_page_without_a_known_author_offers_only_stop_all(client, mailer):
+def test_subscription_page_without_a_known_author_has_no_button_for_one(client, mailer):
     token = _subscriber(client, mailer)
     for query in ("", "?author=999", "?author=abc", "?author=%C2%B2", "?author=" + "9" * 30):
         page = client.get(f"/subscription/{token}{query}")
         assert page.status_code == 200
         assert "Stop all emails" in page.text and "Stop emails about" not in page.text
     assert client.post(f"/subscription/{token}/mute", data={"author": "²"}).status_code == 200
+
+
+def test_subscription_page_lists_every_member_to_stop_or_start(client, mailer, add_member, session_factory):
+    alice = add_member("alice", display_name="Alice", github_id=42)
+    bob = add_member("bob", display_name="Bob", github_id=7)
+    add_member("secret-invitee")
+    token = _subscriber(client, mailer)
+
+    # Opened from the confirmation page, so no email names a member. Both can still be stopped.
+    page = client.get(f"/subscription/{token}")
+    assert "Alice" in page.text and "Bob" in page.text
+    assert "secret-invitee" not in page.text
+    assert page.text.count(f"/subscription/{token}/mute") == 2
+    assert f"/subscription/{token}/unmute" not in page.text
+
+    after = client.post(f"/subscription/{token}/mute", data={"author": str(bob.id)})
+    assert after.text.count(f"/subscription/{token}/mute") == 1
+    assert after.text.count(f"/subscription/{token}/unmute") == 1
+    [mute] = _rows(session_factory, SubscriberMute)
+    assert mute.author_id == bob.id and mute.author_id != alice.id
 
 
 def test_an_unclaimed_invite_is_not_shown_or_muted(client, mailer, add_member, session_factory):

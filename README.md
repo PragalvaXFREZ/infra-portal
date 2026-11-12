@@ -125,7 +125,8 @@ Both work only when `RESEND_API_KEY` and `MAIL_FROM` are set; without them the f
    buttons, because mail scanners open links.
    - A follower's link (`/unsubscribe/<token>`) offers one button that stops that member's posts.
    - A subscriber's link (`/subscription/<token>?author=<member id>`) offers "Stop emails about this member"
-     and "Stop all emails", and lists the members already stopped, each with a button to start them again.
+     and "Stop all emails". The page also lists every member, each with a button to stop their emails or to
+     start them again, so a reader can drop one member without waiting for an email about them.
      Stopping one member also removes a follow of that member by the same address.
    - Mail apps' one-click unsubscribe (RFC 8058) posts to the same address as the link. For a follower it
      stops that member's posts. For a subscriber it ends the subscription and every follow of the same

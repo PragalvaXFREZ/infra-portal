@@ -19,6 +19,7 @@ from infra_portal.db import get_db
 from infra_portal.follow import EMAIL_PATTERN, MAX_EMAIL, RESEND_AFTER, _aware, _page
 from infra_portal.mail import Mailer, get_mailer, subscription_confirm_email
 from infra_portal.models import Follow, Member, Subscriber, SubscriberMute
+from infra_portal.profiles import signed_in_members
 
 log = logging.getLogger(__name__)
 
@@ -125,12 +126,13 @@ def confirm(
 
 def _manage(
     request: Request,
+    db: Session,
     member: Member | None,
     row: Subscriber,
     author: Member | None,
     done: str | None = None,
 ):
-    muted = sorted((m.author for m in row.mutes), key=lambda person: person.name.lower())
+    muted_ids = {m.author_id for m in row.mutes}
     return _page(
         request,
         member,
@@ -140,8 +142,10 @@ def _manage(
             "token": row.token,
             "confirmed": row.is_confirmed,
             "author": author,
-            "author_muted": author is not None and author in muted,
-            "muted_members": muted,
+            "author_muted": author is not None and author.id in muted_ids,
+            # Every member, so one of them can be stopped without waiting for an email about them.
+            "people": signed_in_members(db),
+            "muted_ids": muted_ids,
             "done": done,
         },
     )
@@ -160,7 +164,7 @@ def subscription_page(
     row = _by_token(db, token)
     if row is None:
         return _result(request, member, "unsubscribed")
-    return _manage(request, member, row, _member(db, author))
+    return _manage(request, db, member, row, _member(db, author))
 
 
 @router.post("/subscription/{token}")
@@ -195,13 +199,13 @@ def mute(
         return _result(request, member, "unsubscribed")
     target = _member(db, author)
     if target is None:
-        return _manage(request, member, row, None)
+        return _manage(request, db, member, row, None)
     if all(m.author_id != target.id for m in row.mutes):
         row.mutes.append(SubscriberMute(author_id=target.id))
     # A follow of the same member would keep their posts coming, so it goes too.
     db.execute(delete(Follow).where(Follow.email == row.email, Follow.author_id == target.id))
     db.commit()
-    return _manage(request, member, row, target, "muted")
+    return _manage(request, db, member, row, target, "muted")
 
 
 @router.post("/subscription/{token}/unmute")
@@ -218,8 +222,8 @@ def unmute(
     target = _member(db, author)
     found = [m for m in row.mutes if target is not None and m.author_id == target.id]
     if not found:
-        return _manage(request, member, row, target)
+        return _manage(request, db, member, row, target)
     for mute_row in found:
         row.mutes.remove(mute_row)
     db.commit()
-    return _manage(request, member, row, target, "unmuted")
+    return _manage(request, db, member, row, target, "unmuted")

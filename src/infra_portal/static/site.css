@@ -445,7 +445,7 @@ form.follow > label { font-weight: 500; }
 .follow-row { display: flex; gap: 0.5rem; }
 .follow-row input { flex: 1 1 auto; min-width: 0; }
 form.follow .muted.small { margin: 0; }
-/* The members a subscriber gets no emails about, each with a button to start them again. */
+/* Every member on the subscription page, each with a button to stop their emails or start them again. */
 ul.mutes { padding-left: 1.1rem; }
 ul.mutes li { margin: 0.3rem 0; }
 ul.mutes form { display: inline; margin-left: 0.6rem; }

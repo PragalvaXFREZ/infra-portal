@@ -8,7 +8,7 @@
   {% elif done == "unmuted" %}
     <p role="status"><strong>Done.</strong> Emails about {{ author.name }} start again with their next post.</p>
   {% endif %}
-  <p><strong>{{ email }}</strong> gets an email when any member publishes a post{% if muted_members %}, except the members listed below{% endif %}.</p>
+  <p><strong>{{ email }}</strong> gets an email when any member publishes a post{% if muted_ids %}, except the members marked as stopped below{% endif %}.</p>
   {% if not confirmed %}
     <p class="muted">This subscription is not confirmed yet. Open the link in the confirmation email to start it.</p>
   {% endif %}
@@ -24,16 +24,25 @@
     </form>
   </div>
   <p class="muted small">Stopping all emails also ends any follows of single members for this address.</p>
-  {% if muted_members %}
-    <h2>No emails about</h2>
+  {% if people %}
+    <h2>Members</h2>
+    <p class="muted small">Stop the emails about one member and keep the rest.</p>
     <ul class="mutes">
-    {% for person in muted_members %}
+    {% for person in people %}
       <li>
         <a href="/u/{{ person.github_login }}">{{ person.name }}</a>
-        <form method="post" action="/subscription/{{ token }}/unmute">
-          <input type="hidden" name="author" value="{{ person.id }}">
-          <button class="link">Start again</button>
-        </form>
+        {% if person.id in muted_ids %}
+          <span class="muted small">stopped</span>
+          <form method="post" action="/subscription/{{ token }}/unmute">
+            <input type="hidden" name="author" value="{{ person.id }}">
+            <button class="link">Start again</button>
+          </form>
+        {% else %}
+          <form method="post" action="/subscription/{{ token }}/mute">
+            <input type="hidden" name="author" value="{{ person.id }}">
+            <button class="link">Stop emails</button>
+          </form>
+        {% endif %}
       </li>
     {% endfor %}
     </ul>
