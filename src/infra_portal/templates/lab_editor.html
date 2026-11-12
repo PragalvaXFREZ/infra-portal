@@ -41,25 +41,26 @@
     {# A page with a stage is a step on the learning path and is served under /learn. #}
     <div class="field-row">
       <div>
-        <label for="stage">Stage <span class="muted small">(on the learning path)</span></label>
+        <label for="stage">Stage</label>
         <select id="stage" name="stage">
           <option value="">Not on the path</option>
           {% for s in stages %}<option value="{{ s.id }}"{% if s.id | string == stage %} selected{% endif %}>Stage {{ s.number }}: {{ s.title }}</option>{% endfor %}
         </select>
       </div>
       <div>
-        <label for="position">Place in the stage <span class="muted small">(lowest first)</span></label>
+        <label for="position">Place in the stage</label>
         <input id="position" name="position" type="number" min="0" max="999" value="{{ position }}">
       </div>
       <div>
-        <label for="number">Its number <span class="muted small">(3 for Chunk 3)</span></label>
+        <label for="number">Step number</label>
         <input id="number" name="number" type="number" min="0" max="999" value="{{ number }}">
       </div>
       <div>
-        <label for="minutes">Minutes of video <span class="muted small">(optional)</span></label>
+        <label for="minutes">Minutes of video</label>
         <input id="minutes" name="minutes" type="number" min="0" max="999" value="{{ minutes }}">
       </div>
     </div>
+    <p class="muted small field-note">Only for a step on the learning path. The lowest place comes first. The step number is the 3 in "Chunk 3". Number and minutes may stay empty.</p>
     <label for="visibility">Who can see it</label>
     <select id="visibility" name="visibility">
       {% for value, name in visibilities.items() %}<option value="{{ value }}"{% if value == visibility %} selected{% endif %}>{{ name }}</option>{% endfor %}
