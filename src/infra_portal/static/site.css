@@ -612,6 +612,8 @@ form.stack label { margin-top: 0.8rem; font-weight: 500; }
 /* Two short fields side by side, such as a lab's kind and date. */
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0 1rem; }
 .field-row > div { display: grid; gap: 0.4rem; align-content: start; }
+/* Four short fields on one row where there is room. */
+.field-row.four { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); }
 form.stack .field-note { margin: 0.2rem 0 0; }
 form.inline { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 1.2rem 0 1.6rem; }
 form.inline label { font-weight: 500; }
