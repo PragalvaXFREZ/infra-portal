@@ -15,6 +15,7 @@ from sqlalchemy.pool import StaticPool
 
 from infra_portal import config, db
 from infra_portal.github import GitHubUser, get_github_client
+from infra_portal.mail import Email, MailError, get_mailer
 from infra_portal.models import Base, Member
 
 TEST_ENV = {
@@ -119,3 +120,25 @@ def sign_in(client, github):
 
     return _sign_in
 
+
+
+class FakeMailer:
+    def __init__(self):
+        self.sent: list[Email] = []
+        self.fail = False
+
+    def send(self, emails: list[Email]) -> None:
+        if self.fail:
+            raise MailError("down")
+        self.sent.extend(emails)
+
+
+@pytest.fixture
+def mailer(app, monkeypatch):
+    """Turns email on and collects what would be sent."""
+    monkeypatch.setenv("RESEND_API_KEY", "re_test")
+    monkeypatch.setenv("MAIL_FROM", "infra <posts@example.com>")
+    config.get_settings.cache_clear()
+    fake = FakeMailer()
+    app.dependency_overrides[get_mailer] = lambda: fake
+    return fake
