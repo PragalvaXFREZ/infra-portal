@@ -6,7 +6,16 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from infra_portal import admin, auth, follow, labs, posts, profiles
+from infra_portal import (
+    admin,
+    admin_mail,
+    auth,
+    follow,
+    labs,
+    posts,
+    profiles,
+    subscribe,
+)
 from infra_portal.auth import current_member, require_member
 from infra_portal.config import get_settings
 from infra_portal.db import database_is_reachable, get_db
@@ -35,9 +44,11 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     app.include_router(auth.router)
     app.include_router(admin.router)
+    app.include_router(admin_mail.router)
     app.include_router(profiles.router)
     app.include_router(posts.router)
     app.include_router(follow.router)
+    app.include_router(subscribe.router)
     app.include_router(labs.router)
 
     @app.get("/favicon.ico", include_in_schema=False)

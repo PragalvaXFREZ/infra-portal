@@ -6,38 +6,9 @@ import httpx
 import pytest
 from sqlalchemy import select
 
-from infra_portal import config
 from infra_portal.config import Settings
-from infra_portal.mail import (
-    Email,
-    MailError,
-    NewPost,
-    ResendMailer,
-    get_mailer,
-    new_post_emails,
-)
+from infra_portal.mail import Email, MailError, NewPost, ResendMailer, new_post_emails
 from infra_portal.models import Follow, Post
-
-
-class FakeMailer:
-    def __init__(self):
-        self.sent: list[Email] = []
-        self.fail = False
-
-    def send(self, emails: list[Email]) -> None:
-        if self.fail:
-            raise MailError("down")
-        self.sent.extend(emails)
-
-
-@pytest.fixture
-def mailer(app, monkeypatch):
-    monkeypatch.setenv("RESEND_API_KEY", "re_test")
-    monkeypatch.setenv("MAIL_FROM", "infra <posts@example.com>")
-    config.get_settings.cache_clear()
-    fake = FakeMailer()
-    app.dependency_overrides[get_mailer] = lambda: fake
-    return fake
 
 
 @pytest.fixture
@@ -163,7 +134,7 @@ def test_publishing_emails_confirmed_followers_of_that_author_only(
 
     assert [e.to for e in mailer.sent] == ["a-fan@example.com"]
     email = mailer.sent[0]
-    assert email.subject == "Hello Docker"
+    assert email.subject == "New post by Alice: Hello Docker"
     assert "http://testserver/u/alice/hello-docker" in email.text
     assert email.unsubscribe_url and email.unsubscribe_url.startswith("http://testserver/unsubscribe/")
 

@@ -1,0 +1,16 @@
+{# The form for every member's posts. Hidden while email is not configured. #}
+{% if follow_enabled() %}
+  <form method="post" action="/subscribe" class="follow">
+    <label for="subscribe-email">Get an email when anyone posts</label>
+    <div class="follow-row">
+      <input id="subscribe-email" type="email" name="email" required maxlength="254" autocomplete="email" value="{{ email or '' }}">
+      <button class="secondary">Subscribe</button>
+    </div>
+    {# People never see this field; bots that fill every field give themselves away. #}
+    <div class="visually-hidden" aria-hidden="true">
+      <label for="subscribe-nickname">Leave this empty</label>
+      <input id="subscribe-nickname" name="nickname" tabindex="-1" autocomplete="off">
+    </div>
+    <p class="muted small">You'll get a link to confirm first. Every email has a link to stop emails about one member, or all of them.</p>
+  </form>
+{% endif %}

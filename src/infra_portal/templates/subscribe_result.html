@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block art %}eatons{% endblock %}
+{% block title %}{% if outcome == "confirmed" %}Subscribed{% elif outcome == "unsubscribed" %}Unsubscribed{% elif outcome == "sent" %}Check your inbox{% else %}Subscribe{% endif %}{% endblock %}
+{% block content %}
+  {% if outcome == "sent" %}
+    <h1>Check your inbox</h1>
+    <p>A link to confirm is on its way to <strong>{{ email }}</strong>, unless one was sent in the last day. Open it to start getting an email when any member publishes a post.</p>
+    <p class="muted">Nothing arrives? Look in spam, or try again tomorrow.</p>
+  {% elif outcome == "confirmed" %}
+    <h1>You're subscribed</h1>
+    <p><strong>{{ email }}</strong> will get an email each time a member publishes a post. Every email has a link to stop emails about that member, or all of them.</p>
+    <p><a href="/writing">Read the writing</a> · <a href="/subscription/{{ token }}">Manage the subscription</a></p>
+  {% elif outcome == "unsubscribed" %}
+    <h1>Unsubscribed</h1>
+    <p>You won't get more emails about new posts.</p>
+    <p><a href="/writing">Read the writing</a></p>
+  {% elif outcome == "invalid" %}
+    <h1>Check the address</h1>
+    <p class="error" role="alert">That doesn't look like an email address.</p>
+    {% include "_subscribe_form.html" %}
+  {% elif outcome == "failed" %}
+    <h1>The email didn't go out</h1>
+    <p>Something went wrong on our side. Try again in a few minutes.</p>
+    <p><a href="/writing">Back to the writing</a></p>
+  {% else %}
+    <h1>This link doesn't work</h1>
+    <p>It may be from an address that has since unsubscribed. You can subscribe again from the writing page.</p>
+    <p><a href="/writing">Writing</a></p>
+  {% endif %}
+{% endblock %}

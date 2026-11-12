@@ -39,9 +39,9 @@ class Settings(BaseSettings):
     # the page a non-member sees after signing in. Set it empty to hide the line.
     contact_email: str = "pragalva.sapkota@deerwalk.edu.np"
 
-    # Email for followers, sent through Resend (https://resend.com). MAIL_FROM is the sender, such
-    # as "infra <posts@pragalva.me>", on a domain verified in Resend. With either one empty the
-    # Follow forms are hidden and no email is sent.
+    # Email for followers and subscribers, sent through Resend (https://resend.com). MAIL_FROM is the
+    # sender, such as "infra <posts@pragalva.me>", on a domain verified in Resend. With either one
+    # empty the Follow and Subscribe forms are hidden and no email is sent.
     resend_api_key: str = ""
     mail_from: str = ""
 

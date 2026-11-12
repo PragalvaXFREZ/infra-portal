@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Email preview{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  <h1>Email preview</h1>
+  <p>The four emails the site sends, built by the same code as the real ones, with made-up data. Their links carry a token that matches nothing, so opening one changes nothing.</p>
+  {% if mail_enabled %}
+    <form method="post" action="/admin/mail/send" class="inline">
+      <label for="sample-to">Send all four to</label>
+      <input id="sample-to" type="email" name="to" required maxlength="254" autocomplete="email" value="{{ to or '' }}">
+      <button>Send samples</button>
+    </form>
+    {% if sent_to %}<p role="status">Sent the four samples to <strong>{{ sent_to }}</strong>.</p>{% endif %}
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% else %}
+    <p class="muted">Email is not configured (<code>RESEND_API_KEY</code> and <code>MAIL_FROM</code>), so the samples cannot be sent. The previews still show what would go out.</p>
+  {% endif %}
+  {% for label, email in samples %}
+    <section class="mail-sample">
+      <h2>{{ label }}</h2>
+      <dl>
+        <dt>Subject</dt><dd>{{ email.subject }}</dd>
+        {% for name, value in email.headers.items() %}<dt>{{ name }}</dt><dd><code>{{ value }}</code></dd>{% endfor %}
+      </dl>
+      <h3>HTML</h3>
+      {# srcdoc is autoescaped as an attribute; the sandbox keeps any script or form inside from running. #}
+      <iframe sandbox="" title="{{ label }}, HTML part" srcdoc="{{ email.html }}"></iframe>
+      <h3>Text</h3>
+      <pre class="mail-text">{{ email.text }}</pre>
+    </section>
+  {% endfor %}
+{% endblock %}

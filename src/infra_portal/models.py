@@ -157,3 +157,51 @@ class Follow(Base):
     @property
     def is_confirmed(self) -> bool:
         return self.confirmed_at is not None
+
+
+class Subscriber(Base):
+    """An email address that gets a message when any member publishes a post.
+
+    It is a rule, not one `follows` row per member, so members who join later are covered. It is
+    confirmed the same way as a follow, and `token` plays the same part.
+    """
+
+    __tablename__ = "subscribers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Stored in lowercase.
+    email: Mapped[str] = mapped_column(String(254), unique=True)
+    token: Mapped[str] = mapped_column(String(64), unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    # When the last confirmation email went out. A repeat request within a day sends nothing.
+    confirm_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Not passive: the ORM deletes the mutes itself. SQLite, used in tests, does not run ON DELETE
+    # CASCADE, and it reuses row ids, so leftover mutes could attach to a later subscriber.
+    mutes: Mapped[list["SubscriberMute"]] = relationship(
+        back_populates="subscriber", cascade="all, delete-orphan"
+    )
+
+    @property
+    def is_confirmed(self) -> bool:
+        return self.confirmed_at is not None
+
+
+class SubscriberMute(Base):
+    """A subscriber who wants every member's posts except this member's."""
+
+    __tablename__ = "subscriber_mutes"
+
+    subscriber_id: Mapped[int] = mapped_column(
+        ForeignKey("subscribers.id", ondelete="CASCADE"), primary_key=True
+    )
+    # Removing a member removes the mutes that point at them, through the database.
+    author_id: Mapped[int] = mapped_column(
+        ForeignKey("members.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+
+    subscriber: Mapped[Subscriber] = relationship(back_populates="mutes")
+    author: Mapped[Member] = relationship()
