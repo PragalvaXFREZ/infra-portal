@@ -245,8 +245,12 @@ What the import reads, and nothing else:
 | Any note | A table starting with the columns `Stage` and `Topic` | The names of the stages |
 
 A file whose name ends in `-mentor.md`, or whose header has `draft: true`, is an answer key and is refused.
-Uploading again replaces a step's text, title and place; who sees it and the members' ticks stay. A stage
-that already exists is left as it is. Links between notes (`[[folder/stage-2-build-1|the build]]`) become
+Comments that the notes app hides (`%% ... %%` and `<!-- ... -->`) are dropped. A chunk ends at the next
+first or second level heading.
+
+Uploading again replaces a step's text and title; who sees it and the members' ticks stay. The order of a
+stage changes only when its stage note is in the upload, and a chunk keeps its warm-up when the stage note
+comes without the warm-up note. A stage that already exists is left as it is. Links between notes (`[[folder/stage-2-build-1|the build]]`) become
 links between pages when the reader may see both.
 
 ### Notes syntax in lab bodies
