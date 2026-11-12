@@ -117,8 +117,8 @@ Anyone can ask for an email about new posts in two ways:
 
 Each Subscribe button is a link to `/subscribe`, a page with the form. With JavaScript
 (`static/subscribe.js`) the button opens the same form in a pop-up instead and sends it without leaving the
-page. The top of the pop-up is a drawing of an envelope: the address appears on it while it is typed, and a
-postmark with the date lands on it once the confirmation email is sent. `/any-page#subscribe` opens the
+page. Beside the form the pop-up shows its own painting, a reader with a book (Corot, *A Woman Reading*), not
+the painting of the page behind it. `/any-page#subscribe` opens the
 pop-up directly, so that address can be shared. The pop-up is left out of the pages that manage a
 subscription.
 

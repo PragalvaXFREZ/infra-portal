@@ -12,7 +12,7 @@ if (dialog && typeof dialog.showModal === "function") {
   const button = form.querySelector("button");
   const panels = dialog.querySelectorAll("[data-subscribe-panel]");
   const errors = dialog.querySelectorAll("[data-subscribe-error]");
-  const mirror = dialog.querySelector("[data-subscribe-mirror]");
+  const art = dialog.querySelector(".subscribe-art img");
   const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
   // The same time as the closing animation in site.css.
   const CLOSE_MS = 160;
@@ -24,14 +24,13 @@ if (dialog && typeof dialog.showModal === "function") {
   const complain = (about) => {
     errors.forEach((error) => { error.hidden = error.dataset.subscribeError !== about; });
   };
-  // The envelope in the drawing shows the address being typed, or a sample while there is none.
-  const write = (value) => {
-    const text = value.trim();
-    mirror.textContent = text || mirror.dataset.empty;
-    mirror.classList.toggle("empty", text === "");
-  };
-  input.addEventListener("input", () => write(input.value));
-  input.addEventListener("change", () => write(input.value));
+  // The painting is not fetched with the page, since most visits never open the pop-up. Once
+  // the page has loaded and the browser is idle it is fetched, so it is there when asked for.
+  const fetchArt = () => { art.loading = "eager"; };
+  window.addEventListener("load", () => {
+    if ("requestIdleCallback" in window) requestIdleCallback(fetchArt);
+    else setTimeout(fetchArt, 1500);
+  });
   const busy = (yes) => {
     form.setAttribute("aria-busy", String(yes));
     button.disabled = yes;
@@ -41,7 +40,7 @@ if (dialog && typeof dialog.showModal === "function") {
     if (dialog.open) return;
     show("form");
     complain(null);
-    write(input.value);
+    fetchArt();
     dialog.style.transformOrigin = "";
     dialog.showModal();
     if (from) {
@@ -104,7 +103,6 @@ if (dialog && typeof dialog.showModal === "function") {
     const address = input.value.trim();
     const data = new FormData(form);
     complain(null);
-    write(address);
     busy(true);
 
     let response;
@@ -120,12 +118,7 @@ if (dialog && typeof dialog.showModal === "function") {
     // The server answers with a whole page; only its status matters here. 200 is also what an
     // address that is already subscribed gets, so the pop-up does not reveal who signed up.
     if (response.ok) {
-      const today = new Date();
       dialog.querySelector("[data-subscribe-address]").textContent = address;
-      dialog.querySelector("[data-subscribe-day]").textContent = today
-        .toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-        .toUpperCase();
-      dialog.querySelector("[data-subscribe-year]").textContent = String(today.getFullYear());
       form.reset();
       show("sent");
       dialog.querySelector("[data-subscribe-sent-title]").focus();

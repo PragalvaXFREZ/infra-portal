@@ -3,32 +3,13 @@
    empty on purpose: a page's own `email` value must not leak into it. Nothing here may have the
    id "subscribe": a browser would move the cursor to it when a page is opened at #subscribe. #}
 <dialog class="subscribe" aria-labelledby="subscribe-title" data-step="form">
-  {# A drawing, not a photo: an envelope on a desk. subscribe.js writes the address on it while the
-     reader types, and the postmark with today's date lands once the confirmation email is sent. #}
-  <div class="subscribe-desk" aria-hidden="true">
-    <div class="envelope">
-      <p class="envelope-from"><b>infra</b><span>Deerwalk Institute of Technology</span></p>
-      <svg class="envelope-stamp" viewBox="0 0 48 60" width="48" height="60">
-        <rect class="paper" x="2" y="2" width="44" height="56"/>
-        <rect class="teeth" x="2" y="2" width="44" height="56"/>
-        <rect x="7" y="7" width="34" height="37" fill="#e3c487"/>
-        <circle cx="30" cy="19" r="4.5" fill="#f4e6c0"/>
-        <path d="M7 33q9-8 17-3t17-4v18H7z" fill="#93a06a"/>
-        <path d="M7 39q10-6 18-1t16-3v9H7z" fill="#506a4b"/>
-        <text x="24" y="54" text-anchor="middle">infra</text>
-      </svg>
-      <svg class="postmark" viewBox="0 0 210 120" width="210" height="120">
-        <defs><path id="postmark-ring" d="M 17,60 a 43,43 0 1,1 86,0 a 43,43 0 1,1 -86,0"/></defs>
-        <circle cx="60" cy="60" r="54"/>
-        <circle cx="60" cy="60" r="33"/>
-        <text class="ring"><textPath href="#postmark-ring" textLength="262">INFRA · POSTS BY EMAIL · DEERWALK ·</textPath></text>
-        <text class="day" x="60" y="59" text-anchor="middle" data-subscribe-day></text>
-        <text class="year" x="60" y="73" text-anchor="middle" data-subscribe-year></text>
-        <path d="M118,36 q10,-7 20,0 t20,0 t20,0 t20,0 M118,48 q10,-7 20,0 t20,0 t20,0 t20,0 M118,60 q10,-7 20,0 t20,0 t20,0 t20,0 M118,72 q10,-7 20,0 t20,0 t20,0 t20,0 M118,84 q10,-7 20,0 t20,0 t20,0 t20,0"/>
-      </svg>
-      <p class="envelope-to"><span>To</span><b class="empty" data-subscribe-mirror data-empty="you@example.com">you@example.com</b></p>
-    </div>
-  </div>
+  {# The picture is a painting of a reader, because subscribing is how someone becomes one.
+     It is the pop-up's own painting, not the one behind the page. See static/art/ATTRIBUTION.md. #}
+  <figure class="subscribe-art">
+    <img src="{{ static_url('art/woman-reading-900.webp') }}" width="900" height="1315" loading="lazy" decoding="async"
+         alt="A young woman sits in a meadow by a river and reads a book. A painting by Camille Corot.">
+    <figcaption><cite>A Woman Reading</cite>Camille Corot, 1869 and 1870</figcaption>
+  </figure>
   <div class="subscribe-sheet">
     <button type="button" class="subscribe-close" data-subscribe-close aria-label="Close">
       <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>
