@@ -19,7 +19,13 @@ from sqlalchemy.orm import Session
 from infra_portal.auth import current_member
 from infra_portal.config import Settings, get_settings
 from infra_portal.db import get_db
-from infra_portal.mail import Mailer, NewPost, confirm_email, get_mailer, subscription_url
+from infra_portal.mail import (
+    Mailer,
+    NewPost,
+    confirm_email,
+    get_mailer,
+    subscription_url,
+)
 from infra_portal.models import Follow, Member, Post, Subscriber, SubscriberMute
 from infra_portal.profiles import get_member_by_login
 from infra_portal.templating import templates

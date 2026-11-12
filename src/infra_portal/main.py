@@ -6,7 +6,16 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from infra_portal import admin, admin_mail, auth, follow, labs, posts, profiles, subscribe
+from infra_portal import (
+    admin,
+    admin_mail,
+    auth,
+    follow,
+    labs,
+    posts,
+    profiles,
+    subscribe,
+)
 from infra_portal.auth import current_member, require_member
 from infra_portal.config import get_settings
 from infra_portal.db import database_is_reachable, get_db
