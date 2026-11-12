@@ -186,6 +186,8 @@ def test_preview_route_renders_lab_markdown_and_escapes_html(client, boss):
 
     assert response.status_code == 200
     assert "Label" in response.text
+    assert "[[" not in response.text
+    assert 'class="callout callout-note"' in response.text
     assert "<script>" not in response.text
     assert "&lt;script&gt;" in response.text
 

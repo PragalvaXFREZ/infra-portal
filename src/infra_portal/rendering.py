@@ -10,13 +10,17 @@ import unicodedata
 from markdown_it import MarkdownIt
 from markupsafe import Markup
 
+from infra_portal.obsidian import callouts, wikilinks
+
+
 def _parser() -> MarkdownIt:
     return MarkdownIt("commonmark", {"html": False}).enable(["table", "strikethrough"])
 
 
 _md = _parser()
-# Lab bodies get their own parser, so what labs need never changes how posts and bios render.
-_lab_md = _parser()
+# Lab bodies get their own parser, so the Obsidian syntax in lab guides never changes how posts
+# and bios render.
+_lab_md = _parser().use(wikilinks).use(callouts)
 
 
 def render_markdown(text: str) -> Markup:
@@ -25,6 +29,7 @@ def render_markdown(text: str) -> Markup:
 
 
 def render_lab_markdown(text: str) -> Markup:
+    """Like render_markdown, plus wikilinks and callouts. See obsidian.py."""
     return Markup(_lab_md.render(text or ""))
 
 
