@@ -32,7 +32,7 @@ templates.env.globals["static_url"] = static_url
 
 
 def follow_enabled() -> bool:
-    """Whether to show the Follow forms. They need the email settings."""
+    """Whether to show the Follow and Subscribe forms. They need the email settings."""
     return get_settings().mail_enabled
 
 

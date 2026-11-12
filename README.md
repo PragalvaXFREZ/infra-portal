@@ -59,7 +59,7 @@ Deployments pin the digest, not a tag. A tag can move. A digest always names the
 | `COOKIE_SECURE` | no | `true` | Send the cookie over HTTPS only. Set `false` for `http://localhost`. |
 | `ADMIN_GITHUB_LOGINS` | no | empty | Comma-separated GitHub logins that sign in as admins without an invite. |
 | `CONTACT_EMAIL` | no | `pragalva.sapkota@deerwalk.edu.np` | Shown to people who sign in without an invite. |
-| `RESEND_API_KEY` | no | empty | [Resend](https://resend.com) API key for follower email. Empty hides the Follow forms. |
+| `RESEND_API_KEY` | no | empty | [Resend](https://resend.com) API key for follower and subscriber email. Empty hides the Follow and Subscribe forms. |
 | `MAIL_FROM` | no | empty | Sender, such as `infra <posts@pragalva.me>`, on a domain verified in Resend. |
 
 `compose.yaml` builds `DATABASE_URL` from the `POSTGRES_*` values in `.env`. The migration step receives only
@@ -84,13 +84,16 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | --- | --- | --- |
 | `/` | everyone | What the initiative is, recent labs, recent posts, members |
 | `/labs`, `/labs/<slug>` | everyone | Labs and experiments |
-| `/writing` | everyone | All published posts |
+| `/writing` | everyone | All published posts, and the form to get an email when anyone posts |
 | `/members` | everyone | Members who have signed in |
 | `/u/<login>` | everyone | Profile and published posts |
 | `/u/<login>/<slug>` | everyone, or only the author for a draft | One post |
 | `/write`, `/posts/<id>/edit` | the author | Write, preview, save, publish, unpublish, delete |
 | `/me/posts` | the author | All own posts, drafts included |
 | `/settings/profile` | the member | Name, website, Markdown bio |
+| `/subscription/<token>` | the subscriber, from a link in an email | Stop one member's posts, start them again, or stop all emails |
+| `/admin/members` | admins | Invite and remove members |
+| `/admin/mail` | admins | Preview every email the site sends, and send the samples to one address |
 
 Posts and bios are Markdown. Raw HTML in them is escaped, and `javascript:` links are not rendered. A post's
 link is set when the post is created and does not change when the title changes. Admins can delete any
@@ -101,21 +104,41 @@ published page and saves nothing.
 
 ## Following by email
 
-Anyone can ask for an email when one member publishes a post, from the form on that member's page and under
-each of their posts. It works only when `RESEND_API_KEY` and `MAIL_FROM` are set; without them the forms are
-hidden.
+Anyone can ask for an email about new posts in two ways:
+
+- **Follow one member**, from the form on that member's page and under each of their posts.
+- **Subscribe to everyone**, from the form on the home page and on `/writing`. One sign-up covers every
+  member, including members who join later. A subscriber can stop emails about one member and keep the rest.
+
+Both work only when `RESEND_API_KEY` and `MAIL_FROM` are set; without them the forms are hidden.
 
 1. The address gets a confirmation link first. Nothing else is sent until it is opened. Asking again within a
-   day sends no second link, and the page reads the same whether or not the address already follows, so the
-   form does not reveal who follows whom.
-2. The first time a post is published, every confirmed follower of its author gets one email with the title
-   and link. Unpublishing and publishing again sends nothing. Posts published before this feature count as
-   already announced.
-3. Every email has an unsubscribe link and a `List-Unsubscribe` header. The link opens a page with a button,
-   because mail scanners open links; mail apps' one-click unsubscribe posts to the same address.
+   day sends no second link, and the page reads the same whether or not the address already follows or
+   subscribes, so the forms do not reveal who signed up. A hidden field catches form-filling bots.
+2. Confirmation emails to new addresses are capped at 20 an hour: per member for the follow form, and for
+   the whole site for the subscribe form. Requests over the cap get the same page and no email.
+3. The first time a post is published, each address gets one email with the title and link. The readers are
+   the author's confirmed followers and the confirmed subscribers who have not stopped that author. An
+   address that is both gets one email, the subscriber one. Unpublishing and publishing again sends nothing.
+   Posts published before this feature count as already announced. Only posts are emailed.
+4. Every post email has an unsubscribe link and a `List-Unsubscribe` header. The links open a page with
+   buttons, because mail scanners open links.
+   - A follower's link (`/unsubscribe/<token>`) offers one button that stops that member's posts.
+   - A subscriber's link (`/subscription/<token>?author=<member id>`) offers "Stop emails about this member"
+     and "Stop all emails", and lists the members already stopped, each with a button to start them again.
+     Stopping one member also removes a follow of that member by the same address.
+   - Mail apps' one-click unsubscribe (RFC 8058) posts to the same address as the link. For a follower it
+     stops that member's posts. For a subscriber it ends the subscription and every follow of the same
+     address, because a mail app's button promises no more mail from the sender.
+5. Following a member that the same address stopped on its subscription starts that member's posts again.
 
 The emails go out after the response, through Resend's batch API. A failure is logged and the post stays
-published. Authors see their follower count on `/me/posts`.
+published. Authors see on `/me/posts` how many addresses get an email when they publish.
+
+Admins can check the emails at `/admin/mail`. It shows each of the four messages (confirm a follow, confirm a
+subscription, new post to a follower, new post to a subscriber) with made-up data: the subject, the headers,
+the HTML part and the text part. A form sends all four to one address through the real mailer. The samples
+are built by `mail.sample_emails`, the same code as the real messages, and the tests check them.
 
 ## Labs and experiments
 
