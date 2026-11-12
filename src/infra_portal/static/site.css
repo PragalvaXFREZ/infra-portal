@@ -816,6 +816,16 @@ table.progress td { white-space: nowrap; }
 .seen-draft { color: var(--muted); }
 .seen-draft::before { border-color: var(--muted); background: none; }
 
+/* What an import did, and the plain rules of what it reads. */
+.import-result { margin: 0 0 1.8rem; padding: 0.9rem 1.15rem 0.4rem; border: 1px solid var(--line); border-left: 3px solid var(--link); border-radius: 10px; background: var(--card); }
+.import-result p { margin: 0 0 0.6rem; }
+.import-result h2 { margin: 1rem 0 0.3rem; font-size: 1rem; }
+.import-result h2 .muted { margin-left: 0.3rem; font-weight: 400; }
+.import-result ul, .import-rules { margin: 0 0 0.8rem; padding-left: 1.2rem; }
+.import-result li, .import-rules li { margin: 0.25rem 0; overflow-wrap: anywhere; }
+.import-rules { color: var(--ink-2); font-size: 0.95rem; }
+.import-rules code, .import-result code { font: 0.9em var(--mono); background: var(--sunk); padding: 0.1em 0.35em; border-radius: 4px; }
+
 /* ---------- tables ---------- */
 
 .table-wrap { overflow-x: auto; }

@@ -7,6 +7,7 @@
   <div class="page-head">
     <h1>Course</h1>
     <div class="actions">
+      <a class="button" href="/admin/course/import">Import notes</a>
       <a class="button secondary" href="/admin/course/stages/new">Add a stage</a>
       <a class="button secondary" href="/admin/labs/new">Add a step</a>
     </div>
@@ -65,6 +66,6 @@
       {% endif %}
     </section>
   {% else %}
-    <p class="lede">No stages yet.</p>
+    <p class="lede">No stages yet. <a href="/admin/course/import">Import the course notes</a>, or add a stage by hand.</p>
   {% endfor %}
 {% endblock %}

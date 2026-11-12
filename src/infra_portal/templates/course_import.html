@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Import notes{% endblock %}
+{% block content %}
+  {% set admin_tab = "course" %}
+  {% include "_admin_tabs.html" %}
+  <p class="crumb"><a href="/admin/course">Course</a></p>
+  <h1>Import notes</h1>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if result %}
+    <div class="import-result" role="status">
+      {% if result.new_stages or result.new_pages or result.updated_pages %}
+        <p><strong>Done.</strong> Everything new is a draft. Read it, then show it to members on the <a href="/admin/course">Course</a> tab.</p>
+      {% else %}
+        <p><strong>Nothing was stored.</strong></p>
+      {% endif %}
+      {% for title, items in [("New stages", result.new_stages), ("New steps", result.new_pages), ("Steps replaced", result.updated_pages)] %}
+        {% if items %}
+          <h2>{{ title }} <span class="muted">{{ items | length }}</span></h2>
+          <ul>{% for item in items %}<li>{{ item }}</li>{% endfor %}</ul>
+        {% endif %}
+      {% endfor %}
+      {% if result.refused %}
+        <h2>Left out <span class="muted">{{ result.refused | length }}</span></h2>
+        <ul>{% for name, reason in result.refused %}<li><strong>{{ name }}</strong>: {{ reason }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% if result.unused %}
+        <h2>Nothing found in <span class="muted">{{ result.unused | length }}</span></h2>
+        <ul>{% for name in result.unused %}<li>{{ name }}</li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+  {% endif %}
+  <p>
+    The course is written as notes in the notes repository. That repository is private and this one is
+    public, so the notes are not kept here as files. Upload them and they are stored as drafts.
+  </p>
+  <form method="post" action="/admin/course/import" enctype="multipart/form-data" class="stack">
+    <label for="notes">Note files <span class="muted small">(Markdown, up to {{ max_files }} at once)</span></label>
+    <input id="notes" name="notes" type="file" accept=".md,text/markdown,text/plain" multiple required>
+    <div class="actions"><button>Import</button></div>
+  </form>
+  <h2>What is read</h2>
+  <ul class="import-rules">
+    <li><strong>A stage note</strong>, titled like "..., stage 2: Bread". Each <code>## Chunk N. Title</code> section becomes a chunk. Each <code>### Build N. Title</code> heading names a build. Nothing else in the note is stored.</li>
+    <li><strong>A build note</strong>, titled "Stage 2, build 1: A first loaf". The whole note becomes that build.</li>
+    <li><strong>A warm-up note</strong>, titled "Stage 2, chunk 3: warm-up". It is added to the end of chunk 3.</li>
+    <li><strong>A table</strong> that starts with the columns Stage and Topic, in any note. Its rows name the stages.</li>
+  </ul>
+  <h2>What is never read</h2>
+  <ul class="import-rules">
+    <li>A file whose name ends in <code>-mentor.md</code>, or whose header says <code>draft: true</code>. Answer keys stay out.</li>
+  </ul>
+  <h2>Uploading again</h2>
+  <ul class="import-rules">
+    <li>A step that is already here gets the new text, title and place. Who sees it does not change, and neither do members' ticks.</li>
+    <li>A stage that is already here is left as it is.</li>
+  </ul>
+{% endblock %}
