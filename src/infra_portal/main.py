@@ -11,6 +11,7 @@ from infra_portal import (
     admin_mail,
     auth,
     follow,
+    lab_admin,
     labs,
     posts,
     profiles,
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(follow.router)
     app.include_router(subscribe.router)
     app.include_router(labs.router)
+    app.include_router(lab_admin.router)
 
     @app.get("/favicon.ico", include_in_schema=False)
     def favicon() -> FileResponse:

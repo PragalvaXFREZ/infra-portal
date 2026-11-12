@@ -395,7 +395,7 @@ button.link {
 button.link:hover { background: none; }
 button.danger, button.link.danger { color: var(--danger); }
 
-input, textarea {
+input, textarea, select {
   font: inherit;
   width: 100%;
   padding: 0.6rem 0.75rem;
@@ -404,7 +404,7 @@ input, textarea {
   background: var(--card);
   color: var(--ink);
 }
-input:focus, textarea:focus {
+input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--link);
   box-shadow: 0 0 0 3px rgb(47 107 94 / 0.15);
@@ -412,6 +412,9 @@ input:focus, textarea:focus {
 textarea { font: 0.93rem/1.6 var(--mono); }
 form.stack { display: grid; gap: 0.4rem; }
 form.stack label { margin-top: 0.8rem; font-weight: 500; }
+/* Two short fields side by side, such as a lab's kind and date. */
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0 1rem; }
+.field-row > div { display: grid; gap: 0.4rem; align-content: start; }
 form.inline { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin: 1.2rem 0 1.6rem; }
 form.inline label { font-weight: 500; }
 form.inline input { width: auto; flex: 1 1 12rem; }

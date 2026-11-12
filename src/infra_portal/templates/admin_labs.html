@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Labs admin{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  <h1>Labs admin</h1>
+  <p class="muted small">
+    Pages written here live in the database, so they can stay hidden until they are ready. Lab files in the
+    repository are always public and are not listed here.
+  </p>
+  <p><a href="/admin/labs/new">Add a page</a></p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Title</th><th>Address</th><th>Kind</th><th>Who sees it</th><th>Updated</th></tr></thead>
+    <tbody>
+    {% for page in pages %}
+      <tr>
+        <td><a href="/admin/labs/{{ page.id }}/edit">{{ page.title }}</a></td>
+        <td class="muted"><a href="/labs/{{ page.slug }}">/labs/{{ page.slug }}</a></td>
+        <td class="status">{{ kinds.get(page.kind, page.kind) }}</td>
+        <td class="status">{{ visibilities.get(page.visibility, page.visibility) }}</td>
+        <td class="muted">{{ page.updated_at.strftime("%Y-%m-%d") }}{% if page.edited_by %} by @{{ page.edited_by.github_login }}{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">No pages yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% endblock %}

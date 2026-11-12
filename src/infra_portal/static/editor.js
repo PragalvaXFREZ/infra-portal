@@ -1,12 +1,14 @@
-// Write and Preview tabs in the post editor.
+// Write and Preview tabs in the post and lab editors.
 //
 // Without this file the tabs still work: they submit the form, and the server sends the editor
-// back on the other tab. With it, the page switches tabs itself and asks /preview for the HTML,
-// so nothing reloads. /preview uses the same Markdown renderer as the published post.
+// back on the other tab. With it, the page switches tabs itself and asks the preview address for
+// the HTML, so nothing reloads. That is /preview for posts, or the form's data-preview-url for
+// labs, and each uses the same Markdown renderer as the published page.
 
 const form = document.querySelector("form[data-editor]");
 
 if (form) {
+  const previewUrl = form.dataset.previewUrl || "/preview";
   const title = form.querySelector("#title");
   const body = form.querySelector("#body");
   const pane = form.querySelector("[data-preview]");
@@ -32,9 +34,9 @@ if (form) {
     const data = new FormData();
     data.set("body", body.value);
     try {
-      const response = await fetch("/preview", { method: "POST", body: data, credentials: "same-origin" });
+      const response = await fetch(previewUrl, { method: "POST", body: data, credentials: "same-origin" });
       if (!response.ok) throw new Error(String(response.status));
-      // The server escapes raw HTML in posts, so this is only the HTML Markdown produces.
+      // The server escapes raw HTML in the body, so this is only the HTML Markdown produces.
       paneBody.innerHTML = await response.text();
     } catch {
       paneBody.textContent = "The preview could not load. Your text is still here; switch back to Write.";

@@ -42,6 +42,7 @@
               <a href="/settings/profile">Edit profile</a>
               {% if member.is_admin %}<a href="/admin/members">Members admin</a>{% endif %}
               {% if member.is_admin %}<a href="/admin/mail">Email preview</a>{% endif %}
+              {% if member.is_admin %}<a href="/admin/labs">Labs admin</a>{% endif %}
               <form method="post" action="/auth/logout"><button class="item-button">Sign out</button></form>
             </div>
           </details>
