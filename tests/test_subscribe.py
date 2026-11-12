@@ -469,3 +469,38 @@ def test_bar_marks_the_section_being_read(client, mailer):
     assert '<a href="/writing" aria-current="page">Writing</a>' in client.get("/writing").text
     assert '<a href="/labs" aria-current="page">Labs</a>' in client.get("/labs").text
     assert "aria-current" not in client.get("/").text
+
+
+def _hero_card(page: str) -> str:
+    start = page.index('<aside class="hero-card">')
+    return page[start : page.index("</aside>", start)]
+
+
+def test_home_card_offers_email_before_there_are_posts(client, mailer):
+    card = _hero_card(client.get("/").text)
+    assert "Posts by email" in card and OPENER in card
+
+
+def test_home_card_shows_the_newest_post_and_the_way_to_get_the_next(client, mailer, add_member, sign_in):
+    add_member("alice", display_name="Alice")
+    sign_in("alice", 42)
+    _publish(client, "An older post")
+    _publish(client, "The newest post")
+    card = _hero_card(client.get("/").text)
+    assert "The newest post" in card and "An older post" not in card and "Alice" in card
+    assert "Get the next one by email" in card and OPENER in card
+
+
+def test_home_card_without_email_is_only_the_newest_post(client, add_member, sign_in):
+    assert "hero-card" not in client.get("/").text
+    add_member("alice", display_name="Alice")
+    sign_in("alice", 42)
+    _publish(client, "The newest post")
+    card = _hero_card(client.get("/").text)
+    assert "The newest post" in card and "/subscribe" not in card
+
+
+def test_writing_page_has_one_small_button_by_its_heading(client, mailer):
+    page = client.get("/writing").text
+    head = page[page.index('<div class="page-head">') : page.index('<p class="lede">')]
+    assert OPENER in head and "Get posts by email" in head
