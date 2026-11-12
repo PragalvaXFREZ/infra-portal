@@ -2,6 +2,9 @@
 
 The pages answer the same way whether or not the address already follows the member, so the
 form cannot be used to find out who follows whom.
+
+`announcement` is here too. It picks who gets the email about a new post: the author's followers
+and the subscribers to every member's posts (see subscribe.py).
 """
 
 import logging
@@ -10,14 +13,14 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from infra_portal.auth import current_member
 from infra_portal.config import Settings, get_settings
 from infra_portal.db import get_db
-from infra_portal.mail import Mailer, NewPost, confirm_email, get_mailer
-from infra_portal.models import Follow, Member, Post
+from infra_portal.mail import Mailer, NewPost, confirm_email, get_mailer, subscription_url
+from infra_portal.models import Follow, Member, Post, Subscriber, SubscriberMute
 from infra_portal.profiles import get_member_by_login
 from infra_portal.templating import templates
 
@@ -133,6 +136,14 @@ def confirm(
         return _page(request, member, "follow_result.html", {"outcome": "unknown"}, status.HTTP_404_NOT_FOUND)
     if row.confirmed_at is None:
         row.confirmed_at = datetime.now(UTC)
+        # Asking for this member's posts again undoes an earlier "not this member" on a subscription
+        # of the same address. Otherwise the mute would win and the follow would send nothing.
+        db.execute(
+            delete(SubscriberMute).where(
+                SubscriberMute.author_id == row.author_id,
+                SubscriberMute.subscriber_id.in_(select(Subscriber.id).where(Subscriber.email == row.email)),
+            )
+        )
         db.commit()
     return _page(request, member, "follow_result.html", {"author": row.author, "outcome": "confirmed", "email": row.email})
 
@@ -168,34 +179,59 @@ def unsubscribe(
     return _page(request, member, "follow_result.html", {"author": author, "outcome": "unsubscribed"})
 
 
+def _audience(db: Session, author_id: int) -> tuple[list[Follow], list[Subscriber]]:
+    """Who gets an email when this member publishes, with each address once.
+
+    Confirmed subscribers who have not muted the member, and confirmed followers whose address is
+    not among them. An address that is both gets the subscriber email, because its link manages
+    everything. A mute wins over a follow of the same address.
+    """
+    muting = select(SubscriberMute.subscriber_id).where(SubscriberMute.author_id == author_id)
+    subscribers = db.scalars(
+        select(Subscriber)
+        .where(Subscriber.confirmed_at.is_not(None), Subscriber.id.not_in(muting))
+        .order_by(Subscriber.id)
+    ).all()
+    muted_emails = select(Subscriber.email).where(Subscriber.id.in_(muting))
+    followers = db.scalars(
+        select(Follow)
+        .where(
+            Follow.author_id == author_id,
+            Follow.confirmed_at.is_not(None),
+            Follow.email.not_in(muted_emails),
+        )
+        .order_by(Follow.id)
+    ).all()
+    taken = {s.email for s in subscribers}
+    return [f for f in followers if f.email not in taken], list(subscribers)
+
+
 def follower_count(db: Session, author_id: int) -> int:
-    return db.scalar(
-        select(func.count())
-        .select_from(Follow)
-        .where(Follow.author_id == author_id, Follow.confirmed_at.is_not(None))
-    ) or 0
+    """How many addresses get an email when this member publishes: followers and subscribers."""
+    followers, subscribers = _audience(db, author_id)
+    return len(followers) + len(subscribers)
 
 
 def announcement(db: Session, settings: Settings, post: Post, author: Member) -> NewPost | None:
-    """Mark a just-published post as announced and return what its follower emails need.
+    """Mark a just-published post as announced and return what its emails need.
 
-    Returns None when the post was announced before or email is off. Call it before the commit:
-    it sets `notified_at` in the same transaction, and copies everything out of the session,
-    because the email is sent after the response, when the session is closed.
+    Returns None when the post was announced before, email is off, or nobody gets an email. Call
+    it before the commit: it sets `notified_at` in the same transaction, and copies everything out
+    of the session, because the email is sent after the response, when the session is closed.
+    Only posts are announced. Nothing else on the site emails followers or subscribers.
     """
     if post.notified_at is not None or not post.is_published:
         return None
     post.notified_at = datetime.now(UTC)
     if not settings.mail_enabled:
         return None
-    rows = db.scalars(
-        select(Follow).where(Follow.author_id == author.id, Follow.confirmed_at.is_not(None))
-    ).all()
-    if not rows:
+    followers, subscribers = _audience(db, author.id)
+    if not followers and not subscribers:
         return None
     return NewPost(
         author_name=author.name,
         title=post.title,
         url=f"{settings.base_url}/u/{author.github_login}/{post.slug}",
-        recipients=[(r.email, f"{settings.base_url}/unsubscribe/{r.token}") for r in rows],
+        recipients=[(f.email, f"{settings.base_url}/unsubscribe/{f.token}") for f in followers],
+        subscribers=[(s.email, subscription_url(settings, s.token, author.id)) for s in subscribers],
     )

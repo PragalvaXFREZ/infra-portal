@@ -1,7 +1,7 @@
 import re
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from infra_portal.mail import Email
 from infra_portal.models import Follow, Subscriber, SubscriberMute
@@ -224,3 +224,143 @@ def test_old_follow_tokens_still_work(client, mailer, add_member, session_factor
     assert _rows(session_factory, Follow) == []
     # The subscription is a separate thing and stays.
     assert len(_rows(session_factory, Subscriber)) == 1
+
+
+# ---------- emails about new posts ----------
+
+
+def _publish(client, title="Hello Docker"):
+    response = client.post("/write", data={"title": title, "body": "x", "action": "publish"}, follow_redirects=False)
+    assert response.status_code == 303, response.text
+
+
+def _as(sign_in, add_member, login, github_id, name):
+    add_member(login, display_name=name)
+    sign_in(login, github_id=github_id)
+
+
+def _confirmed_follow(client, mailer, login="alice", email="reader@example.com"):
+    client.post(f"/u/{login}/follow", data={"email": email})
+    token = re.search(r"/follow/confirm/([\w-]+)", mailer.sent[-1].text).group(1)
+    assert client.get(f"/follow/confirm/{token}").status_code == 200
+    mailer.sent.clear()
+
+
+def test_a_post_by_any_member_emails_subscribers(client, mailer, add_member, sign_in):
+    token = _subscriber(client, mailer)
+    _subscribe(client, "pending@example.com")  # never confirmed
+    mailer.sent.clear()
+
+    _as(sign_in, add_member, "alice", 42, "Alice")
+    _publish(client, "Hello Docker")
+    _as(sign_in, add_member, "bob", 7, "Bob")
+    _publish(client, "Hello Kubernetes")
+
+    assert [(e.to, e.subject) for e in mailer.sent] == [
+        ("reader@example.com", "New post by Alice: Hello Docker"),
+        ("reader@example.com", "New post by Bob: Hello Kubernetes"),
+    ]
+    email = mailer.sent[1]
+    assert "http://testserver/u/bob/hello-kubernetes" in email.text
+    assert "subscribed to new posts" in email.text
+    assert email.unsubscribe_url.startswith(f"http://testserver/subscription/{token}?author=")
+    assert email.unsubscribe_url in email.text
+    assert email.headers["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click"
+
+
+def test_a_member_who_joins_after_the_subscription_is_covered(client, mailer, add_member, sign_in):
+    _subscriber(client, mailer)
+    _as(sign_in, add_member, "newcomer", 99, "Newcomer")
+    _publish(client)
+    assert [e.to for e in mailer.sent] == ["reader@example.com"]
+
+
+def test_the_page_from_a_post_email_names_its_author(client, mailer, add_member, sign_in):
+    _subscriber(client, mailer)
+    _as(sign_in, add_member, "alice", 42, "Alice")
+    _publish(client)
+    page = client.get(mailer.sent[0].unsubscribe_url)
+    assert "Stop emails about Alice" in page.text
+
+
+def test_muting_one_author_stops_only_that_author(client, mailer, add_member, sign_in):
+    token = _subscriber(client, mailer)
+    alice = add_member("alice", display_name="Alice")
+    client.post(f"/subscription/{token}/mute", data={"author": str(alice.id)})
+
+    sign_in("alice", github_id=42)
+    _publish(client, "Hello Docker")
+    assert mailer.sent == []
+
+    _as(sign_in, add_member, "bob", 7, "Bob")
+    _publish(client, "Hello Kubernetes")
+    assert [e.subject for e in mailer.sent] == ["New post by Bob: Hello Kubernetes"]
+
+
+def test_a_follower_who_also_subscribes_gets_one_email(client, mailer, add_member, sign_in):
+    _as(sign_in, add_member, "alice", 42, "Alice")
+    _confirmed_follow(client, mailer)
+    _subscriber(client, mailer)
+    _subscriber(client, mailer, "other@example.com")
+
+    _publish(client)
+
+    assert sorted(e.to for e in mailer.sent) == ["other@example.com", "reader@example.com"]
+    [email] = [e for e in mailer.sent if e.to == "reader@example.com"]
+    # The subscriber version, whose link manages everything.
+    assert "/subscription/" in email.unsubscribe_url
+
+
+def test_a_mute_wins_over_a_follow_row_of_the_same_address(client, mailer, add_member, sign_in, session_factory):
+    token = _subscriber(client, mailer)
+    alice = add_member("alice", display_name="Alice")
+    client.post(f"/subscription/{token}/mute", data={"author": str(alice.id)})
+    with session_factory() as session:
+        # A follow row next to the mute, as an older app version could leave during a rollout.
+        session.add(Follow(author_id=alice.id, email="reader@example.com", token="ft", confirmed_at=datetime.now(UTC)))
+        session.commit()
+
+    sign_in("alice", github_id=42)
+    _publish(client)
+
+    assert mailer.sent == []
+    assert "0 people get an email" in client.get("/me/posts").text
+
+
+def test_following_a_muted_member_again_undoes_the_mute(client, mailer, add_member, sign_in, session_factory):
+    token = _subscriber(client, mailer)
+    alice = add_member("alice", display_name="Alice", github_id=42)
+    client.post(f"/subscription/{token}/mute", data={"author": str(alice.id)})
+
+    _confirmed_follow(client, mailer)
+    assert _rows(session_factory, SubscriberMute) == []
+
+    sign_in("alice", github_id=42)
+    _publish(client)
+    assert [e.to for e in mailer.sent] == ["reader@example.com"]
+
+
+def test_author_count_includes_subscribers_once(client, mailer, add_member, sign_in):
+    _as(sign_in, add_member, "alice", 42, "Alice")
+    _confirmed_follow(client, mailer)
+    _subscriber(client, mailer)
+    _subscriber(client, mailer, "other@example.com")
+    assert "2 people get an email when you publish" in client.get("/me/posts").text
+
+
+def test_removing_a_member_removes_the_mutes_of_them(client, mailer, add_member, sign_in, session_factory):
+    with session_factory() as session:
+        # SQLite runs ON DELETE CASCADE only with this switched on. Postgres always does.
+        session.execute(text("PRAGMA foreign_keys = ON"))
+    token = _subscriber(client, mailer)
+    alice = add_member("alice", display_name="Alice")
+    bob = add_member("bob", display_name="Bob")
+    client.post(f"/subscription/{token}/mute", data={"author": str(alice.id)})
+    client.post(f"/subscription/{token}/mute", data={"author": str(bob.id)})
+
+    sign_in("boss", github_id=1)
+    assert client.post(f"/admin/members/{alice.id}/remove", follow_redirects=False).status_code == 303
+
+    assert [m.author_id for m in _rows(session_factory, SubscriberMute)] == [bob.id]
+    page = client.get(f"/subscription/{token}?author={alice.id}")
+    assert page.status_code == 200 and "Bob" in page.text and "Alice" not in page.text
