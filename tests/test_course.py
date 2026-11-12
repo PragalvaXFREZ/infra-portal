@@ -158,3 +158,53 @@ def test_home_card_points_a_member_at_the_path(client, path, as_member):
     home = client.get("/").text
     card = home[home.index('<aside class="hero-card">') : home.index("</aside>")]
     assert "Chunk 1: Flour" in card and 'href="/learn"' in card
+
+
+def test_a_member_ticks_a_step_and_takes_it_back(client, path, as_member):
+    assert "Mark as done" in client.get("/learn/stage-1-chunk-1").text
+    done = client.post("/learn/stage-1-chunk-1/done", follow_redirects=False)
+    assert done.status_code == 303 and done.headers["location"] == "/learn/stage-1-chunk-1"
+    # Ticking twice is the same as once.
+    client.post("/learn/stage-1-chunk-1/done")
+    assert "Done on" in client.get("/learn/stage-1-chunk-1").text
+    page = client.get("/learn").text
+    assert "1 of 3 done" in page and "Next up" in page and "Chunk 3: Water" in page
+    client.post("/learn/stage-1-chunk-1/undo")
+    page = client.get("/learn").text
+    assert "0 of 3 done" in page and "Start here" in page
+
+
+def test_ticks_belong_to_one_member(client, path, add_member, sign_in):
+    add_member("alice")
+    add_member("bob")
+    sign_in("alice", 42)
+    client.post("/learn/stage-1-chunk-1/done")
+    sign_in("bob", 43)
+    assert "0 of 3 done" in client.get("/learn").text
+
+
+def test_a_finished_stage_says_done(client, path, as_member):
+    for slug in ("stage-1-chunk-1", "stage-1-chunk-3", "stage-1-build-1"):
+        client.post(f"/learn/{slug}/done")
+    page = client.get("/learn").text
+    assert "All 3 steps done" in page and "stage-done" in page
+
+
+def test_only_a_visible_written_step_can_be_ticked(client, session_factory, path, add_member, sign_in):
+    from infra_portal.models import PageProgress
+
+    assert client.post("/learn/stage-1-chunk-1/done").status_code == 401
+    add_member("alice")
+    sign_in("alice", 42)
+    for slug in ("stage-1-chunk-2", "stage-1-build-2", "stage-3-chunk-1", "nope"):
+        assert client.post(f"/learn/{slug}/done").status_code == 404, slug
+        assert client.post(f"/learn/{slug}/undo").status_code == 404, slug
+    with session_factory() as db:
+        assert db.query(PageProgress).count() == 0
+
+
+def test_home_card_follows_the_members_next_step(client, path, as_member):
+    client.post("/learn/stage-1-chunk-1/done")
+    home = client.get("/").text
+    card = home[home.index('<aside class="hero-card">') : home.index("</aside>")]
+    assert "Chunk 3: Water" in card

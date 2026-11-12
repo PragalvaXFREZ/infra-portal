@@ -14,12 +14,17 @@
     <p class="lede">Nothing is on the path yet.</p>
   {% else %}
     <p class="lede">Each stage starts with short video sittings. Then comes a build that uses them.</p>
-    {% if start %}
-      <a class="next-up" href="{{ start.url }}">
-        <span class="next-up-label">Start here · Stage {{ start.stage.number }}</span>
-        <strong>{{ start.label }}: {{ start.page.title }}</strong>
-        <span class="next-up-go">Open</span>
+    {% if next %}
+      <a class="next-up" href="{{ next.url }}">
+        <span class="next-up-label">{% if done %}Next up{% else %}Start here{% endif %} · Stage {{ next.stage.number }}</span>
+        <strong>{{ next.label }}: {{ next.page.title }}</strong>
+        <span class="next-up-go">{% if done %}Continue{% else %}Open{% endif %}</span>
+        {# How far along the whole path this member is. #}
+        <span class="next-up-bar" role="img" aria-label="{{ done }} of {{ total }} steps done"><span style="width: {{ (100 * done / total) | round(1) }}%"></span></span>
+        <span class="next-up-count">{{ done }} of {{ total }} done</span>
       </a>
+    {% elif total %}
+      <p class="all-done" role="status"><strong>All {{ total }} steps done.</strong> More is being written.</p>
     {% endif %}
     <ol class="path">
       {% for view in path %}
@@ -27,7 +32,7 @@
           <span class="stage-number" aria-hidden="true">{{ view.stage.number }}</span>
           <div class="stage-head">
             <h2><span class="visually-hidden">Stage {{ view.stage.number }}: </span>{{ view.stage.title }}</h2>
-            <span class="stage-state">{% if view.is_draft %}Draft · {% endif %}{% if view.written %}{{ view.written | length }} {% if view.written | length == 1 %}step{% else %}steps{% endif %}{% elif not view.stage.summary %}Coming later{% endif %}</span>
+            <span class="stage-state">{% if view.is_draft %}Draft · {% endif %}{% if view.state == "done" %}Done{% elif view.written %}{{ view.done_count }} of {{ view.written | length }} done{% elif not view.stage.summary %}Coming later{% endif %}</span>
           </div>
           {% if view.stage.summary %}<div class="stage-summary">{{ view.summary_html }}</div>{% endif %}
           {% if view.steps %}

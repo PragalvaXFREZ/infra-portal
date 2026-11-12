@@ -399,6 +399,10 @@ a.hero-card-title:hover { text-decoration: underline; }
   font-weight: 500;
 }
 .next-up:hover .next-up-go { background: var(--card); }
+.next-up-bar { grid-column: 1 / -1; height: 4px; margin-top: 0.75rem; border-radius: 4px; background: rgb(128 128 128 / 0.4); overflow: hidden; }
+.next-up-bar span { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--paper); }
+.next-up-count { grid-column: 1 / -1; font-size: 0.82rem; opacity: 0.7; }
+.all-done { margin: 0.4rem 0 0; padding: 0.9rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 
 /* Stages hang on a line down the left, each from its number. */
 .path { list-style: none; margin: 2.4rem 0 0; padding: 0; }
@@ -432,6 +436,8 @@ a.hero-card-title:hover { text-decoration: underline; }
   font-weight: 600;
 }
 .stage-open .stage-number { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.stage-done .stage-number { border-color: var(--link); background: var(--link); color: var(--paper); }
+.stage-done::before { background: var(--link); }
 .stage-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.2rem 1rem; flex-wrap: wrap; min-height: 2.2rem; }
 .stage-head h2 { margin: 0.3rem 0 0; font-size: 1.22rem; }
 .stage-planned .stage-head h2 { color: var(--ink-2); font-weight: 500; }
@@ -467,10 +473,28 @@ a.step-row:hover .step-title { text-decoration: underline; text-underline-offset
 .step-coming .step-row { background: none; border-style: dashed; }
 .step-coming .step-title, .step-coming .step-label { color: var(--muted); }
 .step-coming .step-mark { border-style: dashed; }
+/* A ticked step: the mark is filled, with a check drawn from two borders. */
+.step-done .step-mark, .step-tick.is-done .step-mark { position: relative; border-color: var(--link); background: var(--link); }
+.step-done .step-mark::after, .step-tick.is-done .step-mark::after {
+  content: "";
+  position: absolute;
+  top: 12%;
+  left: 33%;
+  width: 28%;
+  height: 52%;
+  border: solid var(--paper);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.step-done .step-title { color: var(--ink-2); }
 
 /* A step's own page. */
 article > .step-label { margin-bottom: 0.3rem; }
-.step-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 2.6rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+.step-tick { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; margin-top: 2.6rem; padding: 0.9rem 1rem 0.9rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.step-tick p { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-weight: 500; }
+.step-tick form { margin: 0; }
+.step-tick .step-mark { display: inline-block; flex: none; }
+.step-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
 .step-nav a { display: grid; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font-weight: 500; line-height: 1.35; text-decoration: none; }
 .step-nav a:hover { border-color: var(--muted); }
 .step-nav a span { color: var(--muted); font-size: 0.76rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }

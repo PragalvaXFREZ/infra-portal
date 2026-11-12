@@ -7,22 +7,27 @@ The path is for signed-in members. Who sees which step follows the same rule as 
 it is approved.
 
 Path pages are served here, under /learn, and are left out of the lab lists.
+
+A member can tick a step as done and take the tick back. Ticks unlock nothing. They show the
+member where they are, and the mentor where everyone is.
 """
 
 import re
 from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from markupsafe import Markup
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, defer
 
-from infra_portal.auth import current_member
+from infra_portal.auth import current_member, require_member
 from infra_portal.db import get_db
 from infra_portal.labs import KIND_LABELS, can_see
-from infra_portal.models import VISIBILITY_DRAFT, CourseStage, LabPage, Member
+from infra_portal.models import VISIBILITY_DRAFT, CourseStage, LabPage, Member, PageProgress
 from infra_portal.rendering import render_lab_markdown, render_markdown
 from infra_portal.templating import templates
 
@@ -45,6 +50,12 @@ class Step:
     label: str
     # False for a page with no text yet. It is listed as coming and cannot be opened.
     written: bool
+    # When this viewer ticked it, or None.
+    done_at: datetime | None = None
+
+    @property
+    def done(self) -> bool:
+        return self.done_at is not None
 
     @property
     def url(self) -> str:
@@ -71,9 +82,15 @@ class StageView:
         return tuple(step for step in self.steps if step.written)
 
     @property
+    def done_count(self) -> int:
+        return sum(1 for step in self.written if step.done)
+
+    @property
     def state(self) -> str:
-        """`open` when there is something to do, `planned` when nothing is written yet."""
-        return "open" if self.written else "planned"
+        """`planned` when nothing is written yet, `done` when every written step is ticked."""
+        if not self.written:
+            return "planned"
+        return "done" if self.done_count == len(self.written) else "open"
 
     @property
     def is_draft(self) -> bool:
@@ -99,6 +116,11 @@ def load_path(db: Session, member: Member | None) -> list[StageView]:
         .options(defer(LabPage.body, raiseload=True))
         .order_by(LabPage.position, LabPage.id)
     ).all()
+    ticks = dict(
+        db.execute(
+            select(PageProgress.page_id, PageProgress.done_at).where(PageProgress.member_id == member.id)
+        ).all()
+    )
 
     views = []
     for stage in stages:
@@ -113,7 +135,15 @@ def load_path(db: Session, member: Member | None) -> list[StageView]:
             else:
                 label = KIND_LABELS.get(page.kind, page.kind.capitalize())
             if can_see(page.visibility, member):
-                steps.append(Step(page=page, stage=stage, label=label, written=bool(written)))
+                steps.append(
+                    Step(
+                        page=page,
+                        stage=stage,
+                        label=label,
+                        written=bool(written),
+                        done_at=ticks.get(page.id),
+                    )
+                )
         if can_see(stage.visibility, member):
             views.append(StageView(stage=stage, steps=tuple(steps)))
     return views
@@ -123,9 +153,15 @@ def all_steps(path: list[StageView]) -> list[Step]:
     return [step for view in path for step in view.steps]
 
 
-def first_step(path: list[StageView]) -> Step | None:
-    """Where to start: the first step that has text."""
-    return next((step for step in all_steps(path) if step.written), None)
+def next_step(path: list[StageView]) -> Step | None:
+    """Where to go on: the first step with text that this viewer has not ticked."""
+    return next((step for step in all_steps(path) if step.written and not step.done), None)
+
+
+def totals(path: list[StageView]) -> tuple[int, int]:
+    """(steps ticked, steps written) over the whole path."""
+    written = [step for step in all_steps(path) if step.written]
+    return sum(1 for step in written if step.done), len(written)
 
 
 def builds(path: list[StageView]) -> list[Step]:
@@ -162,8 +198,11 @@ def learning_path(
     db: Session = Depends(get_db),
 ):
     path = load_path(db, member)
+    done, total = totals(path)
     return templates.TemplateResponse(
-        request, "learn.html", {"member": member, "path": path, "start": first_step(path)}
+        request,
+        "learn.html",
+        {"member": member, "path": path, "next": next_step(path), "done": done, "total": total},
     )
 
 
@@ -195,3 +234,38 @@ def learning_page(
             "later": openable[at + 1] if at + 1 < len(openable) else None,
         },
     )
+
+
+def _own_step(db: Session, member: Member, slug: str) -> Step:
+    """The step a member is ticking: one they may see and that has text. Otherwise the usual 404."""
+    step = next((s for s in all_steps(load_path(db, member)) if s.page.slug == slug), None)
+    if step is None or not step.written:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such page.")
+    return step
+
+
+@router.post("/learn/{slug}/done")
+def mark_done(
+    slug: str,
+    member: Member = Depends(require_member),
+    db: Session = Depends(get_db),
+):
+    step = _own_step(db, member, slug)
+    if not step.done:
+        db.add(PageProgress(member_id=member.id, page_id=step.page.id))
+        db.commit()
+    return RedirectResponse(f"/learn/{slug}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/learn/{slug}/undo")
+def mark_not_done(
+    slug: str,
+    member: Member = Depends(require_member),
+    db: Session = Depends(get_db),
+):
+    step = _own_step(db, member, slug)
+    db.execute(
+        delete(PageProgress).where(PageProgress.member_id == member.id, PageProgress.page_id == step.page.id)
+    )
+    db.commit()
+    return RedirectResponse(f"/learn/{slug}", status_code=status.HTTP_303_SEE_OTHER)

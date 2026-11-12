@@ -19,7 +19,7 @@
           {% if step.is_draft %}<span class="visibility">Draft</span>{% endif %}
           <strong>{{ step.page.title }}</strong>
           <span class="summary">{{ step.page.summary }}</span>
-          <span class="foot">Stage {{ step.stage.number }} · {{ step.label }}</span>
+          <span class="foot">Stage {{ step.stage.number }} · {{ step.label }}{% if step.done %} · Done{% endif %}</span>
         </a>
       {% endfor %}
     </div>

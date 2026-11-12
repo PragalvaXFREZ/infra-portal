@@ -289,3 +289,22 @@ class LabPage(Base):
 
     edited_by: Mapped[Member | None] = relationship()
     stage: Mapped[CourseStage | None] = relationship(back_populates="pages")
+
+
+class PageProgress(Base):
+    """A member's own tick on a step of the learning path: "I have done this one".
+
+    The member sets it and can take it back. It does not unlock anything; it shows where they
+    are, and it shows the mentor where everyone is. One row per member and page.
+    """
+
+    __tablename__ = "page_progress"
+
+    # Both CASCADE: a tick means nothing without its member or its page.
+    member_id: Mapped[int] = mapped_column(
+        ForeignKey("members.id", ondelete="CASCADE"), primary_key=True
+    )
+    page_id: Mapped[int] = mapped_column(
+        ForeignKey("lab_pages.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    done_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
