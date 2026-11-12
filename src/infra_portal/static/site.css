@@ -33,7 +33,10 @@
   --line: #e3e0d8;
   --link: #2f6b5e;
   --danger: #a33a2c;
-  --bar: rgb(247 246 242 / 0.9);
+  --bar: rgb(247 246 242 / 0.74);
+  --bar-edge: rgb(255 255 255 / 0.55);
+  --tint: rgb(28 26 23 / 0.07);
+  --glass: rgb(247 246 242 / 0.46);
   --scrim: rgb(247 246 242 / 0.4);
   --shadow: 0 1px 2px rgb(40 30 15 / 0.06), 0 8px 24px -12px rgb(40 30 15 / 0.18);
 
@@ -54,7 +57,10 @@
     --line: #2e2a26;
     --link: #9fd8c4;
     --danger: #e0806f;
-    --bar: rgb(30 27 24 / 0.9);
+    --bar: rgb(30 27 24 / 0.68);
+    --bar-edge: rgb(255 255 255 / 0.09);
+    --tint: rgb(255 255 255 / 0.09);
+    --glass: rgb(22 20 18 / 0.42);
     --scrim: rgb(22 20 18 / 0.35);
     --shadow: 0 8px 24px -12px rgb(0 0 0 / 0.6);
   }
@@ -74,7 +80,8 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+/* A link to a heading must not land under the floating bar. */
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 5rem; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -99,7 +106,8 @@ h3 { font-size: 1.1rem; }
 .scene {
   position: relative;
   isolation: isolate;
-  padding: 1rem 1rem 0;
+  /* The bar floats over the top of the painting, so the first rem of this is its room. */
+  padding: 4.4rem 1rem 0;
   min-height: 16rem;
 }
 .inner .scene { min-height: clamp(18rem, 44vh, 26rem); }
@@ -130,51 +138,68 @@ h3 { font-size: 1.1rem; }
 
 /* ---------- header ---------- */
 
+/* A small bar that floats over the page and stays in view while it scrolls: frosted, and only
+   as wide as what is in it. */
 header.site {
-  position: relative;
-  z-index: 2;
+  position: fixed;
+  top: 0.9rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 5;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  max-width: 64rem;
-  margin: 0 auto;
-  padding: 0.45rem 0.45rem 0.45rem 0.6rem;
+  gap: 0.15rem;
+  width: max-content;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.35rem;
+  border: 1px solid var(--bar-edge);
+  border-radius: 14px;
   background: var(--bar);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+  /* The hairline keeps its edge visible over plain paper. */
+  box-shadow: var(--shadow), 0 0 0 1px rgb(28 26 23 / 0.05);
 }
 .brand {
   font-weight: 600;
-  font-size: 1.12rem;
+  font-size: 1.08rem;
   letter-spacing: -0.02em;
   color: var(--ink);
   text-decoration: none;
-  padding: 0 0.4rem;
-  margin-right: auto;
+  padding: 0.25rem 0.9rem 0.25rem 0.65rem;
 }
 header.site nav.primary { display: flex; align-items: center; gap: 0.1rem; }
-header.site .end { display: flex; align-items: center; gap: 0.35rem; }
+header.site .end { display: flex; align-items: center; gap: 0.3rem; margin-left: 0.4rem; }
 header.site form { margin: 0; }
 header.site nav.primary a,
-header.site .menu summary,
-header.site .sign-in {
+header.site .menu summary {
   color: var(--ink-2);
   text-decoration: none;
   font-size: 0.93rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 6px;
+  padding: 0.42rem 0.75rem;
+  border-radius: 9px;
 }
 header.site nav.primary a:hover,
-header.site .menu summary:hover,
-header.site .sign-in:hover { background: var(--sunk); color: var(--ink); }
-/* Sign-in is only for the few members, so it stays a quiet link at the end of the bar. */
-header.site .sign-in { color: var(--muted); font-size: 0.86rem; }
+header.site .menu summary:hover { background: var(--tint); color: var(--ink); }
+/* The section the reader is in. */
+header.site nav.primary a[aria-current="page"] { background: var(--tint); color: var(--ink); font-weight: 500; }
+
+/* The one filled button in the bar, always at its right end. It opens the subscribe pop-up. */
+header.site .subscribe-open {
+  padding: 0.6rem 0.85rem;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 500 0.86rem/1 var(--sans);
+  text-decoration: none;
+}
+header.site .subscribe-open:hover { background: var(--ink-2); }
 
 /* Drop-down menus are <details>, so they work without JavaScript. */
 .menu { position: relative; }
 .menu summary { display: block; list-style: none; cursor: pointer; user-select: none; }
 .menu summary::-webkit-details-marker { display: none; }
-.menu[open] summary { background: var(--sunk); color: var(--ink); }
+.menu[open] summary { background: var(--tint); color: var(--ink); }
 .menu .panel {
   position: absolute;
   right: 0;
@@ -216,26 +241,23 @@ header.site .sign-in { color: var(--muted); font-size: 0.86rem; }
 .menu .who span { font-weight: 400; font-size: 0.85rem; color: var(--muted); }
 header.site .account summary { padding: 0.2rem; border-radius: 50%; display: flex; }
 header.site .account summary .avatar { display: block; width: 30px; height: 30px; }
-header.site .account[open] summary { box-shadow: 0 0 0 2px var(--line); }
+header.site .account[open] summary { box-shadow: 0 0 0 2px var(--tint); }
 .site-menu { display: none; }
 .avatar-empty { display: inline-block; width: 30px; height: 30px; }
 
 /* ---------- home ---------- */
 
+/* The statement and its two buttons on the left; the newest post and Subscribe on a card at the right. */
 .hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20.5rem;
+  gap: 2rem 3rem;
+  align-items: end;
   max-width: 64rem;
   margin: 0 auto;
   padding: clamp(3.5rem, 12vh, 7.5rem) 0 0;
 }
-.hero h1 {
-  font-size: clamp(3rem, 8vw, 5rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  margin: 0 0 1.2rem;
-  color: #1c1a17;
-}
-.hero p {
+.hero-text p {
   margin: 0;
   max-width: 40rem;
   font-size: clamp(1.3rem, 2.5vw, 1.75rem);
@@ -244,11 +266,51 @@ header.site .account[open] summary { box-shadow: 0 0 0 2px var(--line); }
   letter-spacing: -0.012em;
   color: #1c1a17;
 }
-.hero .hero-links { display: flex; gap: 1.25rem; align-items: center; margin-top: 1.6rem; font-size: 1rem; }
-.hero .hero-links a:not(.button) { color: #1c1a17; font-weight: 500; }
+.hero-text .hero-links { display: flex; flex-wrap: wrap; gap: 0.7rem; align-items: center; margin-top: 1.6rem; font-size: 1rem; }
 @media (prefers-color-scheme: dark) {
-  .hero h1, .hero .hero-links a:not(.button) { color: #f3efe6; }
-  .hero p { color: #ddd6c8; }
+  .hero-text p { color: #ddd6c8; }
+}
+/* See-through things on the painting: the second button and the card. The painting shows through, blurred. */
+a.button.glass,
+.hero-card {
+  border: 1px solid var(--bar-edge);
+  background: var(--glass);
+  color: var(--ink);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+}
+a.button.glass:hover { border-color: var(--bar-edge); background: var(--bar); }
+.hero-card { padding: 1.05rem 1.15rem 1.1rem; border-radius: 14px; box-shadow: var(--shadow); }
+.hero-card p { margin: 0; }
+.hero-card-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-2); }
+.hero-card-title {
+  display: block;
+  margin-top: 0.4rem;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 1.12rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+a.hero-card-title:hover { text-decoration: underline; }
+.hero-card-meta { margin-top: 0.3rem; font-size: 0.88rem; color: var(--ink-2); }
+.hero-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.95rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--tint);
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+.hero-card-foot .button { flex: none; padding: 0.55rem 0.85rem; font-size: 0.88rem; }
+@media (max-width: 900px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .hero-card { max-width: 26rem; }
 }
 
 .home-sections {
@@ -302,6 +364,12 @@ header.site .account[open] summary { box-shadow: 0 0 0 2px var(--line); }
 
 
 .crumb { margin: 0 0 0.6rem; font-size: 0.92rem; }
+
+/* A page's heading with one small button beside it. */
+.page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.4rem 1.5rem; margin-bottom: 0.5rem; }
+.page-head h1 { margin: 0; }
+.by-email { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 0.85rem; font-size: 0.88rem; }
+.by-email svg { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
 
 /* ---------- post lists and meta ---------- */
 
@@ -466,6 +534,118 @@ ul.mutes form { display: inline; margin-left: 0.6rem; }
 .danger-zone { margin-top: 2.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
 .error { color: var(--danger); background: rgb(163 58 44 / 0.08); padding: 0.6rem 0.9rem; border-radius: 7px; }
 
+/* ---------- subscribing ---------- */
+
+/* The pop-up: a painting of a reader on the left, and a sheet of paper with the form on the right. */
+dialog.subscribe {
+  width: min(44rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06), 0 32px 80px -24px rgb(0 0 0 / 0.6);
+  overflow: hidden auto;
+}
+dialog.subscribe::backdrop {
+  background: rgb(28 26 23 / 0.42);
+  -webkit-backdrop-filter: blur(8px) saturate(1.15);
+  backdrop-filter: blur(8px) saturate(1.15);
+}
+/* The page behind stays still while the pop-up is open. */
+html:has(dialog.subscribe[open]) { overflow: hidden; scrollbar-gutter: stable; }
+
+/* Only while open: a closed dialog must stay hidden. */
+dialog.subscribe[open] { display: grid; grid-template-columns: 17rem minmax(0, 1fr); }
+.subscribe-art { position: relative; min-height: 24.5rem; margin: 0; overflow: hidden; background: #a9a48f; }
+.subscribe-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 42% 40%;
+  /* Around the open book, so the picture moves towards it once the email is sent. */
+  transform-origin: 30% 60%;
+  transition: transform 1.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+dialog.subscribe[data-step="sent"] .subscribe-art img { transform: scale(1.14); }
+.subscribe-art figcaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 1.6rem 0.9rem 0.6rem;
+  background: linear-gradient(to top, rgb(20 16 10 / 0.6), transparent);
+  color: rgb(247 246 242 / 0.92);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+.subscribe-art cite { display: block; font-size: 0.8rem; font-weight: 500; }
+.subscribe-sheet {
+  position: relative;
+  display: grid;
+  align-content: center;
+  padding: 2.2rem 1.9rem 2rem;
+  background: var(--paper);
+}
+.subscribe-sheet h2 { margin: 0 2.6rem 0.35rem 0; font-size: 1.45rem; letter-spacing: -0.02em; }
+.subscribe-sheet h2:focus { outline: none; }
+.subscribe-lede { margin: 0 0 1.1rem; color: var(--ink-2); overflow-wrap: anywhere; }
+.subscribe-sheet .muted.small { margin: 0.9rem 0 0; }
+.subscribe-sheet .error { margin: 0.7rem 0 0; }
+.subscribe-done { margin: 1.3rem 0 0; }
+
+/* The address and the button share one box, so the pop-up has a single thing to do. */
+.subscribe-field {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--card);
+}
+.subscribe-field:focus-within { border-color: var(--link); box-shadow: 0 0 0 3px rgb(47 107 94 / 0.15); }
+.subscribe-field input { flex: 1 1 auto; min-width: 0; padding: 0.5rem 0.6rem; border: 0; background: none; }
+.subscribe-field input:focus { box-shadow: none; }
+.subscribe-field button { flex: none; border-radius: 8px; }
+form[aria-busy="true"] .subscribe-field button { opacity: 0.6; cursor: progress; }
+
+.subscribe-close,
+.subscribe-close:hover {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.15rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sunk);
+  color: var(--ink-2);
+}
+.subscribe-close:hover { background: var(--line); color: var(--ink); }
+.subscribe-close svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The pop-up grows out of the button that opened it (subscribe.js sets the starting point),
+     and the painting settles into place. */
+  dialog.subscribe[open] { animation: subscribe-in 0.4s cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+  dialog.subscribe[open]::backdrop { animation: subscribe-fade 0.3s ease both; }
+  dialog.subscribe[open][data-step="form"] .subscribe-art img { animation: subscribe-settle 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  dialog.subscribe [data-subscribe-panel="sent"]:not([hidden]) { animation: subscribe-panel 0.35s ease both; }
+  /* subscribe.js adds .closing, waits for this, then closes. Keep the two times the same. */
+  dialog.subscribe.closing { animation: subscribe-out 0.16s ease-in both; }
+  dialog.subscribe.closing::backdrop { animation: subscribe-fade-out 0.16s ease-in both; }
+}
+@keyframes subscribe-in { from { opacity: 0; transform: translateY(10px) scale(0.72); } }
+@keyframes subscribe-out { to { opacity: 0; transform: translateY(6px) scale(0.97); } }
+@keyframes subscribe-fade { from { opacity: 0; } }
+@keyframes subscribe-fade-out { to { opacity: 0; } }
+@keyframes subscribe-settle { from { transform: scale(1.1); } }
+@keyframes subscribe-panel { from { opacity: 0; transform: translateY(6px); } }
+
 /* ---------- tables ---------- */
 
 .table-wrap { overflow-x: auto; }
@@ -540,28 +720,40 @@ footer.site {
   font-size: 0.85rem;
   color: var(--muted);
 }
+/* The links sit on their own line, so they never wrap away from each other on a phone. */
+.foot-links { display: flex; justify-content: center; gap: 1.2rem; margin-top: 0.5rem; }
+footer.site a { color: var(--ink-2); }
 
 /* ---------- small screens ---------- */
 
 @media (max-width: 760px) {
   body { font-size: 16px; }
-  header.site { padding: 0.4rem 0.4rem 0.4rem 0.5rem; }
-  /* One row on phones: the name, then Menu, then the account picture or Sign in. */
+  /* One row across the phone: the name, then Menu, the account picture and Subscribe. */
+  header.site { width: calc(100% - 1.5rem); }
+  .brand { margin-right: auto; }
   header.site nav.primary { display: none; }
   .site-menu { display: block; }
-  header.site .sign-in { display: none; }
   .menu .panel { min-width: 12rem; }
   /* The hero is as tall as its text plus a band of the painting, not most of the screen. */
   .home .scene { min-height: 0; padding-bottom: clamp(10rem, 30svh, 14rem); }
   .home .scene::before { background-position: 0 0, 40% 70%; }
   .home .scene::after { height: 4rem; }
   .hero { padding: 2.5rem 0.25rem 0; }
-  .hero p { font-size: 1.25rem; }
+  .hero-text p { font-size: 1.25rem; }
   .split { grid-template-columns: 1fr; }
   main.sheet { margin-top: -3rem; }
   .inner .scene { min-height: 15rem; }
   .profile { align-items: flex-start; }
   .picture-edit { flex-direction: column; }
+  /* On a phone the painting is a band across the top, cut to the reader and her book. The
+     pop-up sits at the top of the screen so the keyboard does not cover the address field. */
+  dialog.subscribe { margin-top: 1rem; }
+  dialog.subscribe[open] { grid-template-columns: minmax(0, 1fr); }
+  .subscribe-art { min-height: 0; height: 15.5rem; }
+  .subscribe-art img { object-position: 50% 34%; transform-origin: 30% 85%; }
+  /* The caption moves to the top, over the sky, so it does not cover the book. */
+  .subscribe-art figcaption { inset: 0 0 auto 0; padding: 0.6rem 0.9rem 1.6rem; background: linear-gradient(to bottom, rgb(20 16 10 / 0.5), transparent); }
+  .subscribe-sheet { padding: 1.35rem 1.2rem 1.3rem; }
 }
 
 .visually-hidden {

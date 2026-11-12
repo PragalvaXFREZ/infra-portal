@@ -3,16 +3,38 @@
 {% block art %}pompton{% endblock %}
 {% block scene %}
   <section class="hero">
-    <h1 class="visually-hidden">infra</h1>
-    {# Draft intro. Edit freely. #}
-    <p>
-      A student-run infrastructure initiative in the R&amp;D Department at Deerwalk Institute of
-      Technology. We learn by building things and writing up what we learn.
-    </p>
-    <p class="hero-links">
-      <a class="button" href="/labs">See the labs</a>
-      <a href="/writing">Read the writing</a>
-    </p>
+    <div class="hero-text">
+      <h1 class="visually-hidden">infra</h1>
+      {# Draft intro. Edit freely. #}
+      <p>
+        A student-run infrastructure initiative in the R&amp;D Department at Deerwalk Institute of
+        Technology. We learn by building things and writing up what we learn.
+      </p>
+      <p class="hero-links">
+        <a class="button" href="/labs">See the labs</a>
+        <a class="button glass" href="/writing">Read the writing</a>
+      </p>
+    </div>
+    {# The newest post, and the way to get the next one by email. With no posts yet it is only the offer. #}
+    {% if posts or follow_enabled() %}
+      <aside class="hero-card">
+        {% if posts %}
+          {% set latest = posts[0] %}
+          <p class="hero-card-label">Latest writing</p>
+          <a class="hero-card-title" href="{{ latest.url }}">{{ latest.title }}</a>
+          <p class="hero-card-meta">{{ latest.author.name }}{% if latest.published_at %} · <time datetime="{{ latest.published_at.isoformat() }}">{{ latest.published_at.strftime("%-d %B %Y") }}</time>{% endif %}</p>
+        {% else %}
+          <p class="hero-card-label">Posts by email</p>
+          <p class="hero-card-title">One email each time a member publishes a post.</p>
+        {% endif %}
+        {% if follow_enabled() %}
+          <p class="hero-card-foot">
+            <span>{% if posts %}Get the next one by email{% else %}Nothing else{% endif %}</span>
+            <a class="button secondary" href="/subscribe" data-subscribe-open>Subscribe</a>
+          </p>
+        {% endif %}
+      </aside>
+    {% endif %}
   </section>
 {% endblock %}
 {% block main %}
@@ -40,7 +62,6 @@
       {% else %}
         <p class="muted">Nothing published yet.</p>
       {% endfor %}
-      {% include "_subscribe_form.html" %}
     </section>
     <section>
       <div class="section-head">

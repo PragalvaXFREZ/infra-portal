@@ -1,0 +1,43 @@
+{# The subscribe pop-up, included once by base.html. static/subscribe.js opens it from any link
+   marked data-subscribe-open and sends the form without leaving the page. The email field starts
+   empty on purpose: a page's own `email` value must not leak into it. Nothing here may have the
+   id "subscribe": a browser would move the cursor to it when a page is opened at #subscribe. #}
+<dialog class="subscribe" aria-labelledby="subscribe-title" data-step="form">
+  {# The picture is a painting of a reader, because subscribing is how someone becomes one.
+     It is the pop-up's own painting, not the one behind the page. See static/art/ATTRIBUTION.md. #}
+  <figure class="subscribe-art">
+    <img src="{{ static_url('art/woman-reading-900.webp') }}" width="900" height="1315" loading="lazy" decoding="async"
+         alt="A young woman sits in a meadow by a river and reads a book. A painting by Camille Corot.">
+    <figcaption><cite>A Woman Reading</cite>Camille Corot, 1869 and 1870</figcaption>
+  </figure>
+  <div class="subscribe-sheet">
+    <button type="button" class="subscribe-close" data-subscribe-close aria-label="Close">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>
+    </button>
+    <div data-subscribe-panel="form">
+      <h2 id="subscribe-title">Posts by email</h2>
+      <p class="subscribe-lede">One email each time a member publishes a post. Nothing else.</p>
+      <form method="post" action="/subscribe" data-subscribe-form>
+        <label class="visually-hidden" for="subscribe-dialog-email">Your email address</label>
+        <div class="subscribe-field">
+          <input id="subscribe-dialog-email" type="email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+          <button>Subscribe</button>
+        </div>
+        {# People never see this field; bots that fill every field give themselves away. #}
+        <div class="visually-hidden" aria-hidden="true">
+          <label for="subscribe-dialog-nickname">Leave this empty</label>
+          <input id="subscribe-dialog-nickname" name="nickname" tabindex="-1" autocomplete="off">
+        </div>
+        <p class="error small" role="alert" data-subscribe-error="invalid" hidden>That doesn't look like an email address.</p>
+        <p class="error small" role="alert" data-subscribe-error="failed" hidden>The email didn't go out. Try again in a few minutes.</p>
+      </form>
+      <p class="muted small">You'll get a link to confirm first. Every email has a link to stop emails about one member, or all of them.</p>
+    </div>
+    <div data-subscribe-panel="sent" hidden>
+      <h2 tabindex="-1" data-subscribe-sent-title>Check your inbox</h2>
+      <p class="subscribe-lede">A link to confirm is on its way to <strong data-subscribe-address></strong>, unless one was sent in the last day.</p>
+      <p class="muted small">Nothing arrives? Look in spam, or try again tomorrow.</p>
+      <p class="subscribe-done"><button type="button" class="secondary" data-subscribe-close>Done</button></p>
+    </div>
+  </div>
+</dialog>

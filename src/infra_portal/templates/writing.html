@@ -1,10 +1,18 @@
 {% extends "base.html" %}
+{% set section = "writing" %}
 {% block art %}eatons{% endblock %}
 {% block title %}Writing{% endblock %}
 {% block content %}
-  <h1>Writing</h1>
+  <div class="page-head">
+    <h1>Writing</h1>
+    {% if follow_enabled() %}
+      <a class="button secondary by-email" href="/subscribe" data-subscribe-open>
+        <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="1.6"/><path d="M2 4.2l6 4.6 6-4.6"/></svg>
+        Get posts by email
+      </a>
+    {% endif %}
+  </div>
   <p class="lede">Posts by members, written while working through the labs.</p>
-  {% include "_subscribe_form.html" %}
   {% for post in posts %}
     {% include "_post_item.html" %}
   {% else %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% set subscribe_entry = false %}
+{% block art %}eatons{% endblock %}
+{% block title %}Posts by email{% endblock %}
+{% block content %}
+  <h1>Posts by email</h1>
+  <p class="lede">One email each time a member publishes a post. Nothing else.</p>
+  {% include "_subscribe_form.html" %}
+  <p><a href="/writing">Read the writing</a></p>
+{% endblock %}

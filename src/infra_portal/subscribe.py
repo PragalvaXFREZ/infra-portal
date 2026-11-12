@@ -62,6 +62,19 @@ def _result(request: Request, member: Member | None, outcome: str, email: str = 
     return _page(request, member, "subscribe_result.html", {"outcome": outcome, "email": email}, status_code)
 
 
+@router.get("/subscribe")
+def subscribe_page(
+    request: Request,
+    member: Member | None = Depends(current_member),
+    settings: Settings = Depends(get_settings),
+):
+    # Every Subscribe button on the site is a link to this page. With JavaScript the button opens
+    # the same form in a pop-up instead, so this page is what people see without it.
+    if not settings.mail_enabled:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Subscribing is not available.")
+    return _page(request, member, "subscribe.html", {})
+
+
 @router.post("/subscribe")
 def subscribe(
     request: Request,
