@@ -72,7 +72,8 @@ Sign-in uses GitHub OAuth and is invite-only. See [ADR 0003](docs/adr/0003-githu
 1. Create a GitHub OAuth app (GitHub Settings, Developer settings, OAuth Apps). Set the callback URL to
    `http://localhost:8000/auth/github/callback` for local use.
 2. Put its client ID and a new client secret in `.env`, and your GitHub login in `ADMIN_GITHUB_LOGINS`.
-3. Run `docker compose up --build --wait`, open <http://localhost:8000>, and sign in.
+3. Run `docker compose up --build --wait`, open <http://localhost:8000>, and sign in. The link is
+   "Member sign in" at the foot of the page, or in the menu on a phone.
 4. Invite others at `/admin/members` by GitHub login. Their first sign-in claims the invite.
 
 A GitHub OAuth app has one callback URL, so production uses a second app with
@@ -82,9 +83,10 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 
 | Page | Who | What |
 | --- | --- | --- |
-| `/` | everyone | What the initiative is, recent labs, recent posts, members, the form to get an email when anyone posts |
+| `/` | everyone | What the initiative is, recent labs, recent posts, members |
 | `/labs`, `/labs/<slug>` | everyone; hidden pages only for members or admins | Labs, experiments and learning sessions |
-| `/writing` | everyone | All published posts, and the form to get an email when anyone posts |
+| `/writing` | everyone | All published posts |
+| `/subscribe` | everyone | The form to get an email when anyone posts. Every Subscribe button leads here |
 | `/members` | everyone | Members who have signed in |
 | `/u/<login>` | everyone | Profile and published posts |
 | `/u/<login>/<slug>` | everyone, or only the author for a draft | One post |
@@ -108,8 +110,17 @@ published page and saves nothing.
 Anyone can ask for an email about new posts in two ways:
 
 - **Follow one member**, from the form on that member's page and under each of their posts.
-- **Subscribe to everyone**, from the form on the home page and on `/writing`. One sign-up covers every
-  member, including members who join later. A subscriber can stop emails about one member and keep the rest.
+- **Subscribe to everyone**, from a Subscribe button: at the right end of the bar at the top of every
+  page, on the card in the home page's opening section, beside the heading on `/writing`, under the follow
+  form and at the foot of the page. One sign-up covers every member, including members who join later. A
+  subscriber can stop emails about one member and keep the rest.
+
+Each Subscribe button is a link to `/subscribe`, a page with the form. With JavaScript
+(`static/subscribe.js`) the button opens the same form in a pop-up instead and sends it without leaving the
+page. The top of the pop-up is a drawing of an envelope: the address appears on it while it is typed, and a
+postmark with the date lands on it once the confirmation email is sent. `/any-page#subscribe` opens the
+pop-up directly, so that address can be shared. The pop-up is left out of the pages that manage a
+subscription.
 
 Both work only when `RESEND_API_KEY` and `MAIL_FROM` are set; without them the forms are hidden.
 
