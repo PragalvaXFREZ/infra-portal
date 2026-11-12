@@ -5,6 +5,8 @@
 {% block content %}
   <h1>Labs and experiments</h1>
   <p class="lede">Labs are step-by-step exercises. Experiments are things we tried and wrote up.</p>
+  {# Every signed-out visitor gets this line, whether or not anything is hidden, so it gives nothing away. #}
+  {% if not member %}<p class="muted small">Members see more after <a href="/auth/github/login">signing in</a>.</p>{% endif %}
   <div class="lab-grid">
     {% for lab in labs %}
       {% include "_lab_card.html" %}

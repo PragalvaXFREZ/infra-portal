@@ -89,7 +89,7 @@ def create_app() -> FastAPI:
             "home.html",
             {
                 "member": member,
-                "labs": labs.all_labs()[:3],
+                "labs": labs.visible_labs(db, member)[:3],
                 "posts": recent_posts(db, limit=5),
                 "people": signed_in_members(db),
             },

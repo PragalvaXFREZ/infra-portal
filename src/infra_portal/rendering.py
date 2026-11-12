@@ -10,12 +10,22 @@ import unicodedata
 from markdown_it import MarkdownIt
 from markupsafe import Markup
 
-_md = MarkdownIt("commonmark", {"html": False}).enable(["table", "strikethrough"])
+def _parser() -> MarkdownIt:
+    return MarkdownIt("commonmark", {"html": False}).enable(["table", "strikethrough"])
+
+
+_md = _parser()
+# Lab bodies get their own parser, so what labs need never changes how posts and bios render.
+_lab_md = _parser()
 
 
 def render_markdown(text: str) -> Markup:
     # Markup tells Jinja the HTML is already safe and must not be escaped again.
     return Markup(_md.render(text or ""))
+
+
+def render_lab_markdown(text: str) -> Markup:
+    return Markup(_lab_md.render(text or ""))
 
 
 def slugify(title: str, max_length: int = 80) -> str:

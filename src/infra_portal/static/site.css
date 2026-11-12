@@ -297,6 +297,8 @@ header.site .account[open] summary { box-shadow: 0 0 0 2px var(--line); }
 .lab-card strong { font-size: 1.08rem; font-weight: 600; line-height: 1.3; }
 .lab-card .summary { color: var(--ink-2); font-size: 0.95rem; line-height: 1.55; }
 .lab-card .foot { margin-top: auto; padding-top: 0.6rem; color: var(--muted); font-size: 0.85rem; }
+/* "Draft" or "Members only" on a page that not everyone can see. Plain text, no chip. */
+.lab-card .visibility { color: var(--muted); font-size: 0.8rem; font-weight: 500; letter-spacing: 0.02em; }
 
 
 .crumb { margin: 0 0 0.6rem; font-size: 0.92rem; }
