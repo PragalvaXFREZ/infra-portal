@@ -13,6 +13,7 @@ painting in a caption, because there the painting was chosen for what it shows: 
 | `eatons-neck-*` | writing, posts | John Frederick Kensett, *Eaton's Neck, Long Island*, 1872. [Met object 11307](https://www.metmuseum.org/art/collection/search/11307) |
 | `spring-blossoms-*` | members, profiles | George Inness, *Spring Blossoms, Montclair, New Jersey*, ca. 1891. [Met object 11234](https://www.metmuseum.org/art/collection/search/11234) |
 | `newburyport-meadows-*` | editor, settings, admin | Martin Johnson Heade, *Newburyport Meadows*, ca. 1876–81. [Met object 11053](https://www.metmuseum.org/art/collection/search/11053) |
+| `single-sculls-*` | courses | Thomas Eakins, *The Champion Single Sculls (Max Schmitt in a Single Scull)*, 1871. [Met object 10819](https://www.metmuseum.org/art/collection/search/10819) |
 | `woman-reading-900.webp` | subscribe pop-up | Camille Corot, *A Woman Reading*, 1869 and 1870. [Met object 435991](https://www.metmuseum.org/art/collection/search/435991) |
 
 To change a section's painting, add the two files here and edit the `.art-*` rules near the top of

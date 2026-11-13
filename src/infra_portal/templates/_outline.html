@@ -1,0 +1,22 @@
+{# The course a step belongs to, as a list to jump around in. Needs `view` and `step`, the open one. #}
+<a class="outline-course" href="{{ view.url }}"><span class="step-label">Course</span>{{ view.stage.title }}</a>
+<p class="outline-progress">
+  <span class="bar" role="img" aria-label="{{ view.done_count }} of {{ view.written | length }} steps done"><span style="width: {{ (100 * view.done_count / view.written | length) | round(1) if view.written else 0 }}%"></span></span>
+  {{ view.done_count }} of {{ view.written | length }} done
+</p>
+<nav aria-label="Steps of the course">
+  {% set sections = view.sections %}
+  {% for section in sections %}
+    {% if sections | length > 1 %}<p class="outline-section">Section {{ section.number }}</p>{% endif %}
+    <ol>
+      {% for item in section.lessons + ((section.lab,) if section.lab else ()) %}
+        <li{% if item.is_build %} class="outline-lab"{% endif %}>
+          {% if item.written %}<a href="{{ item.url }}"{% if item.page.id == step.page.id %} aria-current="page"{% endif %}>{% else %}<span class="outline-coming">{% endif %}
+            <span class="step-mark{% if item.is_build %} is-lab{% endif %}{% if item.done %} is-done{% endif %}{% if not item.written %} is-coming{% endif %}" aria-hidden="true"></span>
+            <span><small>{{ "Lab · " if item.is_build }}{{ item.label }}{% if item.done %}<span class="visually-hidden"> (done)</span>{% endif %}</small>{{ item.page.title }}</span>
+          {% if item.written %}</a>{% else %}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% endfor %}
+</nav>

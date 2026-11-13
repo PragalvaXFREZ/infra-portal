@@ -38,7 +38,7 @@ def overview(
     def count(*where) -> int:
         return db.scalar(select(func.count()).where(*where)) or 0
 
-    steps = [step for step in course.all_steps(course.load_path(db, admin)) if step.written]
+    steps = [step for step in course.all_steps(course.load_courses(db, admin)) if step.written]
     drafts = [step for step in steps if step.is_draft or step.stage.visibility == VISIBILITY_DRAFT]
     return templates.TemplateResponse(
         request,

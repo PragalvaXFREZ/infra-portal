@@ -85,7 +85,7 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | --- | --- | --- |
 | `/` | everyone | What the initiative is, recent labs, recent posts, members |
 | `/labs`, `/labs/<slug>` | everyone; hidden pages only for members or admins | Labs, experiments and learning sessions |
-| `/learn`, `/learn/<slug>` | members; drafts only for admins | The learning path: stages, their chunks and builds, and the member's own ticks |
+| `/learn`, `/learn/<course>`, `/learn/<course>/<step>` | members; drafts only for admins | The courses: each one's lessons and labs, and the member's own ticks |
 | `/writing` | everyone | All published posts |
 | `/subscribe` | everyone | The form to get an email when anyone posts. Every Subscribe button leads here |
 | `/members` | everyone | Members who have signed in |
@@ -95,9 +95,9 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | `/me/posts` | the author | All own posts, drafts included |
 | `/settings/profile` | the member | Name, website, Markdown bio |
 | `/subscription/<token>` | the subscriber, from a link in an email | Stop one member's posts, start them again, or stop all emails |
-| `/admin` | admins | Overview: people, steps still hidden, and where each member is on the path |
+| `/admin` | admins | Overview: people, steps still hidden, and where each member is in the courses |
 | `/admin/course` | admins | The stages and their steps; show them to members or hide them; import the course notes |
-| `/admin/labs` | admins | Write, preview, show or hide, and delete database pages, steps of the path included |
+| `/admin/labs` | admins | Write, preview, show or hide, and delete database pages, steps of the courses included |
 | `/admin/members` | admins | Invite and remove members |
 | `/admin/mail` | admins | Preview every email the site sends, and send the samples to one address |
 
@@ -207,22 +207,29 @@ an admin at `/admin/labs`. Each row has a visibility:
 - The editor has the same Write and Preview tabs as the post editor. Removing a member keeps the pages
   they edited.
 
-## The learning path
+## Courses
 
-The path is the course for members: numbered stages, and in each stage its steps in order. A step is a
-**chunk** (a few videos, questions and a warm-up at the keyboard) or a **build** (the hands-on work that uses
-the chunks before it). It is at `/learn` and only signed-in members see it.
+A course is what a member studies: its steps in order. A step is a **chunk** (a few videos, questions and a
+warm-up at the keyboard) or a **build** (the hands-on work that uses the chunks, shown to members as a
+**lab**). The courses are at `/learn` and only signed-in members see them.
 
-- A stage is a row in `course_stages`. A step is a `lab_pages` row with a stage and a place in it, so steps
-  are written in the same editor as database labs and follow the same visibility rule.
+- A course is a row in `course_stages`: the course notes call it a stage. It is served at `/learn/<slug>`.
+  The slug is made from the title when the stage is created and does not change, so links keep working.
+  A step is a `lab_pages` row with a stage and a place in it, so steps are written in the same editor as
+  database labs and follow the same visibility rule. A step is served at `/learn/<course>/<step>`. The old
+  address `/learn/<step>` redirects there.
+- A course page shows its steps in sections. A section is a few chunks and the lab that uses them, so the
+  labs are easy to find. A step's page keeps the whole outline beside the text.
+- With one course open, `/learn` is that course. With several it lists them.
 - A member sees a step when they may see both the step and its stage. A draft stays with the admins.
   Hidden, missing and signed out all get the same 404.
 - A step with no text yet is listed as "Not written yet" and cannot be opened. A stage with nothing written is
-  shown as coming later.
-- Steps are left out of `/labs` and the home page. Written builds get their own part of `/labs` for those
-  who may see them.
+  a plan: members do not see it, and admins get it on a short folded list under `/learn`. A stage with
+  nothing written but a summary shows as one line, "Before this course", on the course after it.
+- Steps are left out of `/labs` and the home page. Written builds get their own part of `/labs`, under their
+  course, for those who may see them.
 - A member can tick a step as done and take the tick back (`page_progress`). A tick is the member's own
-  word: it unlocks nothing. The path shows the next step that is not ticked, and admins see where each member
+  word: it unlocks nothing. A course shows the next step that is not ticked, and admins see where each member
   is on `/admin`.
 
 ### Getting the course onto the site

@@ -17,14 +17,14 @@
     </div>
     {# The newest post, and the way to get the next one by email. With no posts yet it is only the offer. #}
     {% if next %}
-      {# A member gets their next step on the learning path here. #}
+      {# A member gets their next step in their course here. #}
       <aside class="hero-card">
-        <p class="hero-card-label">Your next step · Stage {{ next.stage.number }}</p>
+        <p class="hero-card-label">Your next step</p>
         <a class="hero-card-title" href="{{ next.url }}">{{ next.label }}: {{ next.page.title }}</a>
-        <p class="hero-card-meta">{{ next.stage.title }}</p>
+        <p class="hero-card-meta">In the course {{ next.stage.title }}</p>
         <p class="hero-card-foot">
-          <span>Every stage and step</span>
-          <a class="button secondary" href="/learn">Open the path</a>
+          <span>Every lesson and lab</span>
+          <a class="button secondary" href="{{ next.stage.url }}">Open the course</a>
         </p>
       </aside>
     {% elif posts or follow_enabled() %}

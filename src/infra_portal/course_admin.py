@@ -9,6 +9,7 @@ An admin uploads them on the import page instead, and they are stored as drafts.
 """
 
 import datetime as dt
+import re
 from dataclasses import asdict, dataclass, field
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
@@ -21,6 +22,7 @@ from infra_portal.auth import require_admin
 from infra_portal.course_import import WARM_UP_HEADING, Plan, plan_import
 from infra_portal.db import get_db
 from infra_portal.labs import file_slugs
+from infra_portal.rendering import slugify
 from infra_portal.models import (
     VISIBILITIES,
     VISIBILITY_DRAFT,
@@ -34,6 +36,8 @@ from infra_portal.templating import templates
 router = APIRouter(prefix="/admin/course")
 
 MAX_TITLE = 200
+# Short enough to read in an address.
+MAX_SLUG = 60
 MAX_SUMMARY = 300
 MAX_NUMBER = 99
 # An upload is a handful of notes of a few thousand words each.
@@ -87,6 +91,26 @@ def _check(db: Session, fields: StageFields, stage: CourseStage | None) -> tuple
     return None, number
 
 
+def new_slug(db: Session, title: str) -> str:
+    """An address for a new course, made from its title: "Bread and butter" gives `bread-and-butter`.
+
+    It must not be another course's address. It must not be a step page's either, because a
+    step used to be served at /learn/<step> and those old links still redirect. `stage-<n>` is
+    kept for courses that have no slug.
+    """
+    base = slugify(title, max_length=200)
+    if base == "post":
+        base = "course"
+    if len(base) > MAX_SLUG:
+        # A long title is cut at the end of a word, not in the middle of one.
+        base = base[: MAX_SLUG + 1].rpartition("-")[0] or base[:MAX_SLUG]
+    taken = set(db.scalars(select(CourseStage.slug))) | set(db.scalars(select(LabPage.slug)))
+    slug, n = base, 2
+    while slug in taken or re.fullmatch(r"stage-\d+", slug):
+        slug, n = f"{base}-{n}", n + 1
+    return slug
+
+
 def _get_stage(db: Session, stage_id: int) -> CourseStage:
     stage = db.get(CourseStage, stage_id)
     if stage is None:
@@ -114,8 +138,8 @@ def course_admin(
     admin: Member = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    # An admin sees every stage and step, so their view of the path is the whole of it.
-    path = course.load_path(db, admin)
+    # An admin sees every stage and step, so their view of the courses is the whole of it.
+    path = course.load_courses(db, admin)
     loose = db.scalar(select(func.count()).select_from(LabPage).where(LabPage.stage_id.is_(None))) or 0
     return templates.TemplateResponse(
         request, "admin_course.html", {"member": admin, "path": path, "loose": loose}
@@ -142,7 +166,13 @@ def create_stage(
     error, number = _check(db, fields, None)
     if error:
         return _editor(request, admin, None, fields, error)
-    stage = CourseStage(number=number, title=fields.title, summary=fields.summary, visibility=fields.visibility)
+    stage = CourseStage(
+        number=number,
+        slug=new_slug(db, fields.title),
+        title=fields.title,
+        summary=fields.summary,
+        visibility=fields.visibility,
+    )
     db.add(stage)
     db.commit()
     return _back(stage)
@@ -283,7 +313,8 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
     stages = {stage.number: stage for stage in db.scalars(select(CourseStage))}
     for draft in plan.stages:
         if draft.number not in stages:
-            stage = CourseStage(number=draft.number, title=_first_upper(draft.title))
+            title = _first_upper(draft.title)
+            stage = CourseStage(number=draft.number, slug=new_slug(db, title), title=title)
             db.add(stage)
             stages[draft.number] = stage
             result.new_stages.append(f"Stage {stage.number}: {stage.title}")

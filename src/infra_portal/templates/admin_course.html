@@ -13,9 +13,10 @@
     </div>
   </div>
   <p class="muted small">
-    The stages and their steps, in the order members see them on <a href="/learn">the learning path</a>.
-    A draft is seen by admins only. Members see a step when both the step and its stage are shown to them.
-    {% if loose %}{{ loose }} {% if loose == 1 %}page is{% else %}pages are{% endif %} not on the path; {% if loose == 1 %}it is{% else %}they are{% endif %} on the <a href="/admin/labs">Pages</a> tab.{% endif %}
+    Each stage of the notes is one course on <a href="/learn">the Learn page</a>, with its steps in this order.
+    A draft is seen by admins only. Members see a step when both the step and its stage are shown to them,
+    and a stage with nothing written in it is not listed for them at all.
+    {% if loose %}{{ loose }} {% if loose == 1 %}page is{% else %}pages are{% endif %} not in a course; {% if loose == 1 %}it is{% else %}they are{% endif %} on the <a href="/admin/labs">Pages</a> tab.{% endif %}
   </p>
   {% for view in path %}
     <section class="admin-stage" id="stage-{{ view.stage.number }}">
@@ -23,6 +24,7 @@
         <h2><span class="muted">Stage {{ view.stage.number }}</span> {{ view.stage.title }}</h2>
         <span class="seen seen-{{ view.stage.visibility }}">{% if view.is_draft %}Draft{% else %}Members see it{% endif %}</span>
         <span class="admin-stage-actions">
+          <a href="{{ view.url }}">{{ view.url }}</a>
           <a href="/admin/course/stages/{{ view.stage.id }}">Edit</a>
           {% set waiting = view.written | selectattr("is_draft") | list | length %}
           {% if view.is_draft or waiting %}
@@ -62,7 +64,7 @@
         </table>
         </div>
       {% else %}
-        <p class="muted small">No steps yet. A step is a page with this stage chosen in its editor.</p>
+        <p class="muted small">No steps yet, so this is not a course for members.{% if view.stage.summary and not view.is_draft %} Its summary shows as what to do before the next course.{% endif %} A step is a page with this stage chosen in its editor.</p>
       {% endif %}
     </section>
   {% else %}

@@ -96,8 +96,8 @@ def create_app() -> FastAPI:
             {
                 "member": member,
                 "labs": labs.visible_labs(db, member)[:3],
-                # For a member, the card in the opening section points at the learning path.
-                "next": course.next_step(course.load_path(db, member)),
+                # For a member, the card in the opening section points at their course.
+                "next": course.next_step(course.load_courses(db, member)),
                 "posts": recent_posts(db, limit=5),
                 "people": signed_in_members(db),
             },
