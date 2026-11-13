@@ -216,10 +216,11 @@ VISIBILITIES = (VISIBILITY_DRAFT, VISIBILITY_MEMBERS, VISIBILITY_PUBLIC)
 
 
 class CourseStage(Base):
-    """One stage of the learning path, such as "Stage 1: one Linux machine".
+    """One stage of the course notes, such as "Stage 1: one Linux machine".
 
+    Members meet a stage as a course of its own on the Learn page, at /learn/<slug>.
     A stage holds pages (LabPage rows with `stage_id` set) in the order of their `position`.
-    A stage with no written page yet is still shown on the path, as something that is coming.
+    A stage with no written page yet is planned work. Only admins see it listed.
     `visibility` works as it does for a page. A viewer sees a page on the path only if they may
     see both the page and its stage.
     """
@@ -228,6 +229,9 @@ class CourseStage(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     number: Mapped[int] = mapped_column(unique=True)
+    # The course's address under /learn, such as `bread` in /learn/bread. It is made from the
+    # title when the stage is created and does not follow later title edits, so links keep working.
+    slug: Mapped[str | None] = mapped_column(String(80), unique=True, index=True)
     title: Mapped[str] = mapped_column(String(200))
     summary: Mapped[str] = mapped_column(String(300), default="")
     visibility: Mapped[str] = mapped_column(String(16), default=VISIBILITY_DRAFT)
@@ -242,6 +246,15 @@ class CourseStage(Base):
         back_populates="stage", order_by="LabPage.position"
     )
 
+    @property
+    def address(self) -> str:
+        """The last part of the course's URL. A stage with no slug is reached by its number."""
+        return self.slug or f"stage-{self.number}"
+
+    @property
+    def url(self) -> str:
+        return f"/learn/{self.address}"
+
 
 class LabPage(Base):
     """A lab, experiment or learning session written on the admin pages instead of in a file.
@@ -250,8 +263,9 @@ class LabPage(Base):
     `visibility` decides who sees it: `draft` (admins), `members` (anyone signed in) or `public`.
     The slug is set when the page is created and does not follow later title edits.
 
-    A page with a `stage_id` is a step on the learning path: a chunk (videos, questions and a
-    warm-up) or a build. It is served under /learn and left out of the lab lists.
+    A page with a `stage_id` is a step of a course: a chunk (videos, questions and a warm-up)
+    or a build, which members see as a lab. It is served under /learn/<course> and left out of
+    the lab lists.
     """
 
     __tablename__ = "lab_pages"
@@ -292,6 +306,13 @@ class LabPage(Base):
 
     edited_by: Mapped[Member | None] = relationship()
     stage: Mapped[CourseStage | None] = relationship(back_populates="pages")
+
+    @property
+    def url(self) -> str:
+        """Where the page is served: inside its course, or among the labs."""
+        if self.stage is not None:
+            return f"{self.stage.url}/{self.slug}"
+        return f"/labs/{self.slug}"
 
 
 class PageProgress(Base):

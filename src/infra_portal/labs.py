@@ -46,7 +46,7 @@ from infra_portal.rendering import render_lab_markdown
 from infra_portal.templating import templates
 
 LABS_DIR = Path(__file__).parent / "content" / "labs"
-# Chunks and builds are the steps of the learning path (course.py).
+# Chunks and builds are the steps of a course (course.py).
 KIND_LABELS = {
     "lab": "Lab",
     "experiment": "Experiment",
@@ -163,8 +163,8 @@ def visible_labs(db: Session, member: Member | None, slug: str | None = None) ->
 
     Database rows are read on every request, not cached like the files, so a change on the
     admin pages shows at once. A row whose slug a file lab took later is left out: the file
-    owns that address. Pages on the learning path are left out too: they have their own place
-    under /learn, and a dozen chunks would push the labs off the home page.
+    owns that address. The steps of a course are left out too: they have their own place under
+    /learn, and a dozen chunks would push the labs off the home page.
     """
     allowed = [visibility for visibility in VISIBILITIES if can_see(visibility, member)]
     query = select(LabPage).where(LabPage.visibility.in_(allowed), LabPage.stage_id.is_(None))
@@ -196,7 +196,8 @@ def lab_list(
         {
             "member": member,
             "labs": visible_labs(db, member),
-            "builds": course.builds(course.load_path(db, member)),
+            # The labs of the courses, each group under its course.
+            "courses": [view for view in course.load_courses(db, member) if course.builds([view])],
         },
     )
 
@@ -212,11 +213,12 @@ def lab_page(
 
     lab = next(iter(visible_labs(db, member, slug)), None)
     if lab is None:
-        # A page that moved onto the learning path keeps its old address working, but only for
-        # a viewer who may see it there.
-        path = course.load_path(db, member)
-        if any(step.page.slug == slug for step in course.all_steps(path)):
-            return RedirectResponse(f"/learn/{slug}", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+        # A page that moved into a course keeps its old address working, but only for a viewer
+        # who may see it there.
+        courses = [view for view in course.load_courses(db, member) if course.can_open(view, member)]
+        step = next((step for step in course.all_steps(courses) if step.page.slug == slug), None)
+        if step is not None:
+            return RedirectResponse(step.url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
         # The same 404 for "missing" and "hidden from you", so an address reveals nothing.
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such lab.")
     return templates.TemplateResponse(

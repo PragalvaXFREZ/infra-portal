@@ -71,12 +71,14 @@
 .art-eatons { --painting: url("/static/art/eatons-neck-2200.webp"); --painting-pos: center 62%; }
 .art-blossoms { --painting: url("/static/art/spring-blossoms-2200.webp"); --painting-pos: center 55%; }
 .art-tools { --painting: url("/static/art/newburyport-meadows-2200.webp"); --painting-pos: center 48%; }
+.art-sculls { --painting: url("/static/art/single-sculls-2200.webp"); --painting-pos: center 72%; }
 @media (max-width: 700px) {
   .art-pompton { --painting: url("/static/art/pompton-plains-1100.webp"); }
   .art-gap { --painting: url("/static/art/delaware-water-gap-1100.webp"); }
   .art-eatons { --painting: url("/static/art/eatons-neck-1100.webp"); }
   .art-blossoms { --painting: url("/static/art/spring-blossoms-1100.webp"); }
   .art-tools { --painting: url("/static/art/newburyport-meadows-1100.webp"); }
+  .art-sculls { --painting: url("/static/art/single-sculls-1100.webp"); }
 }
 
 * { box-sizing: border-box; }
@@ -371,111 +373,93 @@ a.hero-card-title:hover { text-decoration: underline; }
 .by-email { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 0.85rem; font-size: 0.88rem; }
 .by-email svg { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linejoin: round; }
 
-/* ---------- the learning path ---------- */
+/* ---------- courses ---------- */
 
-/* The way in: one dark card with the step to open. */
-.next-up {
+/* A small rounded label. The lab one is the only coloured label on a course, so labs stand out. */
+.pill { display: inline-block; padding: 0.22rem 0.62rem; border-radius: 999px; background: var(--sunk); color: var(--ink-2); font-size: 0.68rem; font-weight: 600; line-height: 1.3; letter-spacing: 0.1em; text-transform: uppercase; }
+.pill-lab { background: var(--link); color: var(--paper); }
+.step-label { margin: 0; color: var(--muted); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* The top of a course: what it is in one line of facts, then its name, large. */
+.course-kicker { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0; margin: 0 0 1rem; color: var(--muted); font-size: 0.92rem; }
+.course-kicker .pill { margin-right: 0.75rem; }
+/* The dot follows a fact, so a line that wraps never starts with one. */
+.course-kicker > :not(.pill):not(:last-child)::after, .course-facts > :not(:last-child)::after { content: "·"; margin: 0 0.5rem; color: var(--muted); font-weight: 400; }
+.course-kicker strong { color: var(--ink-2); font-weight: 600; }
+.course-title { font-size: clamp(2.3rem, 5.6vw, 3.4rem); line-height: 1.04; letter-spacing: -0.035em; }
+.course-head .page-head { align-items: flex-start; margin-bottom: 0.9rem; }
+.course-head .page-head .button { margin-top: 0.6rem; }
+.course-summary { margin-bottom: 0; }
+.course-summary p { margin: 0; }
+.course-before { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 0.2rem 0.9rem; margin-top: 1.1rem; color: var(--ink-2); font-size: 0.95rem; }
+.course-before p { display: inline; margin: 0; }
+
+/* Where the member is: the step to open, and the whole course as one line under it. */
+.continue {
+  --track-todo: rgb(128 128 128 / 0.5);
+  --track-done: var(--paper);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.25rem 1.5rem;
-  margin: 0.4rem 0 0;
-  padding: 1.15rem 1.3rem;
-  border-radius: 12px;
+  gap: 0.15rem 1.5rem;
+  margin: 2rem 0 0;
+  padding: 1.3rem 1.45rem 1.05rem;
+  border-radius: 18px;
   background: var(--ink);
   color: var(--paper);
-  text-decoration: none;
 }
-.next-up-label { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; opacity: 0.7; }
-.next-up strong { grid-column: 1; font-size: 1.2rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
-.next-up-go {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 0.92rem;
-  font-weight: 500;
-}
-.next-up:hover .next-up-go { background: var(--card); }
-.next-up-bar { grid-column: 1 / -1; height: 4px; margin-top: 0.75rem; border-radius: 4px; background: rgb(128 128 128 / 0.4); overflow: hidden; }
-.next-up-bar span { display: block; height: 100%; min-width: 4px; border-radius: 4px; background: var(--paper); }
-.next-up-count { grid-column: 1 / -1; font-size: 0.82rem; opacity: 0.7; }
-.all-done { margin: 0.4rem 0 0; padding: 0.9rem 1.1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.continue p { margin: 0; }
+.continue-label { grid-column: 1; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; opacity: 0.7; }
+.continue-title { grid-column: 1; font-size: clamp(1.2rem, 2.6vw, 1.5rem); font-weight: 600; line-height: 1.25; letter-spacing: -0.015em; }
+.continue-title a { color: inherit; text-decoration: none; }
+.continue-title a:hover { text-decoration: underline; }
+.continue-go { grid-column: 2; grid-row: 1 / span 2; padding: 0.8rem 1.35rem; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 0.95rem; font-weight: 600; line-height: 1; text-decoration: none; }
+.continue-go:hover { background: var(--card); }
+.continue .track { grid-column: 1 / -1; margin-top: 0.85rem; }
+.continue-count { grid-column: 1 / -1; font-size: 0.82rem; opacity: 0.7; }
+.all-done { margin: 2rem 0 0; padding: 0.95rem 1.15rem; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
 
-/* Stages hang on a line down the left, each from its number. */
-.path { list-style: none; margin: 2.4rem 0 0; padding: 0; }
-.stage { position: relative; padding: 0 0 1.9rem 3.5rem; }
-.stage::before {
-  content: "";
-  position: absolute;
-  top: 2.5rem;
-  bottom: 0.3rem;
-  left: 1.1rem;
-  width: 2px;
-  margin-left: -1px;
-  border-radius: 2px;
-  background: var(--line);
-}
-.stage:last-child { padding-bottom: 0; }
-.stage:last-child::before { display: none; }
-.stage-number {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: grid;
-  place-items: center;
-  width: 2.2rem;
-  height: 2.2rem;
-  border: 1.5px solid var(--line);
-  border-radius: 50%;
-  background: var(--card);
-  color: var(--muted);
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-.stage-open .stage-number { border-color: var(--ink); background: var(--ink); color: var(--paper); }
-.stage-done .stage-number { border-color: var(--link); background: var(--link); color: var(--paper); }
-.stage-done::before { background: var(--link); }
-.stage-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.2rem 1rem; flex-wrap: wrap; min-height: 2.2rem; }
-.stage-head h2 { margin: 0.3rem 0 0; font-size: 1.22rem; }
-.stage-planned .stage-head h2 { color: var(--ink-2); font-weight: 500; }
-.stage-state { color: var(--muted); font-size: 0.88rem; white-space: nowrap; }
-.stage-summary { max-width: 40rem; color: var(--ink-2); }
-.stage-summary p { margin: 0.2rem 0 0; }
+/* A course as one line. Each lesson is a bar and each lab is a diamond, so the labs show from
+   far away. A done step is filled. Every mark is a link to its step. */
+.track { display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.track li { flex: 1 1 0; min-width: 0; }
+.track li > * { display: flex; align-items: center; height: 1.7rem; }
+.track li > *::before { content: ""; flex: 1; height: 6px; border-radius: 6px; background: var(--track-todo, var(--line)); transition: scale 0.15s ease; }
+.track a:hover::before { scale: 1 1.7; }
+.track .is-done > *::before { background: var(--track-done, var(--link)); }
+.track .is-coming > *::before { height: 0; border-top: 2px dotted var(--track-todo, var(--muted)); border-radius: 0; background: none; }
+.track .is-lab { flex: 0 0 auto; padding: 0 5px; }
+.track .is-lab > *::before { flex: none; width: 12px; height: 12px; border: 2px solid var(--track-done, var(--link)); border-radius: 3px; background: none; rotate: 45deg; }
+.track .is-lab a:hover::before { scale: 1.2; }
+.track .is-lab.is-done > *::before { background: var(--track-done, var(--link)); }
+.track .is-lab.is-coming > *::before { border-style: dotted; border-color: var(--track-todo, var(--muted)); }
+.track .is-next:not(.is-lab) > *::before { background: linear-gradient(to right, var(--track-done, var(--link)) 35%, var(--track-todo, var(--line)) 35%); }
 
-.steps { list-style: none; display: grid; gap: 0.15rem; margin: 0.8rem 0 0; padding: 0; }
-.step-row {
-  display: grid;
-  grid-template-columns: 1.15rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.85rem;
-  margin-left: -0.8rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  color: var(--ink);
-  text-decoration: none;
-}
-a.step-row:hover { border-color: var(--line); background: var(--card); }
-.step-mark { width: 1.1rem; height: 1.1rem; border: 1.5px solid var(--muted); border-radius: 50%; }
-.step-text { display: grid; grid-template-columns: 5.2rem minmax(0, 1fr); align-items: baseline; gap: 0 0.6rem; }
-.step-label { margin: 0; color: var(--muted); font-size: 0.76rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-.step-title { font-weight: 500; }
-.step-meta { color: var(--muted); font-size: 0.86rem; white-space: nowrap; }
-/* A build is the thing the chunks before it lead to, so it stands out as a card. */
-.step-build .step-row { margin-top: 0.4rem; margin-bottom: 0.7rem; padding-top: 0.95rem; padding-bottom: 0.95rem; border-color: var(--line); background: var(--card); }
-.step-build .step-mark { border-radius: 4px; }
-.step-build .step-label { color: var(--link); }
-.step-build .step-title { font-size: 1.08rem; font-weight: 600; }
-a.step-row:hover .step-title { text-decoration: underline; text-underline-offset: 0.18em; }
-.step-coming .step-row { background: none; border-style: dashed; }
-.step-coming .step-title, .step-coming .step-label { color: var(--muted); }
-.step-coming .step-mark { border-style: dashed; }
-/* A ticked step: the mark is filled, with a check drawn from two borders. */
-.step-done .step-mark, .step-tick.is-done .step-mark { position: relative; border-color: var(--link); background: var(--link); }
-.step-done .step-mark::after, .step-tick.is-done .step-mark::after {
+/* The outline, in sections. A section is a few lessons on the left and the lab that uses them on the right. */
+.course-sections { margin-top: 2.6rem; }
+.course-section { padding: 1.3rem 0 2rem; border-top: 1px solid var(--line); }
+.course-section:last-child { padding-bottom: 0.5rem; }
+.course-section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.1rem 1rem; margin-bottom: 0.7rem; }
+.course-section-head h2 { margin: 0; color: var(--ink); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+/* Two columns even in a section with no lab, so every section's lessons line up. */
+.course-section-body { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(16rem, 1fr); align-items: start; gap: 1.2rem 2.4rem; }
+.only-lab .course-section-body { grid-template-columns: minmax(0, 1fr); }
+.lessons { margin: 0; padding: 0; list-style: none; }
+.lesson-row { display: grid; grid-template-columns: 1.15rem minmax(0, 1fr) auto; align-items: center; gap: 0.85rem; margin: 0 -0.7rem; padding: 0.62rem 0.7rem; border-radius: 10px; color: var(--ink); text-decoration: none; }
+a.lesson-row:hover { background: var(--tint); }
+a.lesson-row:hover .lesson-title { text-decoration: underline; text-underline-offset: 0.18em; }
+.lesson-text { display: grid; grid-template-columns: 5rem minmax(0, 1fr); align-items: baseline; gap: 0 0.6rem; }
+.lesson-title { font-weight: 500; }
+.lesson-meta { color: var(--muted); font-size: 0.86rem; white-space: nowrap; }
+.lesson.is-done .lesson-title { color: var(--ink-2); }
+.lesson.is-coming .lesson-title, .lesson.is-coming .step-label { color: var(--muted); }
+
+/* The mark in front of a step: a ring, filled with a check once ticked. A lab's mark is square. */
+.step-mark { display: inline-block; flex: none; width: 1.1rem; height: 1.1rem; border: 1.5px solid var(--muted); border-radius: 50%; }
+.step-mark.is-lab { border-color: var(--link); border-radius: 4px; }
+.step-mark.is-coming { border-style: dashed; }
+.step-mark.is-done { position: relative; border-color: var(--link); background: var(--link); }
+.step-mark.is-done::after {
   content: "";
   position: absolute;
   top: 12%;
@@ -486,20 +470,112 @@ a.step-row:hover .step-title { text-decoration: underline; text-underline-offset
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
-.step-done .step-title { color: var(--ink-2); }
 
-/* A step's own page. */
-article > .step-label { margin-bottom: 0.3rem; }
+/* The lab of a section: a white sheet with a green edge. The whole of it opens the lab. */
+.lab-panel { position: relative; display: flex; flex-direction: column; gap: 0.45rem; padding: 1.15rem 1.3rem 1rem; border: 1px solid var(--line); border-left: 3px solid var(--link); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); transition: translate 0.2s ease, border-color 0.2s ease; }
+.lab-panel:not(.is-coming):hover { translate: 0 -2px; border-color: var(--muted); border-left-color: var(--link); }
+.lab-panel p { margin: 0; }
+.lab-tag { display: flex; align-items: center; gap: 0.6rem; color: var(--muted); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.lab-panel h3 { margin: 0.15rem 0 0; font-size: 1.35rem; line-height: 1.2; letter-spacing: -0.02em; }
+.lab-panel h3 a { color: var(--ink); text-decoration: none; }
+.lab-panel h3 a::after { content: ""; position: absolute; inset: 0; border-radius: 14px; }
+.lab-summary { color: var(--ink-2); font-size: 0.95rem; line-height: 1.5; }
+.lab-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.3rem 1rem; margin-top: 0.5rem !important; padding-top: 0.75rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.86rem; }
+.lab-done { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink-2); }
+.lab-go { color: var(--link); font-weight: 600; }
+.lab-panel.is-coming { border-style: dashed; border-left-style: solid; border-left-color: var(--muted); background: none; box-shadow: none; }
+.lab-panel.is-coming h3 { color: var(--muted); }
+.lab-panel.is-coming .pill-lab { background: var(--muted); }
+
+/* The list of courses, when there is more than one: a large number, the course, and its line. */
+.resume { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.15rem 1.5rem; margin: 0.4rem 0 0; padding: 1.1rem 1.4rem; border-radius: 18px; background: var(--ink); color: var(--paper); text-decoration: none; }
+.resume .step-label { grid-column: 1; color: inherit; opacity: 0.7; }
+.resume strong { grid-column: 1; font-size: 1.25rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.015em; }
+.resume:hover .continue-go { background: var(--card); }
+.courses { margin: 2.2rem 0 0; padding: 0; list-style: none; }
+.course-row { position: relative; display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) minmax(11rem, 16rem); align-items: start; gap: 0.6rem 1.6rem; padding: 1.7rem 0 1.8rem; border-top: 1px solid var(--line); }
+.course-index { color: var(--line); font-size: 3rem; font-weight: 600; line-height: 0.95; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; transition: color 0.2s ease; }
+.course-open .course-index, .course-row:hover .course-index { color: var(--ink); }
+.course-done .course-index { color: var(--link); }
+.course-row h2 { margin: 0; font-size: clamp(1.45rem, 3vw, 1.9rem); letter-spacing: -0.025em; }
+.course-row h2 a { color: var(--ink); text-decoration: none; }
+.course-row h2 a::after { content: ""; position: absolute; inset: 0; }
+.course-row:hover h2 a { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.16em; }
+.course-row-summary { max-width: 34rem; color: var(--ink-2); }
+.course-row-summary p { margin: 0.35rem 0 0; }
+.course-row-summary a { position: relative; z-index: 1; }
+.course-facts { display: flex; flex-wrap: wrap; margin: 0.7rem 0 0; color: var(--muted); font-size: 0.9rem; }
+.course-section-head .course-facts { margin: 0; font-size: 0.88rem; }
+.course-facts-labs { color: var(--link); font-weight: 600; }
+.course-row-side { display: grid; gap: 0.1rem; padding-top: 0.2rem; }
+.course-row-side .track { position: relative; z-index: 1; }
+.course-row-state { color: var(--muted); font-size: 0.86rem; }
+.course-note { padding: 0.9rem 0 0.9rem 5.8rem; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 0.95rem; }
+.course-note p { display: inline; margin: 0; }
+
+/* Planned courses, for admins: folded away under the page. */
+.planned { margin-top: 2.6rem; padding-top: 1rem; border-top: 1px dashed var(--line); color: var(--ink-2); font-size: 0.95rem; }
+.planned summary { cursor: pointer; color: var(--ink-2); font-weight: 500; }
+.planned summary span { margin-left: 0.5rem; color: var(--muted); font-size: 0.82rem; font-weight: 400; }
+.planned ul { margin: 0.6rem 0 0; padding-left: 1.2rem; }
+.planned li { margin: 0.3rem 0; }
+.planned a { color: var(--ink); }
+
+/* A step's own page: the course outline at the side, the text beside it. */
+main.sheet.reading { padding-left: clamp(1.25rem, 3.6vw, 2.6rem); padding-right: clamp(1.25rem, 3.6vw, 2.6rem); }
+.course-layout { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); align-items: start; gap: 3rem; }
+.reading-column { min-width: 0; max-width: 41rem; }
+/* It stays in view while the text scrolls, under the floating bar. A long outline scrolls by itself. */
+aside.outline { position: sticky; top: 5.2rem; max-height: calc(100vh - 6.4rem); overflow-y: auto; padding: 0 0.6rem 1rem; scrollbar-width: thin; }
+.outline { font-size: 0.92rem; }
+.outline-fold { display: none; }
+.outline-course { display: grid; gap: 0.15rem; color: var(--ink); font-size: 1.12rem; font-weight: 600; line-height: 1.25; letter-spacing: -0.015em; text-decoration: none; }
+.outline-course:hover { text-decoration: underline; }
+.outline-course .step-label::before { content: "← "; }
+.outline-progress { display: flex; align-items: center; gap: 0.7rem; margin: 0.75rem 0 0.4rem; color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
+.outline-progress .bar { flex: 1; width: auto; margin: 0; }
+.outline-section { margin: 1.15rem 0 0.3rem; color: var(--muted); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.outline ol { margin: 0; padding: 0; list-style: none; }
+.outline li > * { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 0.65rem; margin: 0 -0.6rem; padding: 0.42rem 0.6rem; border-radius: 9px; color: var(--ink-2); line-height: 1.35; text-decoration: none; }
+.outline li a:hover { background: var(--tint); color: var(--ink); }
+.outline li a[aria-current="page"] { background: var(--tint); color: var(--ink); font-weight: 600; }
+.outline li .step-mark { width: 0.95rem; height: 0.95rem; margin-top: 0.2rem; }
+.outline li small { display: block; color: var(--muted); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; }
+.outline-lab small { color: var(--link) !important; }
+.outline-lab > * { color: var(--ink) !important; }
+.outline-coming { color: var(--muted) !important; }
+
+.reading-column article > .step-label { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; }
 .step-tick { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; margin-top: 2.6rem; padding: 0.9rem 1rem 0.9rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .step-tick p { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-weight: 500; }
 .step-tick form { margin: 0; }
-.step-tick .step-mark { display: inline-block; flex: none; }
 .step-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
-.step-nav a { display: grid; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font-weight: 500; line-height: 1.35; text-decoration: none; }
+.step-nav a { display: grid; align-content: start; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font-weight: 500; line-height: 1.35; text-decoration: none; }
 .step-nav a:hover { border-color: var(--muted); }
 .step-nav a span { color: var(--muted); font-size: 0.76rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .step-nav-later { grid-column: 2; text-align: right; }
+/* Once the step is ticked, the way on is the loudest thing at the foot of the page. */
+.step-nav a.is-primary { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.step-nav a.is-primary span { color: inherit; opacity: 0.7; }
 
+@media (max-width: 900px) {
+  .course-layout { grid-template-columns: minmax(0, 1fr); }
+  .reading-column { max-width: none; }
+  aside.outline { display: none; }
+  .outline-fold { display: block; margin-bottom: 1.6rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .outline-fold summary { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.1rem 1rem; padding: 0.7rem 0.95rem; cursor: pointer; font-weight: 600; }
+  .outline-fold summary { list-style: none; }
+  .outline-fold summary::-webkit-details-marker { display: none; }
+  .outline-fold summary .muted { font-size: 0.82rem; font-weight: 400; }
+  /* A small arrow that turns when the outline is open. */
+  .outline-fold summary .muted::after { content: ""; display: inline-block; width: 0.42rem; height: 0.42rem; margin: 0 0.15rem 0.15rem 0.55rem; border: solid var(--muted); border-width: 0 1.5px 1.5px 0; rotate: 45deg; }
+  .outline-fold[open] summary .muted::after { margin-bottom: -0.05rem; rotate: 225deg; }
+  .outline-fold[open] { padding-bottom: 0.8rem; }
+  .outline-fold[open] summary { margin-bottom: 0.7rem; border-bottom: 1px solid var(--line); }
+  .outline-fold > :not(summary) { margin-left: 0.95rem; margin-right: 0.95rem; }
+  /* Inside the fold the course's name is the way back to its page. */
+  .outline-fold .outline-course { font-size: 1rem; }
+}
 /* ---------- post lists and meta ---------- */
 
 .item { padding: 0.8rem 0; border-top: 1px solid var(--line); }
@@ -928,11 +1004,18 @@ footer.site a { color: var(--ink-2); }
   .inner .scene { min-height: 15rem; }
   .profile { align-items: flex-start; }
   .picture-edit { flex-direction: column; }
-  /* The path on a phone: a narrower line, and a step's name under its label. */
-  .stage { padding-left: 2.9rem; }
-  .step-text { grid-template-columns: minmax(0, 1fr); }
-  .step-row { align-items: start; }
-  .step-mark { margin-top: 0.2rem; }
+  /* A course on a phone: the lab sits under its lessons, and a lesson's name under its label. */
+  .course-section-body { grid-template-columns: minmax(0, 1fr); }
+  .lesson-text { grid-template-columns: minmax(0, 1fr); }
+  .lesson-row { align-items: start; }
+  .lesson-row .step-mark { margin-top: 0.2rem; }
+  .continue { padding: 1.1rem 1.1rem 0.9rem; }
+  .continue-go { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 0.7rem; }
+  .course-before { grid-template-columns: minmax(0, 1fr); }
+  .course-row { grid-template-columns: 2.8rem minmax(0, 1fr); gap: 0.4rem 1rem; }
+  .course-index { font-size: 2rem; }
+  .course-row-side { grid-column: 2; }
+  .course-note { padding-left: 3.8rem; }
   .step-nav { grid-template-columns: 1fr; }
   .step-nav-later { grid-column: 1; text-align: left; }
   /* On a phone the painting is a band across the top, cut to the reader and her book. The

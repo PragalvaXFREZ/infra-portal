@@ -47,7 +47,7 @@
           <span class="bar" role="img" aria-label="{{ row.done }} of {{ row.total }}"><span style="width: {{ (100 * row.done / row.total) | round(1) if row.total else 0 }}%"></span></span>
           <span class="muted">{{ row.done }} of {{ row.total }}</span>
         </td>
-        <td class="status">{% if row.next %}<a href="{{ row.next.url }}">Stage {{ row.next.stage.number }} · {{ row.next.label }}</a>{% elif row.total %}Through everything{% else %}Nothing to do yet{% endif %}</td>
+        <td class="status">{% if row.next %}<a href="{{ row.next.url }}">{{ row.next.stage.title }} · {{ row.next.label }}</a>{% elif row.total %}Through everything{% else %}Nothing to do yet{% endif %}</td>
         <td class="muted">{% if row.last_tick %}{{ row.last_tick.strftime("%-d %b %Y") }}{% else %}None yet{% endif %}</td>
       </tr>
     {% else %}

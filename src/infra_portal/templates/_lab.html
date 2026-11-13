@@ -1,0 +1,17 @@
+{# The lab that closes a part of a course. Needs `step`, a build. It is the one coloured thing in the outline. #}
+<article class="lab-panel{% if step.done %} is-done{% endif %}{% if not step.written %} is-coming{% endif %}">
+  <p class="lab-tag"><span class="pill pill-lab">Lab</span> {{ step.label }}{% if step.is_draft %} · Draft{% endif %}</p>
+  <h3>{% if step.written %}<a href="{{ step.url }}">{{ step.page.title }}</a>{% else %}{{ step.page.title }}{% endif %}</h3>
+  {% if step.written and step.page.summary and step.page.summary != step.page.title %}<p class="lab-summary">{{ step.page.summary }}</p>{% endif %}
+  <p class="lab-foot">
+    {% if not step.written %}
+      <span>Not written yet</span>
+    {% elif step.done %}
+      <span class="lab-done"><span class="step-mark is-done" aria-hidden="true"></span> Done on {{ step.done_at.strftime("%-d %B %Y") }}</span>
+      <span class="lab-go" aria-hidden="true">Open again</span>
+    {% else %}
+      <span>Hands-on, on your own machine</span>
+      <span class="lab-go" aria-hidden="true">Open the lab</span>
+    {% endif %}
+  </p>
+</article>

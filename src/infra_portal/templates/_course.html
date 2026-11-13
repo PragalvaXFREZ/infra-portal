@@ -1,0 +1,66 @@
+{# A whole course: what it is, where this member is in it, and its outline in sections.
+   Needs `view`, `before` (what is done first) and `more` (whether there are other courses). #}
+<header class="course-head">
+  {% if more %}<p class="crumb"><a href="/learn">All courses</a></p>{% endif %}
+  <p class="course-kicker">
+    <span class="pill">Course</span>
+    <span>{{ view.lessons | length }} {{ "lesson" if view.lessons | length == 1 else "lessons" }}</span>
+    {% if view.labs %}<span>{{ view.labs | length }} {{ "lab" if view.labs | length == 1 else "labs" }}</span>{% endif %}
+    {% if view.minutes %}<span>{{ view.video }} of video</span>{% endif %}
+    {% if view.is_draft %}<strong>Draft</strong>{% endif %}
+  </p>
+  <div class="page-head">
+    <h1 class="course-title">{{ view.stage.title }}</h1>
+    {% if member.is_admin %}<a class="button secondary by-email" href="/admin/course#stage-{{ view.stage.number }}">Edit the course</a>{% endif %}
+  </div>
+  {% if view.stage.summary %}<div class="lede course-summary">{{ view.summary_html }}</div>{% endif %}
+  {% for note in before %}
+    <div class="course-before"><span class="step-label">Before this course</span> <div><strong>{{ note.stage.title }}.</strong> {{ note.summary_html }}</div></div>
+  {% endfor %}
+</header>
+
+{% if view.next %}
+  {# Where this member is: the step to open, and the whole course as one line. #}
+  <section class="continue" aria-label="Where you are">
+    <p class="continue-label">{% if view.done_count %}Next up{% else %}Start here{% endif %}{% if view.sections | length > 1 %} · Section {{ view.next.section }}{% endif %}</p>
+    <p class="continue-title"><a href="{{ view.next.url }}">{{ view.next.label }}: {{ view.next.page.title }}</a></p>
+    <a class="continue-go" href="{{ view.next.url }}">{% if view.done_count %}Continue{% else %}Start{% endif %}</a>
+    {% include "_track.html" %}
+    <p class="continue-count">{{ view.done_count }} of {{ view.written | length }} done</p>
+  </section>
+{% elif view.written %}
+  <p class="all-done" role="status"><strong>All {{ view.written | length }} steps done.</strong> Every lesson and lab stays open below.</p>
+{% else %}
+  <p class="all-done">Nothing in this course is written yet.</p>
+{% endif %}
+
+{% set sections = view.sections %}
+<div class="course-sections">
+  {% for section in sections %}
+    <section class="course-section{% if section.lab %} has-lab{% endif %}{% if not section.lessons %} only-lab{% endif %}" id="section-{{ section.number }}">
+      {% if sections | length > 1 or section.lab %}
+        <header class="course-section-head">
+          <h2>Section {{ section.number }}</h2>
+          <span class="course-facts">
+            {% if section.lessons %}<span>{{ section.lessons | length }} {{ "lesson" if section.lessons | length == 1 else "lessons" }}</span>{% endif %}
+            {% if section.minutes %}<span>{{ section.video }} of video</span>{% endif %}
+            {% if section.lab %}<span class="course-facts-labs">1 lab</span>{% endif %}
+          </span>
+        </header>
+      {% endif %}
+      <div class="course-section-body">
+        {% if section.lessons %}
+          <ol class="lessons">
+            {% for step in section.lessons %}
+              {% include "_step.html" %}
+            {% endfor %}
+          </ol>
+        {% endif %}
+        {% if section.lab %}
+          {% set step = section.lab %}
+          {% include "_lab.html" %}
+        {% endif %}
+      </div>
+    </section>
+  {% endfor %}
+</div>

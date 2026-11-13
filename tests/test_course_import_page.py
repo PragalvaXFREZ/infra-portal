@@ -132,7 +132,7 @@ def test_members_see_nothing_until_an_admin_shows_it(client, boss, add_member, s
     add_member("alice")
     sign_in("alice", 42)
     assert "Bread" not in client.get("/learn").text
-    assert client.get("/learn/stage-2-chunk-1").status_code == 404
+    assert client.get("/learn/bread/stage-2-chunk-1").status_code == 404
     sign_in("boss", 1)
     with session_factory() as db:
         stage = db.scalar(select(CourseStage.id).where(CourseStage.number == 2))
@@ -140,8 +140,10 @@ def test_members_see_nothing_until_an_admin_shows_it(client, boss, add_member, s
     sign_in("alice", 42)
     page = client.get("/learn").text
     assert "Flour" in page and "A first loaf" in page and "A baguette" not in page
+    # The stage the upload made is a course with an address from its title.
+    assert "Flour" in client.get("/learn/bread").text
     # The link between two notes is a link between two pages.
-    assert '<a href="/learn/stage-2-chunk-1">the flour chunk</a>' in client.get("/learn/stage-2-build-1").text
+    assert '<a href="/learn/bread/stage-2-chunk-1">the flour chunk</a>' in client.get("/learn/bread/stage-2-build-1").text
 
 
 def test_uploading_again_replaces_text_and_keeps_who_sees_it_and_the_ticks(client, boss, add_member, sign_in, session_factory):
@@ -154,7 +156,7 @@ def test_uploading_again_replaces_text_and_keeps_who_sees_it_and_the_ticks(clien
     client.post(f"/admin/course/stages/{stage_id}/show")
     add_member("alice")
     sign_in("alice", 42)
-    client.post("/learn/stage-2-chunk-1/done")
+    client.post("/learn/bread/stage-2-chunk-1/done")
     sign_in("boss", 1)
 
     # The second upload has new chunk text and no build note.
@@ -225,8 +227,8 @@ def test_a_step_keeps_its_own_number_when_the_order_differs(client, boss, sessio
     order = [p.slug for p in sorted(pages.values(), key=lambda p: p.position)]
     assert order.index("stage-2-chunk-3") < order.index("stage-2-chunk-2")
     assert (pages["stage-2-chunk-3"].number, pages["stage-2-chunk-2"].number) == (3, 2)
-    assert "Chunk 3" in client.get("/learn/stage-2-chunk-3").text
-    assert "Chunk 2" in client.get("/learn/stage-2-chunk-2").text
+    assert "Chunk 3" in client.get("/learn/bread/stage-2-chunk-3").text
+    assert "Chunk 2" in client.get("/learn/bread/stage-2-chunk-2").text
 
 
 def test_uploading_one_build_note_again_keeps_the_order(client, boss, session_factory):

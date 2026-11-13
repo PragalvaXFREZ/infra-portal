@@ -16,7 +16,7 @@
   <header class="site">
     <a class="brand" href="/">infra</a>
     <nav class="primary" aria-label="Site">
-      {# The learning path is for members, so only they get the link. #}
+      {# The courses are for members, so only they get the link. #}
       {% if member %}<a href="/learn"{% if section == "learn" %} aria-current="page"{% endif %}>Learn</a>{% endif %}
       <a href="/labs"{% if section == "labs" %} aria-current="page"{% endif %}>Labs</a>
       <a href="/writing"{% if section == "writing" %} aria-current="page"{% endif %}>Writing</a>

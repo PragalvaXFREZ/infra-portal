@@ -27,7 +27,7 @@ def boss(sign_in):
 def stage(session_factory):
     """A draft stage 1 with a written draft chunk, a shown chunk and an unwritten build."""
     with session_factory() as db:
-        stage = CourseStage(number=1, title="Bread", visibility="draft")
+        stage = CourseStage(number=1, slug="bread", title="Bread", visibility="draft")
         db.add(stage)
         db.flush()
         for slug, title, kind, position, visibility, body in (
@@ -122,12 +122,12 @@ def test_overview_shows_where_each_member_is(client, stage, add_member, sign_in,
     sign_in("boss", 1)
     client.post(f"/admin/course/stages/{stage}/show")
     sign_in("alice", 42)
-    client.post("/learn/stage-1-chunk-1/done")
+    client.post("/learn/bread/stage-1-chunk-1/done")
     sign_in("boss", 1)
     page = client.get("/admin").text
     row = page[page.index("Alice") :]
     row = row[: row.index("</tr>")]
-    assert "1 of 2" in row and "Stage 1 · Chunk 2" in row
+    assert "1 of 2" in row and "Bread · Chunk 2" in row
     # The admin has ticked nothing.
     assert "0 of 2" in page
 
@@ -153,11 +153,11 @@ def test_hiding_a_stage_takes_it_from_members_at_once(client, stage, add_member,
     client.post(f"/admin/course/stages/{stage}/show")
     add_member("alice")
     sign_in("alice", 42)
-    assert client.get("/learn/stage-1-chunk-1").status_code == 200
+    assert client.get("/learn/bread/stage-1-chunk-1").status_code == 200
     sign_in("boss", 1)
     client.post(f"/admin/course/stages/{stage}/hide")
     sign_in("alice", 42)
-    assert client.get("/learn/stage-1-chunk-1").status_code == 404
+    assert client.get("/learn/bread/stage-1-chunk-1").status_code == 404
     assert "Bread" not in client.get("/learn").text
 
 
@@ -182,12 +182,32 @@ def test_admin_adds_and_edits_a_stage(client, boss, session_factory):
     assert created.status_code == 303
     stage = _stage(session_factory, 2)
     assert stage.title == "Pastry" and stage.visibility == "draft"
+    # The course's address comes from its first title.
+    assert stage.slug == "pastry"
     client.post(
         f"/admin/course/stages/{stage.id}",
         data={"number": "3", "title": "Sweet pastry", "summary": "With [a link](/labs/ci).", "visibility": "members"},
     )
     stage = _stage(session_factory, 3)
     assert stage.title == "Sweet pastry" and stage.visibility == "members"
+    # A new title or number does not move the course, so links to it keep working.
+    assert stage.slug == "pastry"
+    assert "/learn/pastry" in client.get(f"/admin/course/stages/{stage.id}").text
+
+
+def test_a_new_stage_never_takes_an_address_that_is_in_use(client, stage, boss, session_factory):
+    # "Bread" is a course already. A step page is called stage-1-chunk-1, and a step used to be
+    # served at /learn/<step>. "Stage 7" would look like a course that has no slug.
+    long_title = "Sourdough from a starter you kept alive for a whole month, then croissants"
+    for number, title in ((2, "Bread"), (3, "Bread!"), (4, "Stage 1 chunk 1"), (5, "Stage 7"), (6, "???"), (7, long_title)):
+        client.post(
+            "/admin/course/stages/new",
+            data={"number": str(number), "title": title, "summary": "", "visibility": "draft"},
+        )
+    slugs = [_stage(session_factory, number).slug for number in (2, 3, 4, 5, 6)]
+    assert slugs == ["bread-2", "bread-3", "stage-1-chunk-1-2", "stage-7-2", "course"]
+    # A long title is cut at the end of a word.
+    assert _stage(session_factory, 7).slug == "sourdough-from-a-starter-you-kept-alive-for-a-whole-month"
 
 
 @pytest.mark.parametrize(
@@ -236,7 +256,7 @@ def test_the_page_editor_puts_a_page_on_the_path_and_keeps_it_there(client, stag
     assert f'<option value="{stage}" selected>Stage 1: Bread</option>' in form
     assert 'name="position" type="number" min="0" max="999" value="7"' in form
     assert 'name="minutes" type="number" min="0" max="999" value="12"' in form
-    assert "/learn/stage-1-chunk-9" in form
+    assert "/learn/bread/stage-1-chunk-9" in form
     # A preview keeps the three fields too.
     preview = client.post(
         f"/admin/labs/{page.id}/edit",
@@ -270,7 +290,7 @@ def test_removing_a_member_removes_their_ticks(client, stage, add_member, sign_i
     sign_in("boss", 1)
     client.post(f"/admin/course/stages/{stage}/show")
     sign_in("alice", 42)
-    client.post("/learn/stage-1-chunk-1/done")
+    client.post("/learn/bread/stage-1-chunk-1/done")
     sign_in("boss", 1)
     with session_factory() as db:
         # SQLite only follows ON DELETE rules when asked to; Postgres always does.

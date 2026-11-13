@@ -5,11 +5,12 @@
   {% include "_admin_tabs.html" %}
   <p class="crumb"><a href="/admin/course">Course</a></p>
   <h1>{% if stage %}Edit stage {{ stage.number }}{% else %}New stage{% endif %}</h1>
+  <p class="muted small">{% if stage %}Members see it as a course at <a href="{{ stage.url }}">{{ stage.url }}</a>. The address does not change.{% else %}Members see a stage as a course of its own. Its address is made from the title and does not change later.{% endif %}</p>
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
   <form method="post" action="{% if stage %}/admin/course/stages/{{ stage.id }}{% else %}/admin/course/stages/new{% endif %}" class="stack">
     <div class="field-row">
       <div>
-        <label for="number">Number <span class="muted small">(its place on the path)</span></label>
+        <label for="number">Number <span class="muted small">(its place among the courses)</span></label>
         <input id="number" name="number" type="number" min="0" max="99" required value="{{ number }}">
       </div>
       <div>

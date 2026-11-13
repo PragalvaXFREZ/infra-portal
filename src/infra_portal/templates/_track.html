@@ -1,0 +1,12 @@
+{# A course drawn as one line: a bar for each lesson, a diamond for each lab. Needs `view`.
+   Once the member has started, the step they are on is part filled. #}
+<ol class="track" aria-label="Every step of the course">
+  {% for step in view.steps %}
+    {% set state = "is-done" if step.done else ("is-coming" if not step.written else ("is-next" if view.done_count and view.next and step.page.id == view.next.page.id else "")) %}
+    <li class="{{ "is-lab " if step.is_build }}{{ state }}">
+      {% set name = step.label ~ ": " ~ step.page.title ~ (" (done)" if step.done else (" (not written yet)" if not step.written else "")) %}
+      {% if step.written %}<a href="{{ step.url }}" title="{{ name }}"><span class="visually-hidden">{{ name }}</span></a>
+      {% else %}<span title="{{ name }}"><span class="visually-hidden">{{ name }}</span></span>{% endif %}
+    </li>
+  {% endfor %}
+</ol>

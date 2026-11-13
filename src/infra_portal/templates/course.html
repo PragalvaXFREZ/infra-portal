@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% set section = "learn" %}
+{% block art %}sculls{% endblock %}
+{% block title %}{{ view.stage.title }}{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  {% include "_course.html" %}
+{% endblock %}
