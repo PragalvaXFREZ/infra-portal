@@ -249,7 +249,7 @@ What the import reads, and nothing else:
 | Stage note | `..., stage 2: Bread` | Each `## Chunk N. Title` section as a chunk; each `### Build N. Title` heading as the name of a build |
 | Build note | `Stage 2, build 1: A first loaf` | The whole note, as that build |
 | Warm-up note | `Stage 2, chunk 3: warm-up` | Added to the end of chunk 3 |
-| Any note | A table starting with the columns `Stage` and `Topic` | The names of the stages |
+| Any note | A table starting with the columns `Stage` and `Topic` | The names of the stages that have a step in the upload |
 
 A file whose name ends in `-mentor.md`, or whose header has `draft: true`, is an answer key and is refused.
 Comments that the notes app hides (`%% ... %%` and `<!-- ... -->`) are dropped. A chunk ends at the next
@@ -257,7 +257,8 @@ first or second level heading.
 
 Uploading again replaces a step's text and title; who sees it and the members' ticks stay. The order of a
 stage changes only when its stage note is in the upload, and a chunk keeps its warm-up when the stage note
-comes without the warm-up note. A stage that already exists is left as it is. Links between notes (`[[folder/stage-2-build-1|the build]]`) become
+comes without the warm-up note. A stage that already exists is left as it is, and a stage is added only when the upload has a step for
+it, so a table of planned stages adds nothing. Links between notes (`[[folder/stage-2-build-1|the build]]`) become
 links between pages when the reader may see both.
 
 ### Notes syntax in lab bodies

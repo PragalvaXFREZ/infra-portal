@@ -302,6 +302,10 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
     that already exists keeps who sees it; its text and title are replaced. A stage that already
     exists is left as it is, so a title or summary edited here survives the next upload.
 
+    A stage is made only when the upload has a step for it. A row in a `Stage | Topic` table
+    gives a stage its name and nothing more, so the plan of later stages stays in the notes and
+    does not turn into empty stages here.
+
     The order of a stage comes from its stage note, the only file that names every step. An
     upload without that note, such as one build note by itself, leaves the order alone and puts
     a new page at the end. A chunk keeps the warm-up it already has when the upload brings its
@@ -311,8 +315,9 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
         refused=[(item.name, item.reason) for item in plan.refused], unused=list(plan.unused)
     )
     stages = {stage.number: stage for stage in db.scalars(select(CourseStage))}
+    with_steps = {draft.stage for draft in plan.pages}
     for draft in plan.stages:
-        if draft.number not in stages:
+        if draft.number in with_steps and draft.number not in stages:
             title = _first_upper(draft.title)
             stage = CourseStage(number=draft.number, slug=new_slug(db, title), title=title)
             db.add(stage)

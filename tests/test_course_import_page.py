@@ -102,7 +102,8 @@ def test_an_upload_becomes_draft_stages_and_steps_in_order(client, boss, session
     assert response.status_code == 200 and "Done." in response.text
     with session_factory() as db:
         stages = {s.number: s for s in db.scalars(select(CourseStage))}
-    assert {n: s.title for n, s in stages.items()} == {1: "Ovens", 2: "Bread", 3: "Pastry"}
+    # The table names three stages. Only the one with steps in the upload is stored.
+    assert {n: s.title for n, s in stages.items()} == {2: "Bread"}
     assert {s.visibility for s in stages.values()} == {"draft"}
     pages = _pages(session_factory)
     order = sorted(pages.values(), key=lambda p: p.position)
