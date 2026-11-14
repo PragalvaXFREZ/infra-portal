@@ -62,13 +62,23 @@ def _stage(session_factory, number):
         return db.scalar(select(CourseStage).where(CourseStage.number == number))
 
 
-ADMIN_PAGES = ("/admin", "/admin/course", "/admin/course/stages/new", "/admin/labs", "/admin/members", "/admin/mail")
+ADMIN_PAGES = (
+    "/admin",
+    "/admin/course",
+    "/admin/course/stages/new",
+    "/admin/progress",
+    "/admin/progress/boss",
+    "/admin/labs",
+    "/admin/members",
+    "/admin/mail",
+)
 
 
 def test_every_admin_page_has_the_tabs_and_marks_its_own(client, boss):
     for path, name in (
         ("/admin", "Overview"),
         ("/admin/course", "Course"),
+        ("/admin/progress", "Progress"),
         ("/admin/labs", "Pages"),
         ("/admin/members", "Members"),
         ("/admin/mail", "Email"),

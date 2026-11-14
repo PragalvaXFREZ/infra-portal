@@ -513,13 +513,47 @@ a.lesson-row:hover .lesson-title { text-decoration: underline; text-underline-of
 .course-note { padding: 0.9rem 0 0.9rem 5.8rem; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 0.95rem; }
 .course-note p { display: inline; margin: 0; }
 
-/* Planned courses, for admins: folded away under the page. */
-.planned { margin-top: 2.6rem; padding-top: 1rem; border-top: 1px dashed var(--line); color: var(--ink-2); font-size: 0.95rem; }
-.planned summary { cursor: pointer; color: var(--ink-2); font-weight: 500; }
-.planned summary span { margin-left: 0.5rem; color: var(--muted); font-size: 0.82rem; font-weight: 400; }
-.planned ul { margin: 0.6rem 0 0; padding-left: 1.2rem; }
-.planned li { margin: 0.3rem 0; }
-.planned a { color: var(--ink); }
+/* A course that is not open yet. Its picture is a closed door in a quiet room (Hammershøi,
+   Moonlight, Strandgade 30). It is drawn out of focus, and --focus, from 0 to 1, brings it
+   into focus as the member gets through the course before. The text keeps its light colour
+   in both themes, because it sits on the painting. */
+.lock-card, .lock-thumb { --door: url("/static/art/moonlight-strandgade-1400.webp"); position: relative; isolation: isolate; overflow: hidden; background: #1b1715; color: #f4f0e9; }
+.lock-card::before, .lock-thumb::before { content: ""; position: absolute; inset: -30px; z-index: -2; background: var(--door) center 44% / cover no-repeat; filter: blur(calc((1 - var(--focus, 0)) * 11px + 1.5px)); transition: filter 0.5s ease; }
+.lock-card::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to right, rgb(22 18 16 / 0.88), rgb(22 18 16 / 0.62) 46%, rgb(22 18 16 / 0.12)); }
+/* A look through the keyhole: under the pointer the room is a little clearer. */
+.lock-card:hover::before { filter: blur(calc((1 - var(--focus, 0)) * 6px + 1px)); }
+.lock-card.is-open::before, .lock-card.is-open:hover::before { filter: none; }
+.lock-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3rem; min-height: 14.5rem; margin: 2rem 0 0; padding: 1.6rem 1.7rem 1.5rem; border-radius: 18px; }
+.lock-card p { margin: 0; max-width: 30rem; }
+.padlock { flex: none; }
+.lock-label { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.85; }
+.lock-label .padlock { width: 0.85rem; height: 0.85rem; }
+.lock-title { font-size: clamp(1.35rem, 3vw, 1.8rem); font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; }
+.lock-togo { margin-top: 0.25rem !important; font-size: 0.98rem; opacity: 0.9; }
+.lock-togo strong { font-size: 1.25rem; font-weight: 600; }
+.lock-meter { width: min(19rem, 100%); height: 6px; margin-top: 0.55rem; border-radius: 6px; background: rgb(255 255 255 / 0.24); overflow: hidden; }
+.lock-meter span { display: block; height: 100%; border-radius: 6px; background: #f4f0e9; }
+.lock-card .continue-go { margin-top: 1rem; background: #f4f0e9; color: #1c1a17; }
+.lock-card .continue-go:hover { background: #fff; }
+/* The padlock sits on the door of the painting, on a round piece of frosted glass. */
+.lock-badge { position: absolute; top: 50%; left: 76%; translate: -50% -50%; display: grid; place-items: center; width: 3.6rem; height: 3.6rem; border: 1px solid rgb(255 255 255 / 0.4); border-radius: 50%; background: rgb(255 255 255 / 0.14); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.lock-badge .padlock { width: 1.5rem; height: 1.5rem; }
+.course-after { margin-top: 2.8rem; }
+/* The steps of a locked course: their labels can be read, their names cannot yet, and the
+   list fades out before its end. */
+.ghost { margin-top: 2.2rem; user-select: none; }
+.ghost-head { margin: 0 0 0.4rem; color: var(--ink); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.ghost ol { max-height: 21rem; margin: 0; padding: 0; overflow: hidden; list-style: none; -webkit-mask-image: linear-gradient(to bottom, #000 45%, rgb(0 0 0 / 0.15)); mask-image: linear-gradient(to bottom, #000 45%, rgb(0 0 0 / 0.15)); }
+.ghost li { display: grid; grid-template-columns: 1.15rem 8.5rem minmax(0, 1fr); align-items: center; gap: 0.85rem; padding: 0.62rem 0; border-top: 1px solid var(--line); }
+.ghost li.is-lab .step-label { color: var(--link); }
+.ghost-title { font-weight: 500; filter: blur(5.5px); }
+/* On the list of courses a locked one shows the same door, small, where its line would be. */
+.lock-thumb { display: grid; place-items: center; height: 3.5rem; border-radius: 12px; }
+.lock-thumb::before { inset: -18px; background-position: center 46%; filter: blur(calc((1 - var(--focus, 0)) * 5px + 1px)); }
+.lock-thumb > span { display: grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid rgb(255 255 255 / 0.4); border-radius: 50%; background: rgb(22 18 16 / 0.35); }
+.lock-thumb .padlock { width: 0.95rem; height: 0.95rem; }
+.course-locked .course-index { opacity: 0.45; }
+.course-locked .course-row-side { gap: 0.4rem; }
 
 /* A step's own page: the course outline at the side, the text beside it. */
 main.sheet.reading { padding-left: clamp(1.25rem, 3.6vw, 2.6rem); padding-right: clamp(1.25rem, 3.6vw, 2.6rem); }
@@ -549,6 +583,18 @@ aside.outline { position: sticky; top: 5.2rem; max-height: calc(100vh - 6.4rem);
 .step-tick { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; margin-top: 2.6rem; padding: 0.9rem 1rem 0.9rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .step-tick p { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-weight: 500; }
 .step-tick form { margin: 0; }
+.step-tick p a { color: var(--link); }
+/* A lab is handed in with a link to the work: a field and a button, with one line of help. */
+.step-tick.hand-in { display: block; padding: 1.05rem 1.15rem 1.15rem; }
+.hand-in label { display: block; font-weight: 600; }
+.hand-in p.muted { display: block; margin: 0.15rem 0 0.75rem; font-weight: 400; }
+.hand-in p.error { display: block; margin: 0 0 0.75rem; font-weight: 400; }
+.hand-in-row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.hand-in-row input { flex: 1 1 16rem; width: auto; }
+/* The mentor's note on a lab that came back, above the field to hand it in again. */
+.came-back { margin: 0 0 1rem; padding: 0.75rem 0.95rem; border-left: 3px solid #a8741a; border-radius: 8px; background: var(--sunk); }
+.came-back strong { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; }
+.came-back p { display: block; margin: 0.25rem 0 0; font-weight: 400; }
 .step-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
 .step-nav a { display: grid; align-content: start; gap: 0.15rem; padding: 0.75rem 0.9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font-weight: 500; line-height: 1.35; text-decoration: none; }
 .step-nav a:hover { border-color: var(--muted); }
@@ -878,6 +924,109 @@ form[aria-busy="true"] .subscribe-field button { opacity: 0.6; cursor: progress;
 .bar span { display: block; height: 100%; border-radius: 6px; background: var(--link); }
 table.progress td { white-space: nowrap; }
 
+/* Someone's state in a few words, with a dot in front: filled green while they are ticking,
+   amber once they have gone quiet, hollow before the first tick, dark when through. */
+.state { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--ink-2); font-size: 0.92rem; white-space: nowrap; }
+.state::before { content: ""; flex: none; width: 0.6rem; height: 0.6rem; border: 1.5px solid var(--muted); border-radius: 50%; }
+.state.is-active::before { border-color: var(--link); background: var(--link); }
+.state.is-quiet { --quiet: #a8741a; color: var(--quiet); }
+.state.is-quiet::before { border-color: var(--quiet); background: var(--quiet); }
+.state.is-through::before, .state.is-done::before { border-color: var(--ink); background: var(--ink); }
+.state.is-new, .state.is-idle, .state.is-locked { color: var(--muted); }
+.state.is-locked::before { border-radius: 2px; }
+@media (prefers-color-scheme: dark) { .state.is-quiet { --quiet: #dcb36b; } }
+.overview-head { margin-top: 2.4rem; }
+.overview-head h2 { margin: 0; }
+
+/* The Progress tab. First the count of people in each state, as one line. */
+.pulse { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin: 1.3rem 0 0; padding: 0.9rem 1.15rem; border: 1px solid var(--line); border-radius: 12px; background: var(--card); list-style: none; }
+.pulse .state { font-size: 0.95rem; }
+.pulse strong { color: var(--ink); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+
+/* Then each course, with one line per member drawn the way a member sees their own course:
+   a bar for a lesson, a diamond for a lab. The columns are the same in every row, so the
+   lines sit under each other and a step can be read down the page. */
+.roster-course, .learner-course { margin-top: 2.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+.roster-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.2rem 1.2rem; margin-bottom: 0.5rem; }
+.roster-head h2 { margin: 0; font-size: 1.35rem; letter-spacing: -0.02em; }
+.roster-head h2 a { color: var(--ink); text-decoration: none; }
+.roster-head h2 a:hover { text-decoration: underline; }
+.roster-head .course-facts { margin: 0; }
+.roster { margin: 0; padding: 0; list-style: none; }
+.roster-row { display: grid; grid-template-columns: 12.5rem minmax(0, 1fr) 4.6rem 11.5rem; align-items: center; gap: 0 1.3rem; padding: 0.5rem 0; border-top: 1px solid var(--line); }
+.roster-row:first-child { border-top: 0; }
+.roster-name { display: flex; align-items: center; gap: 0.6rem; min-width: 0; color: var(--ink); font-weight: 500; text-decoration: none; }
+.roster-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.roster-name:hover > span:last-child { text-decoration: underline; }
+.roster-name small { margin-left: 0.25rem; color: var(--muted); font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.avatar-blank { width: 28px; height: 28px; }
+.roster-count { color: var(--ink-2); font-size: 0.9rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.roster-where { display: grid; gap: 0.05rem; min-width: 0; }
+.roster-where small { color: var(--muted); font-size: 0.82rem; }
+/* The lab diamonds take the same width in every row, and in the row of counts under them. */
+.roster .track .is-lab { flex: 0 0 1.5rem; padding: 0; }
+.roster .track .is-lab > * { justify-content: center; }
+.roster-tally { padding-top: 0.2rem; color: var(--muted); font-size: 0.82rem; }
+.roster-tally .roster-name { font-weight: 400; color: var(--muted); }
+.tally li > *::before { content: none; }
+.tally li > * { justify-content: center; height: 1.4rem; font: 500 0.74rem/1 var(--mono); color: var(--ink-2); }
+.tally .is-none > * { color: var(--muted); opacity: 0.6; }
+.tally .is-all > * { color: var(--link); font-weight: 600; }
+
+/* One member's page: who and how they are doing, four numbers, the days they ticked, every step. */
+.learner { margin-bottom: 0.4rem; }
+.learner-state { display: grid; justify-items: end; gap: 0.1rem; margin: 0 0 0 auto; }
+.learner-state .state { color: var(--ink); font-size: 1.05rem; font-weight: 500; }
+.learner-state .state.is-quiet { color: var(--quiet); }
+.learner-state small { color: var(--muted); font-size: 0.84rem; }
+div.tile strong { font-size: 1.7rem; }
+.days-strip { margin-top: 2.2rem; }
+.days-strip h2 { margin: 0 0 0.7rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.days, .days ol { margin: 0; padding: 0; list-style: none; }
+.days { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 0.8rem 1.1rem; }
+.days > li { display: grid; gap: 0.3rem; }
+.days ol { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.days small { color: var(--muted); font-size: 0.74rem; }
+.day { aspect-ratio: 1; border-radius: 3px; background: var(--sunk); }
+.day.level-1 { background: color-mix(in srgb, var(--link) 45%, var(--sunk)); }
+.day.level-2 { background: color-mix(in srgb, var(--link) 70%, var(--sunk)); }
+.day.level-3 { background: var(--link); }
+.days-strip p { margin: 0.6rem 0 0; }
+.learner-course > .track { margin: 0.2rem 0 0.6rem; }
+/* The same column widths in every course, so the tables line up down the page. */
+table.steps { table-layout: fixed; min-width: 34rem; }
+table.steps th:nth-child(1) { width: 2.1rem; }
+table.steps th:nth-child(2) { width: 10.5rem; }
+table.steps th:nth-child(4) { width: 6rem; }
+table.steps th:nth-child(5) { width: 14rem; }
+table.steps td:first-child { padding-right: 0; }
+table.steps td.status { white-space: nowrap; }
+table.steps .step-mark { display: block; }
+table.steps .pill { margin-right: 0.35rem; }
+.steps-section th { padding-top: 1.3rem; border-bottom-color: var(--muted); color: var(--ink); font-size: 0.74rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.steps-when { color: var(--ink-2); font-size: 0.9rem; white-space: nowrap; }
+.steps tr.is-here td { background: var(--tint); }
+.steps tr.is-here .steps-when strong { color: var(--link); }
+.steps tr.is-coming td, .steps tr.is-coming .steps-when { color: var(--muted); }
+.steps-when a { color: var(--link); font-weight: 500; }
+.steps-when .sent-back, .lab-back { color: #a8741a; }
+@media (prefers-color-scheme: dark) { .steps-when .sent-back, .lab-back { color: #dcb36b; } }
+/* Under a lab's row, with no line between them: the way to send it back, or the note it went
+   back with. Closed, it is one quiet word, so the table still reads as a list of steps. */
+.steps tr.has-more td { border-bottom: 0; }
+.steps-more td { padding-top: 0; padding-bottom: 0.7rem; font-size: 0.9rem; }
+.send-back summary { display: inline-block; color: var(--muted); cursor: pointer; list-style: none; text-decoration: underline; text-underline-offset: 0.18em; }
+.send-back summary::-webkit-details-marker { display: none; }
+.send-back summary:hover { color: var(--ink); }
+.send-back form { margin: 0.6rem 0 0.2rem; padding: 0.85rem 1rem 1rem; border: 1px solid var(--line); border-left: 3px solid #a8741a; border-radius: 10px; background: var(--card); }
+.send-back label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.sent-note { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.3rem 1rem; margin: 0; color: var(--ink-2); }
+.sent-note a { color: var(--link); }
+/* The mentor's key to a course, under its name. */
+.course-key { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin: 0.2rem 0 0.9rem; padding: 0.65rem 0.8rem 0.65rem 1rem; border: 1px dashed var(--line); border-radius: 10px; color: var(--ink-2); font-size: 0.92rem; }
+.course-key button:not(.link) { padding: 0.5rem 0.8rem; font-size: 0.86rem; }
+.course-key.is-open { border-style: solid; }
+
 /* One stage on the Course tab: its name, who sees it, the button that approves it, then its steps. */
 .admin-stage { margin-top: 2.2rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
 .admin-stage-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
@@ -1018,6 +1167,28 @@ footer.site a { color: var(--ink-2); }
   .course-note { padding-left: 3.8rem; }
   .step-nav { grid-template-columns: 1fr; }
   .step-nav-later { grid-column: 1; text-align: left; }
+  /* A locked course on a phone: the text covers the door, so the padlock on it is left out. */
+  .lock-card { min-height: 0; padding: 1.3rem 1.25rem 1.25rem; }
+  .lock-card::after { background: linear-gradient(to bottom, rgb(22 18 16 / 0.8), rgb(22 18 16 / 0.45)); }
+  .lock-badge { display: none; }
+  .ghost li { grid-template-columns: 1.15rem minmax(0, 1fr); }
+  .ghost-title { grid-column: 2; }
+  /* The Progress tab on a phone: the name and the count on one line, the line of steps under
+     them, then the state. */
+  .roster-row { grid-template-columns: minmax(0, 1fr) auto; gap: 0.1rem 1rem; padding: 0.7rem 0; }
+  .roster-row .roster-name { grid-column: 1; grid-row: 1; }
+  .roster-row .roster-count { grid-column: 2; grid-row: 1; }
+  .roster-row .track { grid-column: 1 / -1; }
+  .roster-row .roster-where { grid-column: 1 / -1; grid-template-columns: auto auto; justify-content: space-between; align-items: baseline; }
+  .roster-tally .roster-name { grid-column: 1 / -1; }
+  .learner { flex-wrap: wrap; }
+  .learner-state { margin-left: 0; justify-items: start; }
+  .days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* Every step on a phone: no video column, and the title takes the room that is left. */
+  table.steps { table-layout: auto; min-width: 0; }
+  table.steps th:nth-child(n) { width: auto; }
+  table.steps th:nth-child(4), table.steps td:nth-child(4) { display: none; }
+  table.steps .pill { display: none; }
   /* On a phone the painting is a band across the top, cut to the reader and her book. The
      pop-up sits at the top of the screen so the keyboard does not cover the address field. */
   dialog.subscribe { margin-top: 1rem; }

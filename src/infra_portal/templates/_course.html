@@ -1,12 +1,17 @@
 {# A whole course: what it is, where this member is in it, and its outline in sections.
-   Needs `view`, `before` (what is done first) and `more` (whether there are other courses). #}
+   Needs `view`, `before` (what is done first), `more` (whether there are other courses) and
+   `after` (the course that follows, if any). #}
 <header class="course-head">
   {% if more %}<p class="crumb"><a href="/learn">All courses</a></p>{% endif %}
   <p class="course-kicker">
     <span class="pill">Course</span>
-    <span>{{ view.lessons | length }} {{ "lesson" if view.lessons | length == 1 else "lessons" }}</span>
-    {% if view.labs %}<span>{{ view.labs | length }} {{ "lab" if view.labs | length == 1 else "labs" }}</span>{% endif %}
-    {% if view.minutes %}<span>{{ view.video }} of video</span>{% endif %}
+    {% if view.coming %}
+      <span>Being written</span>
+    {% else %}
+      <span>{{ view.lessons | length }} {{ "lesson" if view.lessons | length == 1 else "lessons" }}</span>
+      {% if view.labs %}<span>{{ view.labs | length }} {{ "lab" if view.labs | length == 1 else "labs" }}</span>{% endif %}
+      {% if view.minutes %}<span>{{ view.video }} of video</span>{% endif %}
+    {% endif %}
     {% if view.is_draft %}<strong>Draft</strong>{% endif %}
   </p>
   <div class="page-head">
@@ -19,6 +24,22 @@
   {% endfor %}
 </header>
 
+{% if view.locked %}
+  {# Not open yet for this member. The names of its steps are there to be wanted, out of focus. #}
+  {% set door = view %}
+  {% set heading = ("Opens when you finish " ~ view.locked_by.stage.title) if view.steps_to_go else "Not open yet" %}
+  {% include "_lock.html" %}
+  {% if view.steps %}
+  <div class="ghost" aria-hidden="true">
+    <p class="ghost-head">Behind the door</p>
+    <ol>
+      {% for step in view.steps %}
+        <li class="{{ "is-lab" if step.is_build }}"><span class="step-mark{% if step.is_build %} is-lab{% endif %}"></span><span class="step-label">{{ "Lab · " if step.is_build }}{{ step.label }}</span><span class="ghost-title">{{ step.page.title }}</span></li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+{% else %}
 {% if view.next %}
   {# Where this member is: the step to open, and the whole course as one line. #}
   <section class="continue" aria-label="Where you are">
@@ -64,3 +85,11 @@
     </section>
   {% endfor %}
 </div>
+
+{% if after %}
+  {# The course after this one: behind its door until it opens for this member, then the way in. #}
+  {% set door = after %}
+  {% set heading = "Next course: " ~ after.stage.title %}
+  <div class="course-after">{% include "_lock.html" %}</div>
+{% endif %}
+{% endif %}

@@ -18,6 +18,7 @@ a stage note it takes the chunk sections and the build titles, nothing else. Ans
 `-mentor.md` file name or `draft: true` in the header) are refused before anything is read.
 
 Any note may also hold a table whose header starts with `Stage | Topic`. Its rows name stages.
+A stage that is only named, with no chunk or build in the upload, is not stored (see apply_plan).
 """
 
 import re

@@ -16,6 +16,7 @@
     Each stage of the notes is one course on <a href="/learn">the Learn page</a>, with its steps in this order.
     A draft is seen by admins only. Members see a step when both the step and its stage are shown to them,
     and a stage with nothing written in it is not listed for them at all.
+    The courses are taken in order: a member sees the next one behind a lock until every step of the one before is ticked.
     {% if loose %}{{ loose }} {% if loose == 1 %}page is{% else %}pages are{% endif %} not in a course; {% if loose == 1 %}it is{% else %}they are{% endif %} on the <a href="/admin/labs">Pages</a> tab.{% endif %}
   </p>
   {% for view in path %}
@@ -24,6 +25,7 @@
         <h2><span class="muted">Stage {{ view.stage.number }}</span> {{ view.stage.title }}</h2>
         <span class="seen seen-{{ view.stage.visibility }}">{% if view.is_draft %}Draft{% else %}Members see it{% endif %}</span>
         <span class="admin-stage-actions">
+          {% if view.stage.id in started %}<a href="/admin/progress#course-{{ view.stage.address }}">{{ started[view.stage.id] }} of {{ people }} started</a>{% endif %}
           <a href="{{ view.url }}">{{ view.url }}</a>
           <a href="/admin/course/stages/{{ view.stage.id }}">Edit</a>
           {% set waiting = view.written | selectattr("is_draft") | list | length %}
@@ -64,7 +66,12 @@
         </table>
         </div>
       {% else %}
-        <p class="muted small">No steps yet, so this is not a course for members.{% if view.stage.summary and not view.is_draft %} Its summary shows as what to do before the next course.{% endif %} A step is a page with this stage chosen in its editor.</p>
+        <p class="muted small">
+          {% if view.coming %}No steps yet. Members see its name behind the lock, as the course that is being written.
+          {% elif view.is_draft %}No steps yet, so members see nothing of it. Shown to members, the last stage with no steps is listed by name behind the lock.
+          {% else %}No steps yet, so this is not a course for members.{% if view.stage.summary %} Its summary shows as what to do before the next course.{% endif %}{% endif %}
+          A step is a page with this stage chosen in its editor.
+        </p>
       {% endif %}
     </section>
   {% else %}

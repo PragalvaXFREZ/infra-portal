@@ -7,8 +7,11 @@
     {% if not step.written %}
       <span>Not written yet</span>
     {% elif step.done %}
-      <span class="lab-done"><span class="step-mark is-done" aria-hidden="true"></span> Done on {{ step.done_at.strftime("%-d %B %Y") }}</span>
+      <span class="lab-done"><span class="step-mark is-done" aria-hidden="true"></span> Handed in on {{ step.done_at.strftime("%-d %B %Y") }}</span>
       <span class="lab-go" aria-hidden="true">Open again</span>
+    {% elif step.sent_back %}
+      <span class="lab-back">Sent back with a note</span>
+      <span class="lab-go" aria-hidden="true">Read it and hand in again</span>
     {% else %}
       <span>Hands-on, on your own machine</span>
       <span class="lab-go" aria-hidden="true">Open the lab</span>

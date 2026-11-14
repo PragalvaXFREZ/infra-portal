@@ -12,11 +12,11 @@ DAY = dt.date(2026, 11, 12)
 @pytest.fixture
 def path(session_factory):
     """Stage 0 is only a sentence. Stage 1 has two chunks, a build and an unwritten build.
-    Stage 2 has nothing. Stage 3 is a draft with one chunk."""
+    Stage 2 is a draft with nothing in it. Stage 3 is a draft with one chunk."""
     with session_factory() as db:
         zero = CourseStage(number=0, slug="basics", title="Basics", visibility="members", summary="Do the [oven lab](/labs/ci) first.")
         one = CourseStage(number=1, slug="bread", title="Bread", visibility="members", summary="Flour, water and *time*.")
-        two = CourseStage(number=2, slug="pastry", title="Pastry", visibility="members")
+        two = CourseStage(number=2, slug="pastry", title="Pastry", visibility="draft")
         three = CourseStage(number=3, slug="secret-stage", title="Secret stage", visibility="draft")
         db.add_all([zero, one, two, three])
         db.flush()
@@ -79,7 +79,7 @@ def test_with_one_course_open_the_learn_page_is_that_course(client, path, as_mem
 
 
 def test_a_course_with_nothing_written_is_not_shown_to_members(client, session_factory, path, as_member):
-    # Pastry is approved but empty: it is a plan, and members see no trace of it.
+    # Pastry is an empty draft, and members see no trace of it.
     assert "Pastry" not in client.get("/learn").text
     # Not at its own address either, and neither does the course that is only a sentence.
     missing = client.get("/learn/no-such-course")
@@ -117,6 +117,7 @@ def test_a_course_is_split_into_sections_that_each_have_a_lab(client, path, as_m
 def test_several_courses_make_a_list(client, session_factory, path, as_member):
     with session_factory() as db:
         pastry = db.query(CourseStage).filter_by(slug="pastry").one()
+        pastry.visibility = "members"
         db.add(
             LabPage(slug="stage-2-chunk-1", title="Butter", kind="chunk", date=DAY, summary="A summary.",
                     body="Text.", visibility="members", stage_id=pastry.id, position=1)
@@ -128,8 +129,9 @@ def test_several_courses_make_a_list(client, session_factory, path, as_member):
     assert order == sorted(order)
     # The list names each course. A course's outline is on its own page.
     assert 'class="lesson' not in courses
+    # Pastry waits behind its lock until Bread is finished.
     pastry_page = client.get("/learn/pastry").text
-    assert "Butter" in pastry_page and "All courses" in pastry_page
+    assert "Opens when you finish Bread" in pastry_page and "All courses" in pastry_page
 
 
 def test_a_hidden_step_keeps_its_number(client, path, as_member):
@@ -164,10 +166,8 @@ def test_an_admin_sees_drafts_marked_as_drafts(client, path, as_admin):
     page = client.get("/learn").text
     assert "Hidden yeast" in page and "Secret stage" in page and "Draft" in page
     assert client.get("/learn/bread/stage-1-chunk-2").status_code == 200
-    # The empty course is a plan: it is on the admins' own short list, not among the courses.
-    planned = page[page.index('<details class="planned">') :]
-    assert "Pastry" in planned and "Only admins see this" in planned
-    assert "Pastry" not in page[: page.index('<details class="planned">')]
+    # The empty course is not listed for an admin either. They reach it from the Course tab.
+    assert "Pastry" not in page and "Pastry" in client.get("/admin/course").text
 
 
 def test_hidden_missing_and_signed_out_get_the_same_404(client, path, add_member, sign_in):
@@ -276,7 +276,7 @@ def test_ticks_belong_to_one_member(client, path, add_member, sign_in):
 
 def test_a_finished_stage_says_done(client, path, as_member):
     for slug in ("stage-1-chunk-1", "stage-1-chunk-3", "stage-1-build-1"):
-        client.post(f"/learn/bread/{slug}/done")
+        client.post(f"/learn/bread/{slug}/done", data={"link": "https://example.com/my-loaf"})
     page = client.get("/learn").text
     assert "All 3 steps done" in page and "Continue" not in page
 

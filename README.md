@@ -97,6 +97,8 @@ A GitHub OAuth app has one callback URL, so production uses a second app with
 | `/subscription/<token>` | the subscriber, from a link in an email | Stop one member's posts, start them again, or stop all emails |
 | `/admin` | admins | Overview: people, steps still hidden, and where each member is in the courses |
 | `/admin/course` | admins | The stages and their steps; show them to members or hide them; import the course notes |
+| `/admin/progress` | admins | Each course with one line per member, and how many have ticked each step |
+| `/admin/progress/<login>` | admins | One member: every step with the day they ticked it, and the days they ticked anything |
 | `/admin/labs` | admins | Write, preview, show or hide, and delete database pages, steps of the courses included |
 | `/admin/members` | admins | Invite and remove members |
 | `/admin/mail` | admins | Preview every email the site sends, and send the samples to one address |
@@ -224,13 +226,30 @@ warm-up at the keyboard) or a **build** (the hands-on work that uses the chunks,
 - A member sees a step when they may see both the step and its stage. A draft stays with the admins.
   Hidden, missing and signed out all get the same 404.
 - A step with no text yet is listed as "Not written yet" and cannot be opened. A stage with nothing written is
-  a plan: members do not see it, and admins get it on a short folded list under `/learn`. A stage with
-  nothing written but a summary shows as one line, "Before this course", on the course after it.
+  not listed on `/learn` for anyone; admins find it on `/admin/course`. A stage with nothing written but
+  a summary shows as one line, "Before this course", on the course after it.
 - Steps are left out of `/labs` and the home page. Written builds get their own part of `/labs`, under their
   course, for those who may see them.
-- A member can tick a step as done and take the tick back (`page_progress`). A tick is the member's own
-  word: it unlocks nothing. A course shows the next step that is not ticked, and admins see where each member
-  is on `/admin`.
+- A member can tick a step as done and take the tick back (`page_progress`). A lesson is only ticked. A lab
+  is handed in with a link to the work, a pull request or a write-up, and the mentor sees that link. Nobody
+  has to confirm it.
+- The courses are taken in order. A course is locked for a member until every step they can open in the
+  course before it is ticked. Hidden and unwritten steps do not count. Inside an open course every step is
+  open. A locked course is still listed by name, with how many steps are left, and its steps cannot be
+  opened or ticked. A course a member has started stays open if an earlier course gets a new step later.
+  Admins are never locked. A draft is not shown at all.
+- The course that comes next can be shown before it is written. A stage that is shown to members, has no
+  written step and comes after the last course with steps is listed by name behind the same lock, as "being
+  written". Admins see it too. An empty stage in any other place is not listed.
+- Nobody confirms a tick, so the mentor has two ways to step in, both on a member's page under
+  `/admin/progress/<login>`. **Send back** takes a member's tick off a lab and leaves a short note
+  (`lab_returns`); the member reads the note on the lab and hands it in again. **Open this course for them**
+  lets one member into a course without finishing the one before (`course_grants`), and can be taken back
+  until they have ticked something in it.
+- Admins see where each member is on `/admin/progress`, and one member step by step on
+  `/admin/progress/<login>`. All of it is read from the ticks: the site does not record time spent or pages
+  opened. A member is counted only on steps a member can open, and is shown as quiet when their newest tick
+  is more than a week old.
 
 ### Getting the course onto the site
 
@@ -249,7 +268,7 @@ What the import reads, and nothing else:
 | Stage note | `..., stage 2: Bread` | Each `## Chunk N. Title` section as a chunk; each `### Build N. Title` heading as the name of a build |
 | Build note | `Stage 2, build 1: A first loaf` | The whole note, as that build |
 | Warm-up note | `Stage 2, chunk 3: warm-up` | Added to the end of chunk 3 |
-| Any note | A table starting with the columns `Stage` and `Topic` | The names of the stages |
+| Any note | A table starting with the columns `Stage` and `Topic` | The names of the stages that have a step in the upload |
 
 A file whose name ends in `-mentor.md`, or whose header has `draft: true`, is an answer key and is refused.
 Comments that the notes app hides (`%% ... %%` and `<!-- ... -->`) are dropped. A chunk ends at the next
@@ -257,7 +276,8 @@ first or second level heading.
 
 Uploading again replaces a step's text and title; who sees it and the members' ticks stay. The order of a
 stage changes only when its stage note is in the upload, and a chunk keeps its warm-up when the stage note
-comes without the warm-up note. A stage that already exists is left as it is. Links between notes (`[[folder/stage-2-build-1|the build]]`) become
+comes without the warm-up note. A stage that already exists is left as it is, and a stage is added only when the upload has a step for
+it, so a table of planned stages adds nothing. Links between notes (`[[folder/stage-2-build-1|the build]]`) become
 links between pages when the reader may see both.
 
 ### Notes syntax in lab bodies

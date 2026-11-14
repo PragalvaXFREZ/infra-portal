@@ -17,7 +17,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
-from infra_portal import course
+from infra_portal import course, progress
 from infra_portal.auth import require_admin
 from infra_portal.course_import import WARM_UP_HEADING, Plan, plan_import
 from infra_portal.db import get_db
@@ -141,8 +141,18 @@ def course_admin(
     # An admin sees every stage and step, so their view of the courses is the whole of it.
     path = course.load_courses(db, admin)
     loose = db.scalar(select(func.count()).select_from(LabPage).where(LabPage.stage_id.is_(None))) or 0
+    people = progress.roster(db)
     return templates.TemplateResponse(
-        request, "admin_course.html", {"member": admin, "path": path, "loose": loose}
+        request,
+        "admin_course.html",
+        {
+            "member": admin,
+            "path": path,
+            "loose": loose,
+            # Only the stages members can open are in here.
+            "started": progress.started_counts(people),
+            "people": len(people),
+        },
     )
 
 
@@ -302,6 +312,10 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
     that already exists keeps who sees it; its text and title are replaced. A stage that already
     exists is left as it is, so a title or summary edited here survives the next upload.
 
+    A stage is made only when the upload has a step for it. A row in a `Stage | Topic` table
+    gives a stage its name and nothing more, so the plan of later stages stays in the notes and
+    does not turn into empty stages here.
+
     The order of a stage comes from its stage note, the only file that names every step. An
     upload without that note, such as one build note by itself, leaves the order alone and puts
     a new page at the end. A chunk keeps the warm-up it already has when the upload brings its
@@ -311,8 +325,9 @@ def apply_plan(db: Session, plan: Plan, admin: Member, today: dt.date) -> Import
         refused=[(item.name, item.reason) for item in plan.refused], unused=list(plan.unused)
     )
     stages = {stage.number: stage for stage in db.scalars(select(CourseStage))}
+    with_steps = {draft.stage for draft in plan.pages}
     for draft in plan.stages:
-        if draft.number not in stages:
+        if draft.number in with_steps and draft.number not in stages:
             title = _first_upper(draft.title)
             stage = CourseStage(number=draft.number, slug=new_slug(db, title), title=title)
             db.add(stage)
