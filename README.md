@@ -237,8 +237,10 @@ warm-up at the keyboard) or a **build** (the hands-on work that uses the chunks,
   course before it is ticked. Hidden and unwritten steps do not count. Inside an open course every step is
   open. A locked course is still listed by name, with how many steps are left, and its steps cannot be
   opened or ticked. A course a member has started stays open if an earlier course gets a new step later.
-  Admins are never locked. Only a course that is shown to members and has a written step can appear locked:
-  a draft is not shown at all.
+  Admins are never locked. A draft is not shown at all.
+- The course that comes next can be shown before it is written. A stage that is shown to members, has no
+  written step and comes after the last course with steps is listed by name behind the same lock, as "being
+  written". Admins see it too. An empty stage in any other place is not listed.
 - Nobody confirms a tick, so the mentor has two ways to step in, both on a member's page under
   `/admin/progress/<login>`. **Send back** takes a member's tick off a lab and leaves a short note
   (`lab_returns`); the member reads the note on the lab and hands it in again. **Open this course for them**

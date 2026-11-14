@@ -231,6 +231,80 @@ def test_clean_link_keeps_a_web_address_and_nothing_else():
     assert course.clean_link("data:text/html,x") is None
 
 
+# ---------- the course that is still being written ----------
+
+
+@pytest.fixture
+def coming(session_factory, courses):
+    """After the three courses: Tarts, shown to members with nothing written, and Pies, a draft."""
+    with session_factory() as db:
+        db.add(CourseStage(number=4, slug="tarts", title="Tarts", visibility="members", summary="Sweet and savoury."))
+        db.add(CourseStage(number=5, slug="pies", title="Pies", visibility="draft"))
+        db.commit()
+
+
+def test_a_course_with_nothing_written_is_shown_behind_the_lock_when_it_comes_last(client, coming, alice):
+    page = client.get("/learn").text
+    tarts = page[page.index(">Tarts</a>") :]
+    assert "Being written" in tarts and "Locked · 6 steps to go · opens after Cakes" in tarts
+    # A draft is never shown, to members or as a lock.
+    assert "Pies" not in page
+    own = client.get("/learn/tarts")
+    assert own.status_code == 200 and "Tarts</h1>" in own.text
+    assert "<strong>6</strong> steps to go in Bread, then Pastry, then Cakes. This course is being written" in own.text
+    assert '<a class="continue-go" href="/learn/bread/stage-1-chunk-1">Continue Bread</a>' in own.text
+    assert client.get("/learn/pies").status_code == 404
+
+
+def test_a_course_that_is_being_written_stays_locked_when_everything_before_is_done(client, coming, alice):
+    _finish_bread(client)
+    for slug in ("pastry/stage-2-chunk-1", "pastry/stage-2-build-1", "cakes/stage-3-chunk-1"):
+        assert client.post(f"/learn/{slug}/done", data=WORK, follow_redirects=False).status_code == 303
+    page = client.get("/learn").text
+    assert "Locked · being written" in page[page.index(">Tarts</a>") :]
+    own = client.get("/learn/tarts").text
+    assert "Not open yet" in own and "This course is being written. It opens here when it is ready." in own
+    assert "Continue" not in own[own.index('class="lock-card') :]
+    # The last course with steps is done and points at it, with nothing to start.
+    cakes = client.get("/learn/cakes").text
+    assert "Next course: Tarts" in cakes and "Start Tarts" not in cakes
+    # Nothing is left to do, so the home page has no next step for her.
+    assert "Your next step" not in client.get("/").text
+
+
+def test_one_open_course_and_one_to_come_make_a_list(client, session_factory, add_member, sign_in):
+    with session_factory() as db:
+        bread = CourseStage(number=1, slug="bread", title="Bread", visibility="members")
+        db.add_all([bread, CourseStage(number=2, slug="pastry", title="Pastry", visibility="members")])
+        db.flush()
+        _page(db, bread, "stage-1-chunk-1", "Flour", "chunk", 1)
+        db.commit()
+    add_member("alice")
+    sign_in("alice", 42)
+    page = client.get("/learn").text
+    assert '<ol class="courses">' in page and "Where you left off" in page
+    assert "Locked · 1 step to go · opens after Bread" in page
+    assert "All courses" in client.get("/learn/bread").text
+    # An admin sees the same course to come, because there is nothing in it to open.
+    sign_in("boss", 1)
+    admin = client.get("/learn").text
+    assert "Locked · 1 step to go · opens after Bread" in admin
+    assert "Members see its name behind the lock" in client.get("/admin/course").text
+
+
+def test_an_empty_course_between_two_others_is_not_shown(client, session_factory, courses, add_member, sign_in):
+    with session_factory() as db:
+        for page in db.query(LabPage).filter(LabPage.slug.like("stage-2-%")):
+            db.delete(page)
+        db.commit()
+    add_member("alice")
+    sign_in("alice", 42)
+    page = client.get("/learn").text
+    assert "Pastry" not in page and client.get("/learn/pastry").status_code == 404
+    # Cakes now follows Bread.
+    assert "opens after Bread" in page[page.index(">Cakes</a>") :]
+
+
 # ---------- the mentor's two ways to step in ----------
 
 NOTE = {"note": "The link opens an empty repository."}

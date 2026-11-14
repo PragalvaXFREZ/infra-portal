@@ -6,11 +6,17 @@
   {% if door.locked %}<span class="lock-badge" aria-hidden="true">{% include "_padlock.html" %}</span>{% endif %}
   <p class="lock-label">{% if door.locked %}{% include "_padlock.html" %} Locked{% else %}Open now{% endif %}</p>
   <p class="lock-title">{{ heading }}</p>
-  {% if door.locked %}
+  {% if door.locked and door.steps_to_go %}
     {% set left = door.steps_to_go %}
-    <p class="lock-togo"><strong>{{ left }}</strong> {{ "step" if left == 1 else "steps" }} to go in {{ waiting | map(attribute="stage.title") | join(", then ") }}</p>
+    {# The courses that still have steps to do, and the first of them that can be gone on with. #}
+    {% set todo = waiting | selectattr("written") | rejectattr("state", "equalto", "done") | list %}
+    {% set front = waiting | selectattr("next") | first %}
+    <p class="lock-togo"><strong>{{ left }}</strong> {{ "step" if left == 1 else "steps" }} to go in {{ todo | map(attribute="stage.title") | join(", then ") }}{% if door.coming %}. This course is being written{% endif %}</p>
     <span class="lock-meter" role="img" aria-label="{{ (door.focus * 100) | round | int }} percent of the way there"><span style="width: {{ (door.focus * 100) | round(1) }}%"></span></span>
-    <a class="continue-go" href="{{ waiting[0].next.url }}">Continue {{ waiting[0].stage.title }}</a>
+    {% if front %}<a class="continue-go" href="{{ front.next.url }}">Continue {{ front.stage.title }}</a>{% endif %}
+  {% elif door.locked %}
+    {# Everything before it is done, and it is not written yet. #}
+    <p class="lock-togo">This course is being written. It opens here when it is ready.</p>
   {% else %}
     <p class="lock-togo">{{ door.lessons | length }} {{ "lesson" if door.lessons | length == 1 else "lessons" }}{% if door.labs %} and {{ door.labs | length }} {{ "lab" if door.labs | length == 1 else "labs" }}{% endif %}{% if door.minutes %}, {{ door.video }} of video{% endif %}</p>
     <a class="continue-go" href="{{ door.next.url if door.next else door.url }}">{% if door.done_count %}Continue{% else %}Start{% endif %} {{ door.stage.title }}</a>

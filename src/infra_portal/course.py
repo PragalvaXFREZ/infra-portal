@@ -21,6 +21,10 @@ The courses are taken in order. A course is locked for a member until every step
 in the course before it is ticked (with_locks). A locked course is still shown, by name, with
 what is left to do before it opens. Inside an open course every step is open.
 
+The course that comes next can be shown before anything in it is written: a stage that is
+shown to members, has no written step and comes after the last course with steps is listed by
+name behind the same lock, as "being written". It gives members something to work towards.
+
 Nobody confirms a tick. The mentor has two ways to step in, both on the member's page of the
 Progress tab (progress.py): send a lab back with a note, which takes the tick away until the
 member hands it in again, and open a course for one member who should not have to finish the
@@ -136,6 +140,8 @@ class CourseView:
     steps: tuple[Step, ...]
     # The course to finish first, when this one is locked for the viewer (with_locks).
     locked_by: "CourseView | None" = None
+    # Shown by name behind the lock although nothing in it is written yet (with_locks).
+    coming: bool = False
 
     @property
     def url(self) -> str:
@@ -248,16 +254,23 @@ def with_locks(
     course later on, or a lab sent back, does not shut them out of where they already are.
     `opened` is the ids of the stages a mentor opened for this member: those are open too.
     Admins are never locked.
+
+    A stage that is shown to members but has nothing written, and comes after the last course
+    with steps, is marked as `coming`: listed by name behind the lock, for everyone, admins
+    too, because there is nothing in it to open. A draft is never marked.
     """
-    if member.is_admin:
-        return courses
+    last = max((n for n, view in enumerate(courses) if view.listed), default=-1)
     marked: list[CourseView] = []
     before: CourseView | None = None
-    for view in courses:
+    for n, view in enumerate(courses):
         if view.listed:
-            behind = before is not None and before.state != "done"
-            let_in = view.done_count or view.stage.id in opened
-            view = replace(view, locked_by=before if behind and not let_in else None)
+            if not member.is_admin:
+                behind = before is not None and before.state != "done"
+                let_in = view.done_count or view.stage.id in opened
+                view = replace(view, locked_by=before if behind and not let_in else None)
+            before = view
+        elif before is not None and n > last and not view.is_draft:
+            view = replace(view, locked_by=before, coming=True)
             before = view
         marked.append(view)
     return marked
@@ -341,15 +354,26 @@ def listed(courses: list[CourseView]) -> list[CourseView]:
     return [view for view in courses if view.listed]
 
 
+def shown(courses: list[CourseView]) -> list[CourseView]:
+    """The courses a member sees by name: those with something to study, and after them the
+    ones that are still being written."""
+    return [view for view in courses if view.listed or view.coming]
+
+
 def can_open(view: CourseView, member: Member | None) -> bool:
-    """Whether this viewer may open the course's own pages. A course with nothing written has
-    no page for members, whatever its visibility says."""
-    return view.listed or (member is not None and member.is_admin)
+    """Whether this viewer may open the course's own page. A course with nothing written has
+    no page for members, unless it is shown as the course that is coming: then its page is its
+    name behind the lock."""
+    return view.listed or view.coming or (member is not None and member.is_admin)
 
 
 def notes(courses: list[CourseView]) -> list[CourseView]:
     """Approved courses that are only a sentence, such as one that points at labs done elsewhere."""
-    return [view for view in courses if not view.listed and not view.is_draft and view.stage.summary]
+    return [
+        view
+        for view in courses
+        if not view.listed and not view.coming and not view.is_draft and view.stage.summary
+    ]
 
 
 def notes_before(courses: list[CourseView], view: CourseView) -> list[CourseView]:
@@ -380,7 +404,7 @@ def builds(courses: list[CourseView]) -> list[Step]:
 
 def following(courses: list[CourseView], view: CourseView) -> CourseView | None:
     """The course after this one, whether it is open yet or not."""
-    after = [other for other in listed(courses) if other.stage.number > view.stage.number]
+    after = [other for other in shown(courses) if other.stage.number > view.stage.number]
     return after[0] if after else None
 
 
@@ -436,7 +460,7 @@ def _course_context(courses: list[CourseView], view: CourseView) -> dict:
         "view": view,
         "before": notes_before(courses, view),
         # A way back to the list only when there is a list to go back to.
-        "more": len(listed(courses)) > 1,
+        "more": len(shown(courses)) > 1,
         # The course after this one, shown at the foot: locked, or open once this one is done.
         "after": following(courses, view),
     }
@@ -449,16 +473,16 @@ def learn(
     db: Session = Depends(get_db),
 ):
     courses = load_courses(db, member)
-    shown = listed(courses)
+    named = shown(courses)
     context = {
         "member": member,
-        "courses": [view for view in courses if view.listed or view in notes(courses)],
-        "listed": shown,
-        "next": next_step(shown),
+        "courses": [view for view in courses if view in named or view in notes(courses)],
+        "listed": named,
+        "next": next_step(named),
     }
     # With one course there is nothing to choose, so the page is that course.
-    if len(shown) == 1:
-        context |= _course_context(courses, shown[0])
+    if len(named) == 1:
+        context |= _course_context(courses, named[0])
     return templates.TemplateResponse(request, "learn.html", context)
 
 

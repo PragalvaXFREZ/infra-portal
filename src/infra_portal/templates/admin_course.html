@@ -66,7 +66,12 @@
         </table>
         </div>
       {% else %}
-        <p class="muted small">No steps yet, so this is not a course for members.{% if view.stage.summary and not view.is_draft %} Its summary shows as what to do before the next course.{% endif %} A step is a page with this stage chosen in its editor.</p>
+        <p class="muted small">
+          {% if view.coming %}No steps yet. Members see its name behind the lock, as the course that is being written.
+          {% elif view.is_draft %}No steps yet, so members see nothing of it. Shown to members, the last stage with no steps is listed by name behind the lock.
+          {% else %}No steps yet, so this is not a course for members.{% if view.stage.summary %} Its summary shows as what to do before the next course.{% endif %}{% endif %}
+          A step is a page with this stage chosen in its editor.
+        </p>
       {% endif %}
     </section>
   {% else %}

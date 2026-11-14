@@ -5,9 +5,13 @@
   {% if more %}<p class="crumb"><a href="/learn">All courses</a></p>{% endif %}
   <p class="course-kicker">
     <span class="pill">Course</span>
-    <span>{{ view.lessons | length }} {{ "lesson" if view.lessons | length == 1 else "lessons" }}</span>
-    {% if view.labs %}<span>{{ view.labs | length }} {{ "lab" if view.labs | length == 1 else "labs" }}</span>{% endif %}
-    {% if view.minutes %}<span>{{ view.video }} of video</span>{% endif %}
+    {% if view.coming %}
+      <span>Being written</span>
+    {% else %}
+      <span>{{ view.lessons | length }} {{ "lesson" if view.lessons | length == 1 else "lessons" }}</span>
+      {% if view.labs %}<span>{{ view.labs | length }} {{ "lab" if view.labs | length == 1 else "labs" }}</span>{% endif %}
+      {% if view.minutes %}<span>{{ view.video }} of video</span>{% endif %}
+    {% endif %}
     {% if view.is_draft %}<strong>Draft</strong>{% endif %}
   </p>
   <div class="page-head">
@@ -23,8 +27,9 @@
 {% if view.locked %}
   {# Not open yet for this member. The names of its steps are there to be wanted, out of focus. #}
   {% set door = view %}
-  {% set heading = "Opens when you finish " ~ view.locked_by.stage.title %}
+  {% set heading = ("Opens when you finish " ~ view.locked_by.stage.title) if view.steps_to_go else "Not open yet" %}
   {% include "_lock.html" %}
+  {% if view.steps %}
   <div class="ghost" aria-hidden="true">
     <p class="ghost-head">Behind the door</p>
     <ol>
@@ -33,6 +38,7 @@
       {% endfor %}
     </ol>
   </div>
+  {% endif %}
 {% else %}
 {% if view.next %}
   {# Where this member is: the step to open, and the whole course as one line. #}

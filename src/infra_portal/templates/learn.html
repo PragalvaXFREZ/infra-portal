@@ -33,7 +33,7 @@
     <ol class="courses">
       {% set count = namespace(n=0) %}
       {% for view in courses %}
-        {% if view.listed %}
+        {% if view.listed or view.coming %}
           {% set count.n = count.n + 1 %}
           <li class="course-row course-{{ "locked" if view.locked else view.state }}"{% if view.locked %} style="--focus: {{ view.focus }}"{% endif %}>
             <span class="course-index" aria-hidden="true">{{ "%02d" | format(count.n) }}</span>
@@ -41,9 +41,11 @@
               <h2><a href="{{ view.url }}">{{ view.stage.title }}</a></h2>
               {% if view.stage.summary %}<div class="course-row-summary">{{ view.summary_html }}</div>{% endif %}
               <p class="course-facts">
+                {% if view.coming %}<span>Being written</span>{% else %}
                 <span>{{ view.lessons | length }} {{ "lesson" if view.lessons | length == 1 else "lessons" }}</span>
                 {% if view.labs %}<span class="course-facts-labs">{{ view.labs | length }} {{ "lab" if view.labs | length == 1 else "labs" }}</span>{% endif %}
                 {% if view.minutes %}<span>{{ view.video }} of video</span>{% endif %}
+                {% endif %}
                 {% if view.is_draft %}<strong>Draft</strong>{% endif %}
               </p>
             </div>
@@ -51,7 +53,7 @@
               {% if view.locked %}
                 {% set left = view.steps_to_go %}
                 <span class="lock-thumb" aria-hidden="true"><span>{% include "_padlock.html" %}</span></span>
-                <span class="course-row-state">Locked · {{ left }} {{ "step" if left == 1 else "steps" }} to go · opens after {{ view.locked_by.stage.title }}</span>
+                <span class="course-row-state">Locked · {% if left %}{{ left }} {{ "step" if left == 1 else "steps" }} to go · opens after {{ view.locked_by.stage.title }}{% else %}being written{% endif %}</span>
               {% else %}
                 {% include "_track.html" %}
                 <span class="course-row-state">{% if view.state == "done" %}Done{% elif view.done_count %}{{ view.done_count }} of {{ view.written | length }} done{% else %}Not started{% endif %}</span>
