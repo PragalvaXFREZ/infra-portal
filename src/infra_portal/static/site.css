@@ -517,12 +517,14 @@ a.lesson-row:hover .lesson-title { text-decoration: underline; text-underline-of
    Moonlight, Strandgade 30). It is drawn out of focus, and --focus, from 0 to 1, brings it
    into focus as the member gets through the course before. The text keeps its light colour
    in both themes, because it sits on the painting. */
-.lock-card, .lock-thumb { --door: url("/static/art/moonlight-strandgade-1400.webp"); position: relative; isolation: isolate; overflow: hidden; background: #1b1715; color: #f4f0e9; }
-.lock-card::before, .lock-thumb::before { content: ""; position: absolute; inset: -30px; z-index: -2; background: var(--door) center 44% / cover no-repeat; filter: blur(calc((1 - var(--focus, 0)) * 11px + 1.5px)); transition: filter 0.5s ease; }
+.lock-card, .lock-thumb { --door: url("/static/art/moonlight-strandgade-1400.webp"); position: relative; isolation: isolate; overflow: hidden; contain: paint; background: #1b1715; color: #f4f0e9; }
+.lock-card::before, .lock-thumb::before { content: ""; position: absolute; inset: -30px; z-index: -2; background: var(--door) center 44% / cover no-repeat; filter: blur(calc((1 - var(--focus, 0)) * 11px + 1.5px)); transform: translateZ(0); }
 .lock-card::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to right, rgb(22 18 16 / 0.88), rgb(22 18 16 / 0.62) 46%, rgb(22 18 16 / 0.12)); }
-/* A look through the keyhole: under the pointer the room is a little clearer. */
-.lock-card:hover::before { filter: blur(calc((1 - var(--focus, 0)) * 6px + 1px)); }
-.lock-card.is-open::before, .lock-card.is-open:hover::before { filter: none; }
+/* The blur is set once for the page and never moves. A blur that changes under the pointer,
+   or that sits under frosted glass, makes the browser redraw a large blurred picture again
+   and again, and that shows as a flicker. So there is no hover effect here, the picture has
+   a layer of its own, and the padlock sits on plain dark glass. */
+.lock-card.is-open::before { filter: none; }
 .lock-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.3rem; min-height: 14.5rem; margin: 2rem 0 0; padding: 1.6rem 1.7rem 1.5rem; border-radius: 18px; }
 .lock-card p { margin: 0; max-width: 30rem; }
 .padlock { flex: none; }
@@ -536,7 +538,7 @@ a.lesson-row:hover .lesson-title { text-decoration: underline; text-underline-of
 .lock-card .continue-go { margin-top: 1rem; background: #f4f0e9; color: #1c1a17; }
 .lock-card .continue-go:hover { background: #fff; }
 /* The padlock sits on the door of the painting, on a round piece of frosted glass. */
-.lock-badge { position: absolute; top: 50%; left: 76%; translate: -50% -50%; display: grid; place-items: center; width: 3.6rem; height: 3.6rem; border: 1px solid rgb(255 255 255 / 0.4); border-radius: 50%; background: rgb(255 255 255 / 0.14); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.lock-badge { position: absolute; top: 50%; left: 76%; translate: -50% -50%; display: grid; place-items: center; width: 3.6rem; height: 3.6rem; border: 1px solid rgb(255 255 255 / 0.4); border-radius: 50%; background: rgb(22 18 16 / 0.42); }
 .lock-badge .padlock { width: 1.5rem; height: 1.5rem; }
 .course-after { margin-top: 2.8rem; }
 /* The steps of a locked course: their labels can be read, their names cannot yet, and the
