@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from infra_portal.auth import require_admin
 from infra_portal.db import get_db
-from infra_portal import course
+from infra_portal import course, progress
 from infra_portal.models import (
     STATUS_PUBLISHED,
     VISIBILITY_DRAFT,
@@ -52,7 +52,7 @@ def overview(
             "posts": count(Post.status == STATUS_PUBLISHED),
             "live": len(steps) - len(drafts),
             "drafts": len(drafts),
-            "everyone": course.everyone(db),
+            "everyone": progress.roster(db),
         },
     )
 

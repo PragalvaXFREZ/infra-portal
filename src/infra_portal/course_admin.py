@@ -17,7 +17,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
-from infra_portal import course
+from infra_portal import course, progress
 from infra_portal.auth import require_admin
 from infra_portal.course_import import WARM_UP_HEADING, Plan, plan_import
 from infra_portal.db import get_db
@@ -141,8 +141,18 @@ def course_admin(
     # An admin sees every stage and step, so their view of the courses is the whole of it.
     path = course.load_courses(db, admin)
     loose = db.scalar(select(func.count()).select_from(LabPage).where(LabPage.stage_id.is_(None))) or 0
+    people = progress.roster(db)
     return templates.TemplateResponse(
-        request, "admin_course.html", {"member": admin, "path": path, "loose": loose}
+        request,
+        "admin_course.html",
+        {
+            "member": admin,
+            "path": path,
+            "loose": loose,
+            # Only the stages members can open are in here.
+            "started": progress.started_counts(people),
+            "people": len(people),
+        },
     )
 
 

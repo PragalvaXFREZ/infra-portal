@@ -17,6 +17,7 @@ from infra_portal import (
     labs,
     posts,
     profiles,
+    progress,
     subscribe,
 )
 from infra_portal.auth import current_member, require_member
@@ -55,6 +56,7 @@ def create_app() -> FastAPI:
     app.include_router(labs.router)
     app.include_router(course.router)
     app.include_router(course_admin.router)
+    app.include_router(progress.router)
     app.include_router(lab_admin.router)
 
     @app.get("/favicon.ico", include_in_schema=False)

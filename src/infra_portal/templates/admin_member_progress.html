@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}{{ person.member.name }}: progress{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  {% set admin_tab = "progress" %}
+  {% include "_admin_tabs.html" %}
+  <p class="crumb"><a href="/admin/progress">Everyone</a></p>
+  <section class="profile learner">
+    {% if person.member.avatar_src %}<img class="avatar" src="{{ person.member.avatar_src }}" alt="" width="72" height="72">{% endif %}
+    <div>
+      <h1>{{ person.member.name }}</h1>
+      <div class="muted">
+        <a href="/u/{{ person.member.github_login }}">@{{ person.member.github_login }}</a>
+        {% if person.member.is_admin %} · Admin{% endif %}
+      </div>
+    </div>
+    <p class="learner-state">
+      <span class="state is-{{ person.state }}">{{ person.status }}</span>
+      {% if person.last_tick %}<small>Last tick {{ person.last_tick_ago }}</small>{% endif %}
+    </p>
+  </section>
+
+  <div class="tiles">
+    <div class="tile">
+      <strong>{{ person.done }}</strong>
+      <span>of {{ person.total }} {{ "step" if person.total == 1 else "steps" }} ticked</span>
+      <small>{% if person.next %}Next: {{ person.next.stage.title }} · {{ person.next.label }}{% elif person.total %}Nothing left to tick{% else %}No step is open yet{% endif %}</small>
+    </div>
+    <div class="tile">
+      <strong>{{ person.labs_done }}</strong>
+      <span>of {{ person.labs | length }} {{ "lab" if person.labs | length == 1 else "labs" }} handed in</span>
+      <small>Each handed in with a link to the work</small>
+    </div>
+    <div class="tile">
+      <strong>{{ person.video }}</strong>
+      <span>of video in the lessons they ticked</span>
+      <small>{{ person.total_video }} in the open lessons</small>
+    </div>
+    <div class="tile">
+      <strong>{% if person.last_tick %}{{ person.last_tick.strftime("%-d %b") }}{% else %}None{% endif %}</strong>
+      <span>{% if person.last_tick %}newest tick{% else %}ticks yet{% endif %}</span>
+      <small>{% if person.first_tick %}First tick {{ person.first_tick.strftime("%-d %b %Y") }}{% else %}Signed in, nothing ticked{% endif %}</small>
+    </div>
+  </div>
+
+  {# The days they ticked something, a week to a group, so a steady week and one catch-up evening look different. #}
+  <section class="days-strip" aria-label="Ticks by day">
+    <h2>The last {{ weeks }} weeks</h2>
+    <ol class="days">
+      {% for week in person.days | batch(7) %}
+        <li>
+          <ol>
+            {% for day in week %}
+              <li class="day level-{{ day.level }}" title="{{ day.date.strftime("%a %-d %b") }}: {{ day.ticks }} {{ "tick" if day.ticks == 1 else "ticks" }}"><span class="visually-hidden">{{ day.date.strftime("%-d %b") }}: {{ day.ticks }}</span></li>
+            {% endfor %}
+          </ol>
+          <small>{{ week[0].date.strftime("%-d %b") }}</small>
+        </li>
+      {% endfor %}
+    </ol>
+    <p class="muted small">One square is one day, in UTC. A darker square is more steps ticked that day. A tick is not time spent.</p>
+  </section>
+
+  {% for view in person.courses %}
+    {% set grant = person.grants.get(view.stage.id) %}
+    {% set base = "/admin/progress/" ~ person.member.github_login %}
+    <section class="learner-course" id="course-{{ view.stage.address }}">
+      <header class="roster-head">
+        <h2><a href="{{ view.url }}">{{ view.stage.title }}</a></h2>
+        <p class="course-facts">{% if view.locked %}<span>Locked until {{ view.locked_by.stage.title }} is finished</span>{% endif %}<span>{{ view.done_count }} of {{ view.written | length }} ticked</span></p>
+      </header>
+      {# The mentor's own key: let this one person in without the course before. #}
+      {% if view.locked %}
+        <form class="course-key" method="post" action="{{ base }}/courses/{{ view.stage.id }}/open">
+          <span>They have {{ view.steps_to_go }} {{ "step" if view.steps_to_go == 1 else "steps" }} to go before this opens by itself.</span>
+          <button class="secondary">Open this course for them</button>
+        </form>
+      {% elif grant %}
+        <form class="course-key is-open" method="post" action="{{ base }}/courses/{{ view.stage.id }}/close">
+          <span>Opened for them on {{ grant.granted_at.strftime("%-d %b %Y") }}, without finishing the course before.</span>
+          <button class="link">Take that back</button>
+        </form>
+      {% endif %}
+      {% include "_track.html" %}
+      <div class="table-wrap">
+      <table class="steps">
+        <thead><tr><th></th><th>Step</th><th>Title</th><th>Video</th><th>Ticked</th></tr></thead>
+        <tbody>
+        {% set many = view.sections | length > 1 %}
+        {% set at = namespace(section=0) %}
+        {% for step in view.steps %}
+          {% if many and step.section != at.section %}
+            {% set at.section = step.section %}
+            <tr class="steps-section"><th colspan="5" scope="rowgroup">Section {{ step.section }}</th></tr>
+          {% endif %}
+          {# One place only: the first step they have not ticked, over all the courses. #}
+          {% set here = person.next and step.page.id == person.next.page.id %}
+          <tr id="step-{{ step.page.id }}" class="{{ "is-done" if step.done }}{{ " is-here" if here }}{{ " is-coming" if not step.written }}{{ " has-more" if step.is_build and (step.done or step.sent_back) }}">
+            <td><span class="step-mark{% if step.is_build %} is-lab{% endif %}{% if step.done %} is-done{% endif %}{% if not step.written %} is-coming{% endif %}" aria-hidden="true"></span></td>
+            <td class="status">{% if step.is_build %}<span class="pill pill-lab">Lab</span> {% endif %}{{ step.label }}</td>
+            <td>{% if step.written %}<a href="{{ step.url }}">{{ step.page.title }}</a>{% else %}{{ step.page.title }}{% endif %}</td>
+            <td class="muted">{% if step.written and step.page.minutes %}{{ step.page.minutes }} min{% endif %}</td>
+            <td class="steps-when">{% if step.done %}{{ step.done_at.strftime("%-d %b %Y") }}{% if step.link %} · <a href="{{ step.link }}" rel="noopener nofollow">Their work</a>{% elif step.is_build %} · no link{% endif %}{% elif not step.written %}Not written yet{% elif step.sent_back %}<strong class="sent-back">Sent back {{ step.sent_back.returned_at.strftime("%-d %b") }}</strong>{% elif here %}<strong>Here now</strong>{% else %}Not yet{% endif %}</td>
+          </tr>
+          {# Under a lab: the way to send it back, or the note it went back with. #}
+          {% if step.is_build and step.done %}
+            <tr class="steps-more">
+              <td></td>
+              <td colspan="4">
+                <details class="send-back">
+                  <summary>Send this lab back</summary>
+                  <form method="post" action="{{ base }}/labs/{{ step.page.id }}/send-back">
+                    <label for="note-{{ step.page.id }}">What is missing? They read this on the lab, and hand it in again.</label>
+                    <div class="hand-in-row">
+                      <input id="note-{{ step.page.id }}" name="note" required maxlength="500" autocomplete="off" placeholder="The link opens an empty repository.">
+                      <button>Send back</button>
+                    </div>
+                  </form>
+                </details>
+              </td>
+            </tr>
+          {% elif step.is_build and step.sent_back %}
+            <tr class="steps-more">
+              <td></td>
+              <td colspan="4">
+                <form class="sent-note" method="post" action="{{ base }}/labs/{{ step.page.id }}/take-back">
+                  <span>Your note: “{{ step.sent_back.note }}”{% if step.sent_back.link %} · <a href="{{ step.sent_back.link }}" rel="noopener nofollow">what they handed in</a>{% endif %}</span>
+                  <button class="link">Sent back by mistake</button>
+                </form>
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </section>
+  {% else %}
+    <p class="lede">No course is open to members yet.</p>
+  {% endfor %}
+{% endblock %}

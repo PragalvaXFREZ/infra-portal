@@ -12,7 +12,7 @@
   </form>
   <div class="table-wrap">
   <table>
-    <thead><tr><th>GitHub login</th><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>GitHub login</th><th>Name</th><th>Role</th><th>Status</th><th>Courses</th><th></th></tr></thead>
     <tbody>
     {% for m in members %}
       <tr>
@@ -20,6 +20,7 @@
         <td>{{ m.display_name or "" }}</td>
         <td>{{ m.role }}</td>
         <td class="status">{% if m.has_signed_in %}Joined{% else %}Invited{% endif %}</td>
+        <td class="status">{% if m.has_signed_in %}<a href="/admin/progress/{{ m.github_login }}">Progress</a>{% endif %}</td>
         <td>
           {% if m.id != member.id %}
           <form method="post" action="/admin/members/{{ m.id }}/remove"><button class="link danger">Remove</button></form>

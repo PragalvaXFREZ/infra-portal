@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Progress{% endblock %}
+{% block sheet_class %}wide{% endblock %}
+{% block content %}
+  {% set admin_tab = "progress" %}
+  {% include "_admin_tabs.html" %}
+  <h1>Progress</h1>
+  <p class="muted small">
+    Read from the ticks members set themselves on the steps they can open. The site does not record
+    time spent or pages opened. Someone is quiet when their newest tick is more than {{ quiet_days }} days old.
+    The counts below are over every course; each line under a course is that member in that course.
+  </p>
+
+  {# How many people are in each state, as one line. #}
+  <ul class="pulse">
+    {% for key, name in [("active", "active"), ("quiet", "quiet"), ("new", "not started"), ("through", "through everything")] %}
+      <li class="state is-{{ key }}"><strong>{{ states[key] }}</strong> {{ name }}</li>
+    {% endfor %}
+  </ul>
+
+  {% for group in courses %}
+    {% set steps = group.view.written | length %}
+    <section class="roster-course" id="course-{{ group.view.stage.address }}">
+      <header class="roster-head">
+        <h2><a href="{{ group.view.url }}">{{ group.view.stage.title }}</a></h2>
+        <p class="course-facts">
+          <span>{{ steps }} {{ "step" if steps == 1 else "steps" }}</span>
+          <span>{{ group.started }} of {{ group.lines | length }} started</span>
+          {% if group.through %}<span>{{ group.through }} through</span>{% endif %}
+        </p>
+      </header>
+      {# One line per member: a bar for each lesson, a diamond for each lab, filled once ticked. #}
+      <ol class="roster">
+        {% for line in group.lines %}
+          {% set view = line.view %}
+          <li class="roster-row">
+            <a class="roster-name" href="/admin/progress/{{ line.member.github_login }}">
+              {% if line.member.avatar_src %}<img class="avatar" src="{{ line.member.avatar_src }}" alt="" width="28" height="28">{% else %}<span class="avatar avatar-blank" aria-hidden="true"></span>{% endif %}
+              <span>{{ line.member.name }}{% if line.member.is_admin %} <small>Admin</small>{% endif %}</span>
+            </a>
+            {% include "_track.html" %}
+            <span class="roster-count">{{ view.done_count }} of {{ steps }}</span>
+            <span class="roster-where">
+              <span class="state is-{{ line.state }}">{{ line.status }}</span>
+              {% if line.detail %}<small>{{ line.detail }}</small>{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+        {# Under the lines: how many members have ticked each step, so a step that holds people up shows. #}
+        <li class="roster-row roster-tally">
+          <span class="roster-name">Ticked by</span>
+          <ol class="track tally" aria-label="How many members have ticked each step">
+            {% for step, count in group.tally %}
+              <li class="{{ "is-lab " if step.is_build }}{{ "is-all" if count and count == group.lines | length }}{{ " is-none" if not count }}">
+                <span title="{{ step.label }}: {{ step.page.title }}">{% if step.written %}{{ count }}{% endif %}<span class="visually-hidden"> ticked {{ step.label }}</span></span>
+              </li>
+            {% endfor %}
+          </ol>
+        </li>
+      </ol>
+    </section>
+  {% else %}
+    <p class="lede">No course is open to members yet, so there is nothing to tick. <a href="/admin/course">Show a stage on the Course tab.</a></p>
+  {% endfor %}
+{% endblock %}

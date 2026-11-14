@@ -31,20 +31,37 @@
         {% endif %}
       </article>
       {% if step.written %}
-        {# The member's own tick. It unlocks nothing; it shows them, and the mentor, where they are. #}
-        <div class="step-tick{% if step.done %} is-done{% endif %}">
+        {# The member's own tick. A lab is handed in with a link to the work. Once every step of
+           the course is ticked, the next course opens. #}
+        <div class="step-tick{% if step.done %} is-done{% endif %}{% if step.is_build and not step.done %} hand-in{% endif %}" id="tick">
           {% if step.done %}
-            <p role="status"><span class="step-mark is-done" aria-hidden="true"></span> Done on {{ step.done_at.strftime("%-d %B %Y") }}</p>
+            <p role="status"><span class="step-mark is-done" aria-hidden="true"></span> {{ "Handed in" if step.is_build else "Done" }} on {{ step.done_at.strftime("%-d %B %Y") }}{% if step.link %} · <a href="{{ step.link }}" rel="noopener nofollow">your work</a>{% endif %}</p>
             <form method="post" action="{{ step.url }}/undo"><button class="link">Not done after all</button></form>
+          {% elif step.is_build %}
+            {% if step.sent_back %}
+              <div class="came-back" role="status">
+                <strong>Sent back on {{ step.sent_back.returned_at.strftime("%-d %B %Y") }}</strong>
+                <p>{{ step.sent_back.note }}</p>
+              </div>
+            {% endif %}
+            <form method="post" action="{{ step.url }}/done#tick">
+              <label for="work-link">{% if step.sent_back %}Hand it in again, with the same link or a new one{% else %}Hand in this lab with a link to your work{% endif %}</label>
+              <p class="muted small">A pull request, or the page where you wrote up what you did. Your mentor sees the link.</p>
+              {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+              <div class="hand-in-row">
+                <input id="work-link" name="link" type="url" inputmode="url" required maxlength="500" autocomplete="off" placeholder="https://github.com/you/your-repo/pull/1" value="{{ link }}">
+                <button>Hand in{{ " again" if step.sent_back }}</button>
+              </div>
+            </form>
           {% else %}
-            <p>{% if step.is_build %}Handed in and talked through with your mentor?{% else %}Watched, answered and warmed up?{% endif %}</p>
+            <p>Watched, answered and warmed up?</p>
             <form method="post" action="{{ step.url }}/done"><button>Mark as done</button></form>
           {% endif %}
         </div>
       {% endif %}
       <nav class="step-nav" aria-label="Earlier and next step">
         {% if earlier %}<a class="step-nav-earlier" href="{{ earlier.url }}"><span>Earlier</span>{{ earlier.label }}: {{ earlier.page.title }}</a>{% else %}<a class="step-nav-earlier" href="{{ view.url }}"><span>Back to</span>{{ view.stage.title }}</a>{% endif %}
-        {% if later %}<a class="step-nav-later{% if step.done %} is-primary{% endif %}" href="{{ later.url }}"><span>Next</span>{{ later.label }}: {{ later.page.title }}</a>{% else %}<a class="step-nav-later" href="{{ view.url }}"><span>End of the course</span>Back to the outline</a>{% endif %}
+        {% if later %}<a class="step-nav-later{% if step.done %} is-primary{% endif %}" href="{{ later.url }}"><span>Next</span>{{ later.label }}: {{ later.page.title }}</a>{% elif after and not after.locked and view.state == "done" %}<a class="step-nav-later is-primary" href="{{ after.url }}"><span>This course is done · Next course, open now</span>{{ after.stage.title }}</a>{% else %}<a class="step-nav-later" href="{{ view.url }}"><span>End of the course</span>Back to the outline</a>{% endif %}
       </nav>
     </div>
   </div>

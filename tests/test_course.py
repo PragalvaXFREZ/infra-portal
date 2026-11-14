@@ -79,7 +79,7 @@ def test_with_one_course_open_the_learn_page_is_that_course(client, path, as_mem
 
 
 def test_a_course_with_nothing_written_is_not_shown_to_members(client, session_factory, path, as_member):
-    # Pastry is approved but empty: it is a plan, and members see no trace of it.
+    # Pastry is approved but empty, and members see no trace of it.
     assert "Pastry" not in client.get("/learn").text
     # Not at its own address either, and neither does the course that is only a sentence.
     missing = client.get("/learn/no-such-course")
@@ -164,10 +164,8 @@ def test_an_admin_sees_drafts_marked_as_drafts(client, path, as_admin):
     page = client.get("/learn").text
     assert "Hidden yeast" in page and "Secret stage" in page and "Draft" in page
     assert client.get("/learn/bread/stage-1-chunk-2").status_code == 200
-    # The empty course is a plan: it is on the admins' own short list, not among the courses.
-    planned = page[page.index('<details class="planned">') :]
-    assert "Pastry" in planned and "Only admins see this" in planned
-    assert "Pastry" not in page[: page.index('<details class="planned">')]
+    # The empty course is not listed for an admin either. They reach it from the Course tab.
+    assert "Pastry" not in page and "Pastry" in client.get("/admin/course").text
 
 
 def test_hidden_missing_and_signed_out_get_the_same_404(client, path, add_member, sign_in):
@@ -276,7 +274,7 @@ def test_ticks_belong_to_one_member(client, path, add_member, sign_in):
 
 def test_a_finished_stage_says_done(client, path, as_member):
     for slug in ("stage-1-chunk-1", "stage-1-chunk-3", "stage-1-build-1"):
-        client.post(f"/learn/bread/{slug}/done")
+        client.post(f"/learn/bread/{slug}/done", data={"link": "https://example.com/my-loaf"})
     page = client.get("/learn").text
     assert "All 3 steps done" in page and "Continue" not in page
 

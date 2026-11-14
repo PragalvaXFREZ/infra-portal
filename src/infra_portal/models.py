@@ -220,7 +220,7 @@ class CourseStage(Base):
 
     Members meet a stage as a course of its own on the Learn page, at /learn/<slug>.
     A stage holds pages (LabPage rows with `stage_id` set) in the order of their `position`.
-    A stage with no written page yet is planned work. Only admins see it listed.
+    A stage with no written page yet is not listed on the Learn page for anyone.
     `visibility` works as it does for a page. A viewer sees a page on the path only if they may
     see both the page and its stage.
     """
@@ -316,10 +316,11 @@ class LabPage(Base):
 
 
 class PageProgress(Base):
-    """A member's own tick on a step of the learning path: "I have done this one".
+    """A member's own tick on a step of a course: "I have done this one".
 
-    The member sets it and can take it back. It does not unlock anything; it shows where they
-    are, and it shows the mentor where everyone is. One row per member and page.
+    The member sets it and can take it back. It shows where they are, and it shows the mentor
+    where everyone is. A course opens once every step of the course before it is ticked
+    (course.with_locks). One row per member and page.
     """
 
     __tablename__ = "page_progress"
@@ -332,3 +333,57 @@ class PageProgress(Base):
         ForeignKey("lab_pages.id", ondelete="CASCADE"), primary_key=True, index=True
     )
     done_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Where the member's work on a lab is: a pull request or their write-up. A lab is handed in
+    # with it. Empty on a lesson, and on a lab ticked before links were asked for.
+    link: Mapped[str | None] = mapped_column(String(500))
+
+
+class LabReturn(Base):
+    """A lab the mentor sent back to a member, with a short note saying why.
+
+    Sending a lab back takes the member's tick away, so the lab is theirs to hand in again, and
+    this row keeps the note for them to read on the lab. The link they handed in is kept here
+    too, so the form starts from it. The row goes when they hand the lab in again.
+    One row per member and page.
+    """
+
+    __tablename__ = "lab_returns"
+
+    # Both CASCADE: a note means nothing without its member or its page.
+    member_id: Mapped[int] = mapped_column(
+        ForeignKey("members.id", ondelete="CASCADE"), primary_key=True
+    )
+    page_id: Mapped[int] = mapped_column(
+        ForeignKey("lab_pages.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    note: Mapped[str] = mapped_column(String(500))
+    link: Mapped[str | None] = mapped_column(String(500))
+    # When the member had handed it in, so a lab sent back by mistake gets its own day back.
+    handed_in_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    returned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # SET NULL: removing the mentor must not remove the note.
+    returned_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("members.id", ondelete="SET NULL")
+    )
+
+
+class CourseGrant(Base):
+    """A course the mentor opened for one member, without the course before it being finished.
+
+    For someone who already knows what an earlier course teaches. The mentor can take it back,
+    which locks the course again unless the member has ticked something in it by then.
+    One row per member and stage.
+    """
+
+    __tablename__ = "course_grants"
+
+    member_id: Mapped[int] = mapped_column(
+        ForeignKey("members.id", ondelete="CASCADE"), primary_key=True
+    )
+    stage_id: Mapped[int] = mapped_column(
+        ForeignKey("course_stages.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    granted_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("members.id", ondelete="SET NULL")
+    )
