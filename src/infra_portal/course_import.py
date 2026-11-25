@@ -1,23 +1,26 @@
 """Turn the notes of a course into plain data, ready to be stored.
 
 A course is a list of numbered stages. Each stage has chunks (one short sitting of videos) and
-builds (hands-on work). The course is written as Obsidian notes in a private notes repository.
+builds (hands-on work). The notes call them courses, lessons and labs, and members see those
+words. The older words stage, chunk and build are read the same way, so old notes still import,
+and the stored kinds and addresses keep the old words so that a page is found again on the next
+upload. The course is written as Obsidian notes in a private notes repository.
 An admin uploads those files, and this module reads their text. It does no I/O and touches no
 database: text goes in, dataclasses come out, and other code decides what to store.
 
 Every note starts with a small header between two `---` lines. Only `title`, `description` and
 `draft` matter here. The title says what kind of note it is:
 
-- `Some course, stage 2: Bread` is a stage note. Its `## Chunk N. Title` sections become chunk
-  pages, and its `### Build N. Title` headings name the builds of the stage.
-- `Stage 2, build 1: a first loaf` is a build note. Its whole body is the guide for that build.
-- `Stage 2, chunk 3: warm-up` is a warm-up note. Its body is added to the end of chunk 3.
+- `Some path, course 2: Bread` is a stage note. Its `## Lesson N. Title` sections become chunk
+  pages, and its `### Lab N. Title` headings name the builds of the stage.
+- `Course 2, lab 1: a first loaf` is a build note. Its whole body is the guide for that build.
+- `Course 2, lesson 3: warm-up` is a warm-up note. Its body is added to the end of chunk 3.
 
 The notes also hold text meant only for the mentor, so the reader works from an allow-list. From
 a stage note it takes the chunk sections and the build titles, nothing else. Answer keys (a
 `-mentor.md` file name or `draft: true` in the header) are refused before anything is read.
 
-Any note may also hold a table whose header starts with `Stage | Topic`. Its rows name stages.
+Any note may also hold a table whose header starts with `Course | Topic`. Its rows name stages.
 A stage that is only named, with no chunk or build in the upload, is not stored (see apply_plan).
 """
 
@@ -34,15 +37,20 @@ SUMMARY_LIMIT = 300
 # a number that could clash with a real one.
 NUMBER = r"(\d{1,9})(?!\d)"
 
-STAGE_TITLE = re.compile(rf"\bstage\s+{NUMBER}\s*:\s*(.+)$", re.IGNORECASE)
-BUILD_TITLE = re.compile(rf"^stage\s+{NUMBER}\s*,\s*build\s+{NUMBER}\s*:\s*(.+)$", re.IGNORECASE)
-WARMUP_TITLE = re.compile(rf"^stage\s+{NUMBER}\s*,\s*chunk\s+{NUMBER}\s*:\s*warm-up$", re.IGNORECASE)
+# The words of the notes, new and old. Both are read everywhere.
+STAGE = r"(?:course|stage)"
+CHUNK = r"(?:lesson|chunk)"
+BUILD = r"(?:lab|build)"
 
-CHUNK_HEADING = re.compile(rf"^## +chunk\s+{NUMBER}\.(.*)$", re.IGNORECASE)
-BUILD_HEADING = re.compile(rf"^### +build\s+{NUMBER}\.(.*)$", re.IGNORECASE)
+STAGE_TITLE = re.compile(rf"\b{STAGE}\s+{NUMBER}\s*:\s*(.+)$", re.IGNORECASE)
+BUILD_TITLE = re.compile(rf"^{STAGE}\s+{NUMBER}\s*,\s*{BUILD}\s+{NUMBER}\s*:\s*(.+)$", re.IGNORECASE)
+WARMUP_TITLE = re.compile(rf"^{STAGE}\s+{NUMBER}\s*,\s*{CHUNK}\s+{NUMBER}\s*:\s*warm-up$", re.IGNORECASE)
+
+CHUNK_HEADING = re.compile(rf"^## +{CHUNK}\s+{NUMBER}\.(.*)$", re.IGNORECASE)
+BUILD_HEADING = re.compile(rf"^### +{BUILD}\s+{NUMBER}\.(.*)$", re.IGNORECASE)
 NOT_WRITTEN = re.compile(r"\s*\(not written yet\)\s*$", re.IGNORECASE)
 WATCH = re.compile(r"\*\*Watch\s*\(\s*(\d{1,9})\s*min\s*\)\*\*", re.IGNORECASE)
-FEEDS = re.compile(rf"\*\*Feeds:\*\*\s*build\s+{NUMBER}", re.IGNORECASE)
+FEEDS = re.compile(rf"\*\*Feeds:\*\*\s*{BUILD}\s+{NUMBER}", re.IGNORECASE)
 RULE = re.compile(r"^ {0,3}-{3,}\s*$")
 FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 # A stage table row may end with a short note to the mentor, as in "Bread. Done.".
@@ -280,7 +288,7 @@ def _read_stage_body(body: str) -> tuple[list[_Chunk], dict[int, str]]:
         chunks.append(
             _Chunk(
                 number=number,
-                title=_cut_title(match.group(2)) or f"Chunk {number}",
+                title=_cut_title(match.group(2)) or f"Lesson {number}",
                 summary=_cut_summary(_first_paragraph(text)),
                 minutes=minutes,
                 feeds=feeds,
@@ -294,12 +302,12 @@ def _read_stage_body(body: str) -> tuple[list[_Chunk], dict[int, str]]:
         if match and not inside:
             number = int(match.group(1))
             title = _cut_title(NOT_WRITTEN.sub("", match.group(2)))
-            build_titles.setdefault(number, title or f"Build {number}")
+            build_titles.setdefault(number, title or f"Lab {number}")
     return chunks, build_titles
 
 
 def _read_tables(body: str) -> list[StageDraft]:
-    """Rows of every table whose header row starts with the cells Stage and Topic."""
+    """Rows of every table whose header row starts with the cells Course (or Stage) and Topic."""
     lines = body.splitlines()
     fenced = _fence_flags(lines)
     rows: list[StageDraft] = []
@@ -312,7 +320,7 @@ def _read_tables(body: str) -> list[StageDraft]:
         # A cell may hold `\|`, as Obsidian writes a wikilink label inside a table.
         cells = [cell.strip() for cell in re.split(r"(?<!\\)\|", stripped.strip("|"))]
         if not in_table:
-            in_table = len(cells) >= 2 and [c.lower() for c in cells[:2]] == ["stage", "topic"]
+            in_table = len(cells) >= 2 and cells[0].lower() in ("course", "stage") and cells[1].lower() == "topic"
             continue
         if len(cells) < 2 or not re.fullmatch(r"\d{1,9}", cells[0]):
             continue  # the |---|---| line, or a row that does not name a stage

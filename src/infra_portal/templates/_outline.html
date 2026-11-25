@@ -13,7 +13,7 @@
         <li{% if item.is_build %} class="outline-lab"{% endif %}>
           {% if item.written %}<a href="{{ item.url }}"{% if item.page.id == step.page.id %} aria-current="page"{% endif %}>{% else %}<span class="outline-coming">{% endif %}
             <span class="step-mark{% if item.is_build %} is-lab{% endif %}{% if item.done %} is-done{% endif %}{% if not item.written %} is-coming{% endif %}" aria-hidden="true"></span>
-            <span><small>{{ "Lab · " if item.is_build }}{{ item.label }}{% if item.done %}<span class="visually-hidden"> (done)</span>{% endif %}</small>{{ item.page.title }}</span>
+            <span><small>{{ item.label }}{% if item.done %}<span class="visually-hidden"> (done)</span>{% endif %}</small>{{ item.page.title }}</span>
           {% if item.written %}</a>{% else %}</span>{% endif %}
         </li>
       {% endfor %}

@@ -46,13 +46,13 @@ from infra_portal.rendering import render_lab_markdown
 from infra_portal.templating import templates
 
 LABS_DIR = Path(__file__).parent / "content" / "labs"
-# Chunks and builds are the steps of a course (course.py).
+# Chunks and builds are the steps of a course (course.py). Members know them as lessons and labs.
 KIND_LABELS = {
     "lab": "Lab",
     "experiment": "Experiment",
     "session": "Learning session",
-    "chunk": "Chunk",
-    "build": "Build",
+    "chunk": "Lesson",
+    "build": "Course lab",
 }
 KINDS = set(KIND_LABELS)
 # Shown on cards and pages that not everyone can see. Public pages get no label.

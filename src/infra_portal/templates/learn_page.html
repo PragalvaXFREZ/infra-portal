@@ -16,7 +16,7 @@
         {% include "_outline.html" %}
       </details>
       <article>
-        <p class="step-label">{% if step.is_build %}<span class="pill pill-lab">Lab</span> {% endif %}{{ step.label }}</p>
+        <p class="step-label">{% if step.is_build %}<span class="pill pill-lab">{{ step.label }}</span>{% else %}{{ step.label }}{% endif %}</p>
         <h1>{{ step.page.title }}</h1>
         <div class="meta">
           {% if step.page.minutes %}{{ step.page.minutes }} min of video{% else %}{{ "Hands-on" if step.is_build else "Reading" }}{% endif %}

@@ -261,7 +261,7 @@ class Line:
         if step is None or (self.state == "new" and not step.sent_back):
             return ""
         back = " (sent back)" if step.sent_back else ""
-        return f"Next: {'Lab · ' if step.is_build else ''}{step.label}{back}"
+        return f"Next: {step.label}{back}"
 
 
 @dataclass(frozen=True)

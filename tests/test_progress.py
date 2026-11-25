@@ -62,6 +62,19 @@ def people(courses, add_member, sign_in, session_factory):
     sign_in("boss", 1)
 
 
+@pytest.fixture
+def at_now(monkeypatch):
+    """The Progress tab reads the clock. Hold it at NOW, so that who counts as active does not
+    depend on the day the tests are run."""
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW
+
+    monkeypatch.setattr(progress, "datetime", Clock)
+
+
 def _tick(session_factory, login, slug, when):
     with session_factory() as db:
         member = db.query(Member).filter_by(github_login=login).one()
@@ -120,7 +133,7 @@ def test_the_strip_of_days_starts_on_a_monday_and_ends_today(people, session_fac
     assert {day.date: day.ticks for day in days if day.ticks} == {dt.date(2026, 11, 11): 1, dt.date(2026, 11, 13): 1}
 
 
-def test_progress_tab_draws_each_member_in_each_course(client, people):
+def test_progress_tab_draws_each_member_in_each_course(client, people, at_now):
     page = client.get("/admin/progress").text
     bread = page[page.index('id="course-bread"') : page.index('id="course-pastry"')]
     pastry = page[page.index('id="course-pastry"') :]
@@ -128,7 +141,7 @@ def test_progress_tab_draws_each_member_in_each_course(client, people):
     assert "1 of 3 started" in bread and "0 of 3 started" in pastry
     alice = _row(bread, "Alice")
     assert 'href="/admin/progress/alice"' in bread
-    assert "2 of 3" in alice and "Active" in alice and "Next: Lab · Build 1" in alice
+    assert "2 of 3" in alice and "Active" in alice and "Next: Lab 1" in alice
     # Her line: two lessons ticked, the lab not, and the unwritten lab drawn as coming.
     assert alice.count('class="is-done"') == 2 and "A baguette (not written yet)" in alice
     assert "Not started" in _row(bread, "Bob")
@@ -139,7 +152,7 @@ def test_progress_tab_draws_each_member_in_each_course(client, people):
     assert [cell.split(">")[1].split("<")[0] for cell in tally.split('<span title="')[1:]] == ["1", "1", "0", ""]
 
 
-def test_progress_tab_counts_people_by_state(client, people):
+def test_progress_tab_counts_people_by_state(client, people, at_now):
     page = client.get("/admin/progress").text
     pulse = page[page.index('<ul class="pulse">') : page.index("</ul>", page.index('<ul class="pulse">'))]
     assert "<strong>1</strong> active" in pulse and "<strong>2</strong> not started" in pulse
