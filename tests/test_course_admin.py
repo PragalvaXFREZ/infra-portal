@@ -137,7 +137,7 @@ def test_overview_shows_where_each_member_is(client, stage, add_member, sign_in,
     page = client.get("/admin").text
     row = page[page.index("Alice") :]
     row = row[: row.index("</tr>")]
-    assert "1 of 2" in row and "Bread · Chunk 2" in row
+    assert "1 of 2" in row and "Bread · Lesson 2" in row
     # The admin has ticked nothing.
     assert "0 of 2" in page
 

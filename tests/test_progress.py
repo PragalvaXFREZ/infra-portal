@@ -128,7 +128,7 @@ def test_progress_tab_draws_each_member_in_each_course(client, people):
     assert "1 of 3 started" in bread and "0 of 3 started" in pastry
     alice = _row(bread, "Alice")
     assert 'href="/admin/progress/alice"' in bread
-    assert "2 of 3" in alice and "Active" in alice and "Next: Lab · Build 1" in alice
+    assert "2 of 3" in alice and "Active" in alice and "Next: Lab 1" in alice
     # Her line: two lessons ticked, the lab not, and the unwritten lab drawn as coming.
     assert alice.count('class="is-done"') == 2 and "A baguette (not written yet)" in alice
     assert "Not started" in _row(bread, "Bob")

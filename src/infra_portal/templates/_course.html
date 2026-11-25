@@ -34,7 +34,7 @@
     <p class="ghost-head">Behind the door</p>
     <ol>
       {% for step in view.steps %}
-        <li class="{{ "is-lab" if step.is_build }}"><span class="step-mark{% if step.is_build %} is-lab{% endif %}"></span><span class="step-label">{{ "Lab · " if step.is_build }}{{ step.label }}</span><span class="ghost-title">{{ step.page.title }}</span></li>
+        <li class="{{ "is-lab" if step.is_build }}"><span class="step-mark{% if step.is_build %} is-lab{% endif %}"></span><span class="step-label">{{ step.label }}</span><span class="ghost-title">{{ step.page.title }}</span></li>
       {% endfor %}
     </ol>
   </div>

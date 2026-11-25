@@ -151,7 +151,7 @@ def test_a_started_course_stays_open_when_an_earlier_one_gets_a_new_step(client,
     # The new step is still where they are sent next.
     home = client.get("/").text
     # It is chunk 4: the hidden chunk keeps its number.
-    assert "Chunk 4: Salt" in home[home.index('<aside class="hero-card">') : home.index("</aside>")]
+    assert "Lesson 4: Salt" in home[home.index('<aside class="hero-card">') : home.index("</aside>")]
     # Cakes was never started, so it waits.
     assert client.get("/learn/cakes/stage-3-chunk-1", follow_redirects=False).status_code == 303
 
@@ -352,7 +352,7 @@ def test_the_mentor_sends_a_lab_back_and_the_member_hands_it_in_again(client, si
     assert "Sent back" in page and "The link opens an empty repository." in page
     assert f'action="/admin/progress/alice/labs/{loaf}/take-back"' in page
     # The lab that came back is where she is sent next, ahead of the lessons she has not ticked.
-    assert "Next: Lab · Build 1 (sent back)" in client.get("/admin/progress").text
+    assert "Next: Lab 1 (sent back)" in client.get("/admin/progress").text
 
     _as_alice(sign_in)
     lab = client.get("/learn/bread/stage-1-build-1").text
@@ -361,7 +361,7 @@ def test_the_mentor_sends_a_lab_back_and_the_member_hands_it_in_again(client, si
     assert f'value="{WORK["link"]}"' in lab and "Hand in again" in lab
     assert "Sent back with a note" in client.get("/learn/bread").text
     home = client.get("/").text
-    assert "Build 1: A loaf" in home[home.index('<aside class="hero-card">') : home.index("</aside>")]
+    assert "Lab 1: A loaf" in home[home.index('<aside class="hero-card">') : home.index("</aside>")]
     client.post("/learn/bread/stage-1-build-1/done", data={"link": "https://example.com/alice/loaf/pull/4"})
     assert _ticks(session_factory) == {"stage-1-build-1": "https://example.com/alice/loaf/pull/4"}
     assert _returns(session_factory) == []
@@ -423,11 +423,11 @@ def test_a_lab_sent_back_locks_the_next_course_unless_it_was_started(client, sig
     client.post("/learn/pastry/stage-2-chunk-1/done")
     _as_boss(sign_in)
     client.post(f"/admin/progress/alice/labs/{loaf}/send-back", data=NOTE)
-    assert "Next: Lab · Build 1 (sent back)" in client.get("/admin/progress").text
+    assert "Next: Lab 1 (sent back)" in client.get("/admin/progress").text
     _as_alice(sign_in)
     assert client.get("/learn/pastry/stage-2-build-1").status_code == 200
     home = client.get("/").text
-    assert "Build 1: A loaf" in home[home.index('<aside class="hero-card">') : home.index("</aside>")]
+    assert "Lab 1: A loaf" in home[home.index('<aside class="hero-card">') : home.index("</aside>")]
 
 
 def test_the_mentor_opens_a_course_for_one_member(client, sign_in, session_factory, add_member, pastry):

@@ -97,7 +97,7 @@
           {% set here = person.next and step.page.id == person.next.page.id %}
           <tr id="step-{{ step.page.id }}" class="{{ "is-done" if step.done }}{{ " is-here" if here }}{{ " is-coming" if not step.written }}{{ " has-more" if step.is_build and (step.done or step.sent_back) }}">
             <td><span class="step-mark{% if step.is_build %} is-lab{% endif %}{% if step.done %} is-done{% endif %}{% if not step.written %} is-coming{% endif %}" aria-hidden="true"></span></td>
-            <td class="status">{% if step.is_build %}<span class="pill pill-lab">Lab</span> {% endif %}{{ step.label }}</td>
+            <td class="status">{% if step.is_build %}<span class="pill pill-lab">{{ step.label }}</span>{% else %}{{ step.label }}{% endif %}</td>
             <td>{% if step.written %}<a href="{{ step.url }}">{{ step.page.title }}</a>{% else %}{{ step.page.title }}{% endif %}</td>
             <td class="muted">{% if step.written and step.page.minutes %}{{ step.page.minutes }} min{% endif %}</td>
             <td class="steps-when">{% if step.done %}{{ step.done_at.strftime("%-d %b %Y") }}{% if step.link %} · <a href="{{ step.link }}" rel="noopener nofollow">Their work</a>{% elif step.is_build %} · no link{% endif %}{% elif not step.written %}Not written yet{% elif step.sent_back %}<strong class="sent-back">Sent back {{ step.sent_back.returned_at.strftime("%-d %b") }}</strong>{% elif here %}<strong>Here now</strong>{% else %}Not yet{% endif %}</td>

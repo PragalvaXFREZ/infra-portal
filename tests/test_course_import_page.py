@@ -228,8 +228,8 @@ def test_a_step_keeps_its_own_number_when_the_order_differs(client, boss, sessio
     order = [p.slug for p in sorted(pages.values(), key=lambda p: p.position)]
     assert order.index("stage-2-chunk-3") < order.index("stage-2-chunk-2")
     assert (pages["stage-2-chunk-3"].number, pages["stage-2-chunk-2"].number) == (3, 2)
-    assert "Chunk 3" in client.get("/learn/bread/stage-2-chunk-3").text
-    assert "Chunk 2" in client.get("/learn/bread/stage-2-chunk-2").text
+    assert "Lesson 3" in client.get("/learn/bread/stage-2-chunk-3").text
+    assert "Lesson 2" in client.get("/learn/bread/stage-2-chunk-2").text
 
 
 def test_uploading_one_build_note_again_keeps_the_order(client, boss, session_factory):
@@ -259,3 +259,50 @@ def test_uploading_the_stage_note_alone_keeps_a_warm_up_that_is_already_there(cl
     _upload(client, **{"stage-2-bread.md": STAGE_NOTE, "stage-2-chunk-1.md": WARM_UP.replace("100 g", "250 g")})
     body = _pages(session_factory)["stage-2-chunk-1"].body
     assert "250 g" in body and "100 g" not in body and body.count("## Warm-up steps") == 1
+
+
+def _new_words(text: str) -> str:
+    for old, new in (
+        ("Stage", "Course"),
+        ("stage", "course"),
+        ("Chunk", "Lesson"),
+        ("chunk", "lesson"),
+        ("Build", "Lab"),
+        ("build", "lab"),
+    ):
+        text = text.replace(old, new)
+    return text
+
+
+def test_notes_renamed_to_course_lesson_and_lab_update_the_pages_that_are_there(client, boss, session_factory):
+    _upload(client, **{"stage-2-bread.md": STAGE_NOTE, "stage-2-build-1.md": BUILD_NOTE, "stage-2-chunk-1.md": WARM_UP})
+    before = {slug: (page.id, page.position) for slug, page in _pages(session_factory).items()}
+    response = _upload(
+        client,
+        **{
+            "course-2-bread.md": _new_words(STAGE_NOTE).replace("ground grain", "milled grain"),
+            "course-2-lab-1.md": _new_words(BUILD_NOTE),
+            "course-2-lesson-1.md": _new_words(WARM_UP),
+        },
+    )
+    assert response.status_code == 200 and "Done." in response.text
+    pages = _pages(session_factory)
+    # No page is made twice: every address, row and place is the one from the first upload.
+    assert {slug: (page.id, page.position) for slug, page in pages.items()} == before
+    assert "milled grain" in pages["stage-2-chunk-1"].body and pages["stage-2-chunk-1"].body.count("Weigh 100 g") == 1
+    assert "the flour lesson" in pages["stage-2-build-1"].body
+    with session_factory() as db:
+        assert len(db.scalars(select(CourseStage)).all()) == 1
+
+
+def test_a_member_reads_lesson_and_lab_and_follows_a_link_written_the_new_way(client, boss, session_factory):
+    _upload(
+        client,
+        **{"course-2-bread.md": _new_words(STAGE_NOTE), "course-2-lab-1.md": _new_words(BUILD_NOTE)},
+    )
+    lab = client.get("/learn/bread/stage-2-build-1").text
+    # The note links to [[baking/course-2-lesson-1|...]], and the page it means is stage-2-chunk-1.
+    assert '<a href="/learn/bread/stage-2-chunk-1">the flour lesson</a>' in lab
+    assert "Lab 1" in lab and "Build 1" not in lab and "Lab · Lab" not in lab
+    lesson = client.get("/learn/bread/stage-2-chunk-1").text
+    assert "Lesson 1" in lesson and "Chunk 1" not in lesson

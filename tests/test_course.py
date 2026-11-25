@@ -135,9 +135,9 @@ def test_several_courses_make_a_list(client, session_factory, path, as_member):
 
 
 def test_a_hidden_step_keeps_its_number(client, path, as_member):
-    # Chunk 2 is a draft. The next chunk is still "Chunk 3" for a member.
+    # Lesson 2 is a draft. The next chunk is still "Lesson 3" for a member.
     page = client.get("/learn").text
-    assert "Chunk 3" in page and "Chunk 2" not in page
+    assert "Lesson 3" in page and "Lesson 2" not in page
 
 
 def test_an_unwritten_step_is_listed_but_is_not_a_link(client, path, as_member):
@@ -186,7 +186,7 @@ def test_step_page_links_to_the_steps_around_it(client, path, as_member):
     page = client.get("/learn/bread/stage-1-chunk-3").text
     # Earlier skips the hidden chunk; next is the build.
     assert 'href="/learn/bread/stage-1-chunk-1"' in page and 'href="/learn/bread/stage-1-build-1"' in page
-    assert "Chunk 3" in page
+    assert "Lesson 3" in page
     last = client.get("/learn/bread/stage-1-build-1").text
     # The last step that can be opened leads back to the course.
     assert "End of the course" in last[last.index('<nav class="step-nav"') :]
@@ -248,7 +248,7 @@ def test_old_lab_address_of_a_path_page_moves_only_for_those_who_may_see_it(clie
 def test_home_card_points_a_member_at_the_path(client, path, as_member):
     home = client.get("/").text
     card = home[home.index('<aside class="hero-card">') : home.index("</aside>")]
-    assert "Chunk 1: Flour" in card and 'href="/learn/bread"' in card and "Bread" in card
+    assert "Lesson 1: Flour" in card and 'href="/learn/bread"' in card and "Bread" in card
 
 
 def test_a_member_ticks_a_step_and_takes_it_back(client, path, as_member):
@@ -259,7 +259,7 @@ def test_a_member_ticks_a_step_and_takes_it_back(client, path, as_member):
     client.post("/learn/bread/stage-1-chunk-1/done")
     assert "Done on" in client.get("/learn/bread/stage-1-chunk-1").text
     page = client.get("/learn").text
-    assert "1 of 3 done" in page and "Next up" in page and "Chunk 3: Water" in page
+    assert "1 of 3 done" in page and "Next up" in page and "Lesson 3: Water" in page
     client.post("/learn/bread/stage-1-chunk-1/undo")
     page = client.get("/learn").text
     assert "0 of 3 done" in page and "Start here" in page
@@ -298,4 +298,4 @@ def test_home_card_follows_the_members_next_step(client, path, as_member):
     client.post("/learn/bread/stage-1-chunk-1/done")
     home = client.get("/").text
     card = home[home.index('<aside class="hero-card">') : home.index("</aside>")]
-    assert "Chunk 3: Water" in card
+    assert "Lesson 3: Water" in card

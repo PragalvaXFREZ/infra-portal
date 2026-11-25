@@ -61,8 +61,11 @@ from infra_portal.templating import templates
 
 KIND_CHUNK = "chunk"
 KIND_BUILD = "build"
-# These two are counted inside their course: "Chunk 3", "Build 1".
-NUMBERED = {KIND_CHUNK: "Chunk", KIND_BUILD: "Build"}
+# These two are counted inside their course. Members see "Lesson 3" and "Lab 1". The stored
+# kinds and the addresses keep the older words, chunk and build.
+NUMBERED = {KIND_CHUNK: "Lesson", KIND_BUILD: "Lab"}
+# How a note's file name says the same thing as a page's address: course-1-lab-2 is stage-1-build-2.
+_NOTE_WORDS = {"course": "stage", "lesson": "chunk", "lab": "build"}
 # The same length as the column it is stored in.
 MAX_LINK = 500
 
@@ -83,9 +86,9 @@ class Step:
 
     page: LabPage
     stage: CourseStage
-    # "Chunk 3" or "Build 1". The number is the step's own when it has one. Otherwise it is
-    # counted over every page of the course, hidden ones too, so a hidden chunk 2 does not turn
-    # the next chunk into "Chunk 2" for members.
+    # "Lesson 3" or "Lab 1". The number is the step's own when it has one. Otherwise it is
+    # counted over every page of the course, hidden ones too, so a hidden lesson 2 does not turn
+    # the next lesson into "Lesson 2" for members.
     label: str
     # False for a page with no text yet. It is listed as coming and cannot be opened.
     written: bool
@@ -425,14 +428,23 @@ def clean_link(text: str) -> str | None:
 def link_resolver(courses: list[CourseView]) -> Callable[[str], str | None]:
     """Turns a wikilink target from the notes into an address on this site, if there is one.
 
-    The notes link to each other by file path, such as `course/stage-1-build-1`. The last section
-    of that path is the page's address here. A link to a stage note goes to that course.
+    The notes link to each other by file path, such as `course/course-1-lab-1`, or
+    `course/stage-1-build-1` in older notes. The last section of that path names the page:
+    `course-1-lab-1` is the page at the address `stage-1-build-1`. A link to a course note goes
+    to that course.
     Anything else, or anything this viewer may not open, stays plain text: a hidden page, and a
     step of a course that is still locked for them.
     """
 
     def resolve(target: str) -> str | None:
         name = target.partition("#")[0].strip().rstrip("/").rsplit("/", 1)[-1].removesuffix(".md")
+        # course-1-lab-2 -> stage-1-build-2, course-1-lesson-3 -> stage-1-chunk-3, course-1-x -> stage-1-x
+        parts = name.split("-")
+        if len(parts) >= 2 and parts[0] == "course" and parts[1].isdigit():
+            parts[0] = "stage"
+            if len(parts) >= 4 and parts[2] in _NOTE_WORDS and parts[3].isdigit():
+                parts[2] = _NOTE_WORDS[parts[2]]
+            name = "-".join(parts)
         for view in courses:
             if view.locked:
                 continue

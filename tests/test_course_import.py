@@ -450,3 +450,44 @@ def test_comments_the_notes_app_hides_are_not_stored():
     assert "HIDDEN" not in chunk.body
     assert "Shown.  Also shown." in chunk.body
     assert "printf '%%d%%'" in chunk.body and "echo %%KEPT-IN-CODE%%" in chunk.body
+
+
+def _new_words(text: str) -> str:
+    """The same note as the notes are written now: course, lesson and lab."""
+    for old, new in (
+        ("Stage", "Course"),
+        ("stage", "course"),
+        ("Chunk", "Lesson"),
+        ("chunk", "lesson"),
+        ("Build", "Lab"),
+        ("build", "lab"),
+    ):
+        text = text.replace(old, new)
+    return text
+
+
+def test_course_lesson_and_lab_read_the_same_as_stage_chunk_and_build():
+    old = full_plan()
+    new = plan_import(
+        [
+            ("course-2-lesson-1.md", _new_words(WARMUP)),
+            ("course-2-bread.md", _new_words(STAGE)),
+            ("course-2-lab-1.md", _new_words(BUILD)),
+        ]
+    )
+    assert "Stage" not in _new_words(STAGE) and "## Lesson 1." in _new_words(STAGE)
+    assert not new.refused and not new.unused
+
+    # The same pages at the same addresses and in the same order, so an upload finds each one again.
+    def shape(plan: Plan) -> list[tuple]:
+        return [(p.slug, p.kind, p.number, p.position, p.minutes) for p in plan.pages]
+
+    assert shape(new) == shape(old) and len(new.pages) > 3
+    assert new.stages == tuple(StageDraft(s.number, _new_words(s.title)) for s in old.stages)
+    assert page(new, "stage-2-build-1").title == "A first loaf"
+    assert "Weigh 100 g" in page(new, "stage-2-chunk-1").body
+
+
+def test_a_lesson_or_a_lab_with_no_title_is_named_by_its_number():
+    plan = plan_import([("c.md", '---\ntitle: "C, course 1: x"\n---\n## Lesson 1.\n\nText.\n\n### Lab 1.\n')])
+    assert {p.slug: p.title for p in plan.pages} == {"stage-1-chunk-1": "Lesson 1", "stage-1-build-1": "Lab 1"}
